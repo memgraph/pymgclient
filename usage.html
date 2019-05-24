@@ -38,13 +38,13 @@
 adapters compliant the DB-API 2.0. To use the module, you must:</p>
 <blockquote>
 <div><ol class="arabic simple">
-<li><p>Create a <a class="reference internal" href="connection.html#mgclient.Connection" title="mgclient.Connection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code></a> object, using the <a class="reference internal" href="module.html#mgclient.connect" title="mgclient.connect"><code class="xref py py-func docutils literal notranslate"><span class="pre">connect()</span></code></a>
+<li><p>Create a <code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code> object, using the <code class="xref py py-func docutils literal notranslate"><span class="pre">connect()</span></code>
 function.</p></li>
-<li><p>Create a <a class="reference internal" href="cursor.html#mgclient.Cursor" title="mgclient.Cursor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code></a> object by calling <a class="reference internal" href="connection.html#mgclient.Connection.cursor" title="mgclient.Connection.cursor"><code class="xref py py-meth docutils literal notranslate"><span class="pre">cursor()</span></code></a> on
-the <a class="reference internal" href="connection.html#mgclient.Connection" title="mgclient.Connection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code></a> object.</p></li>
-<li><p>Call cursor’s <a class="reference internal" href="cursor.html#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> method to perform openCypher queries.</p></li>
-<li><p>Make database changes persistent by calling <a class="reference internal" href="connection.html#mgclient.Connection.commit" title="mgclient.Connection.commit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">commit()</span></code></a>, or drop them
-by calling <a class="reference internal" href="connection.html#mgclient.Connection.rollback" title="mgclient.Connection.rollback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rollback()</span></code></a>.</p></li>
+<li><p>Create a <code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code> object by calling <code class="xref py py-meth docutils literal notranslate"><span class="pre">cursor()</span></code> on
+the <code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code> object.</p></li>
+<li><p>Call cursor’s <code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code> method to perform openCypher queries.</p></li>
+<li><p>Make database changes persistent by calling <code class="xref py py-meth docutils literal notranslate"><span class="pre">commit()</span></code>, or drop them
+by calling <code class="xref py py-meth docutils literal notranslate"><span class="pre">rollback()</span></code>.</p></li>
 </ol>
 </div></blockquote>
 <p>Here is an example of an interactive session
@@ -88,7 +88,7 @@ because doing so is insecure.</p>
 <p>Instead, you should use the parameter substitution mechanism built into
 Memgraph. Put <code class="docutils literal notranslate"><span class="pre">$name</span></code> as a placeholder wherever you want to use a value, and
 the provide a dictionary mapping names to values as the second argument to the
-cursor’s <a class="reference internal" href="cursor.html#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a>. For example:</p>
+cursor’s <code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code>. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Don&#39;t do this!</span>
 <span class="n">server_id</span> <span class="o">=</span> <span class="s1">&#39;srvr-38219012-sw&#39;</span>
 <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;MATCH (s:Server {id: &#39;</span><span class="si">%s</span><span class="s2">&#39;}) SET s.hits = s.hits + 1&quot;</span>
@@ -136,13 +136,13 @@ cursor’s <a class="reference internal" href="cursor.html#mgclient.Cursor.execu
 <td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Node</p></td>
-<td><p><a class="reference internal" href="module.html#mgclient.Node" title="mgclient.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">mgclient.Node</span></code></a></p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">mgclient.Node</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p>Relationship</p></td>
-<td><p><a class="reference internal" href="module.html#mgclient.Relationship" title="mgclient.Relationship"><code class="xref py py-class docutils literal notranslate"><span class="pre">mgclient.Relationship</span></code></a></p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">mgclient.Relationship</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Path</p></td>
-<td><p><a class="reference internal" href="module.html#mgclient.Path" title="mgclient.Path"><code class="xref py py-class docutils literal notranslate"><span class="pre">mgclient.Path</span></code></a></p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">mgclient.Path</span></code></p></td>
 </tr>
 </tbody>
 </table>
@@ -151,22 +151,22 @@ binary data.</p>
 </div>
 <div class="section" id="transactions-control">
 <h2>Transactions control<a class="headerlink" href="#transactions-control" title="Permalink to this headline">¶</a></h2>
-<p>In <a class="reference internal" href="#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> transactions are handled by the <a class="reference internal" href="connection.html#mgclient.Connection" title="mgclient.Connection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code></a> class.
+<p>In <a class="reference internal" href="#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> transactions are handled by the <code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code> class.
 By default, the first time a command is sent to the database using one of the
-<a class="reference internal" href="cursor.html#mgclient.Cursor" title="mgclient.Cursor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code></a> objects created by it, a new transaction is started (by sending
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code> objects created by it, a new transaction is started (by sending
 <code class="docutils literal notranslate"><span class="pre">BEGIN</span></code> command to Memgraph). All following commands (issued by any of the
 cursors) will be executed in the context of the same transaction. If any of the
 commands fails, the transaction will not be able to commit and no further
-command will successfuly execute until <a class="reference internal" href="connection.html#mgclient.Connection.rollback" title="mgclient.Connection.rollback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rollback()</span></code></a> is called.</p>
+command will successfuly execute until <code class="xref py py-meth docutils literal notranslate"><span class="pre">rollback()</span></code> is called.</p>
 <p>The connection is responsible for terming its transaction, either by calling
-<a class="reference internal" href="connection.html#mgclient.Connection.commit" title="mgclient.Connection.commit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">commit()</span></code></a> or <a class="reference internal" href="connection.html#mgclient.Connection.rollback" title="mgclient.Connection.rollback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rollback()</span></code></a>. Closing the connection using
-<a class="reference internal" href="connection.html#mgclient.Connection.close" title="mgclient.Connection.close"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Connection.close()</span></code></a> or destroying the connection object results
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">commit()</span></code> or <code class="xref py py-meth docutils literal notranslate"><span class="pre">rollback()</span></code>. Closing the connection using
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">Connection.close()</span></code> or destroying the connection object results
 in an implicit rollback.</p>
 <p>You can set the connection in <em>autocommit</em> mode: that way all commands executed
 will be immediately committed and no rollback is possible. A few commands
 (<code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">INDEX</span></code>, <code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">USER</span></code> and similar) require to be run outside any
 transaction. To set the connection in <em>autocommit</em> mode, set
-<a class="reference internal" href="connection.html#mgclient.Connection.autocommit" title="mgclient.Connection.autocommit"><code class="xref py py-attr docutils literal notranslate"><span class="pre">autocommit</span></code></a> property of the connection to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">autocommit</span></code> property of the connection to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </div>
 </div>
 

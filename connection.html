@@ -128,7 +128,7 @@ can only be seen for lazy connections.</p>
 <div class="section" id="lazy-connections">
 <span id="id1"></span><h2>Lazy connections<a class="headerlink" href="#lazy-connections" title="Permalink to this headline">¶</a></h2>
 <p>When a query is executed using <a class="reference internal" href="cursor.html#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> on a cursor, the default
-<a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> behaviour is to wait for all of the results to be available
+<a class="reference internal" href="module.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> behaviour is to wait for all of the results to be available
 and store them into cursor’s internal result list. On one hand, that means that
 <a class="reference internal" href="cursor.html#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> will block until all of the results are ready and all results
 will be stored in memory at the same time. On the other hand, that also means

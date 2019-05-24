@@ -61,7 +61,7 @@ To run the tests, you will need to have Memgraph, pytest and pyopenssl
 installed on your machine. The tests will try to start the Memgraph binary from
 the standard installation path (usually :file:`/usr/lib/memgraph/memgraph`)
 listening on port 7687. You can configure a different path or port by setting
-the following environment libraries:
+the following environment variables:
 
    * :envvar:`MEMGRAPH_PATH`
    * :envvar:`MEMGRAPH_PORT`

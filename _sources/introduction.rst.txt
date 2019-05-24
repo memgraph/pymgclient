@@ -57,11 +57,11 @@ is working correctly. From the source directory, you can run::
 
    $ python3 -m pytest
 
-You will need to have Memgraph installed on your machine to run the tests. The
-tests will try to start the Memgraph binary from the standard installation path
-(usually :file:`/usr/lib/memgraph/memgraph`) listening on port 7687. You can
-configure a different path or port by setting the following environment
-libraries:
+To run the tests, you will need to have Memgraph, pytest and pyopenssl
+installed on your machine. The tests will try to start the Memgraph binary from
+the standard installation path (usually :file:`/usr/lib/memgraph/memgraph`)
+listening on port 7687. You can configure a different path or port by setting
+the following environment libraries:
 
    * :envvar:`MEMGRAPH_PATH`
    * :envvar:`MEMGRAPH_PORT`

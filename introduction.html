@@ -81,11 +81,11 @@ is working correctly. From the source directory, you can run:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python3 -m pytest
 </pre></div>
 </div>
-<p>You will need to have Memgraph installed on your machine to run the tests. The
-tests will try to start the Memgraph binary from the standard installation path
-(usually <code class="file docutils literal notranslate"><span class="pre">/usr/lib/memgraph/memgraph</span></code>) listening on port 7687. You can
-configure a different path or port by setting the following environment
-libraries:</p>
+<p>To run the tests, you will need to have Memgraph, pytest and pyopenssl
+installed on your machine. The tests will try to start the Memgraph binary from
+the standard installation path (usually <code class="file docutils literal notranslate"><span class="pre">/usr/lib/memgraph/memgraph</span></code>)
+listening on port 7687. You can configure a different path or port by setting
+the following environment libraries:</p>
 <blockquote>
 <div><blockquote>
 <div><ul class="simple">
@@ -159,7 +159,7 @@ libraries:</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Marin Tomic.
+      &copy;2019, Memgraph Ltd..
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>

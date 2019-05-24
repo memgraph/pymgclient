@@ -71,5 +71,5 @@ setup(name="pymgclient",
       ],
       project_urls={
           'Source': 'https://github.com/memgraph/pymgclient',
-          'Documentation': 'https://pymgclient.readthedocs.io/en/latest/'
+          'Documentation': 'https://memgraph.github.io/pymgclient',
       })

@@ -1,0 +1,13 @@
+# build directory
+build/
+dist/
+pymgclient.egg-info/
+
+# vim temporary files
+*.swp
+*.swo
+
+# python temporary files
+*.pyc
+*.pyo
+__pycache__/

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PY_MG_CLIENT_COLUMN_H
-#define PY_MG_CLIENT_COLUMN_H
+#ifndef PYMGCLIENT_COLUMN_H
+#define PYMGCLIENT_COLUMN_H
 
 #include <Python.h>
 

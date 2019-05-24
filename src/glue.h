@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PY_MG_CLIENT_GLUE_H
-#define PY_MG_CLIENT_GLUE_H
+#ifndef PYMGCLIENT_GLUE_H
+#define PYMGCLIENT_GLUE_H
 
 #include <Python.h>
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PY_MG_CLIENT_CURSOR_H
-#define PY_MG_CLIENT_CURSOR_H
+#ifndef PYMGCLIENT_CURSOR_H
+#define PYMGCLIENT_CURSOR_H
 
 #include <Python.h>
 

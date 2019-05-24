@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pymgclient – DB-API 2.0 interface for Memgraph database &#8212; pymgclient 0.1a1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Introduction" href="introduction.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="pymgclient-db-api-2-0-interface-for-memgraph-database">
+<h1>pymgclient – DB-API 2.0 interface for Memgraph database<a class="headerlink" href="#pymgclient-db-api-2-0-interface-for-memgraph-database" title="Permalink to this headline">¶</a></h1>
+<p>pymgclient is a <a class="reference external" href="https://memgraph.com/">Memgraph</a> database adapter for Python
+language compliant with the DB-API 2.0 specification described by <span class="target" id="index-0"></span><a class="pep reference external" href="https://www.python.org/dev/peps/pep-0249"><strong>PEP 249</strong></a>.</p>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#running-the-test-suite">Running the test suite</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Basic module usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#passing-parameters-to-opencypher-queries">Passing parameters to openCypher queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#adaptation-of-opencypher-values-to-python-types">Adaptation of openCypher values to Python types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#transactions-control">Transactions control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="module.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code> module content</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module.html#module-constants">Module constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module.html#exceptions">Exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module.html#graph-type-objects">Graph type objects</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="connection.html"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code> class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="connection.html#lazy-connections">Lazy connections</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cursor.html"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code> class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cursor.html#column-class"><code class="xref py py-class docutils literal notranslate"><span class="pre">Column</span></code> class</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">pymgclient</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Basic module usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code> module content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="connection.html"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code> class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cursor.html"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code> class</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="introduction.html" title="next chapter">Introduction</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Marin Tomic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,251 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Basic module usage &#8212; pymgclient 0.1a1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="mgclient module content" href="module.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-mgclient">
+<span id="basic-module-usage"></span><h1>Basic module usage<a class="headerlink" href="#module-mgclient" title="Permalink to this headline">¶</a></h1>
+<p>Basic <a class="reference internal" href="#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> module usage is similar to that of all the database
+adapters compliant the DB-API 2.0. To use the module, you must:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Create a <a class="reference internal" href="connection.html#mgclient.Connection" title="mgclient.Connection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code></a> object, using the <a class="reference internal" href="module.html#mgclient.connect" title="mgclient.connect"><code class="xref py py-func docutils literal notranslate"><span class="pre">connect()</span></code></a>
+function.</p></li>
+<li><p>Create a <a class="reference internal" href="cursor.html#mgclient.Cursor" title="mgclient.Cursor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code></a> object by calling <a class="reference internal" href="connection.html#mgclient.Connection.cursor" title="mgclient.Connection.cursor"><code class="xref py py-meth docutils literal notranslate"><span class="pre">cursor()</span></code></a> on
+the <a class="reference internal" href="connection.html#mgclient.Connection" title="mgclient.Connection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code></a> object.</p></li>
+<li><p>Call cursor’s <a class="reference internal" href="cursor.html#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> method to perform openCypher queries.</p></li>
+<li><p>Make database changes persistent by calling <a class="reference internal" href="connection.html#mgclient.Connection.commit" title="mgclient.Connection.commit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">commit()</span></code></a>, or drop them
+by calling <a class="reference internal" href="connection.html#mgclient.Connection.rollback" title="mgclient.Connection.rollback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rollback()</span></code></a>.</p></li>
+</ol>
+</div></blockquote>
+<p>Here is an example of an interactive session
+showing some of the basic commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mgclient</span>
+
+<span class="go"># Make a connection to the database</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">conn</span> <span class="o">=</span> <span class="n">mgclient</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">7687</span><span class="p">)</span>
+
+<span class="go"># Create a cursor for query execution</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+<span class="go"># Execute a query</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="go">        CREATE (n:Person {name: &#39;John&#39;})-[e:KNOWS]-&gt;</span>
+<span class="go">               (m:Person {name: &#39;Steve&#39;})</span>
+<span class="go">        RETURN n, e, m</span>
+<span class="go">    &quot;&quot;&quot;)</span>
+
+<span class="go"># Fetch one row of query results</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="go">(:Person {&#39;name&#39;: &#39;John&#39;})</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="go">[:KNOWS]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="go">(:Person {&#39;name&#39;: &#39;Steve&#39;})</span>
+
+<span class="go"># Make database changes persistent</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="section" id="passing-parameters-to-opencypher-queries">
+<h2>Passing parameters to openCypher queries<a class="headerlink" href="#passing-parameters-to-opencypher-queries" title="Permalink to this headline">¶</a></h2>
+<p>Usually, your openCypher queries will need to use the values from Python
+variables. You shouldn’t assemble your query using Python’s string operators
+because doing so is insecure.</p>
+<p>Instead, you should use the parameter substitution mechanism built into
+Memgraph. Put <code class="docutils literal notranslate"><span class="pre">$name</span></code> as a placeholder wherever you want to use a value, and
+the provide a dictionary mapping names to values as the second argument to the
+cursor’s <a class="reference internal" href="cursor.html#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a>. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Don&#39;t do this!</span>
+<span class="n">server_id</span> <span class="o">=</span> <span class="s1">&#39;srvr-38219012-sw&#39;</span>
+<span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;MATCH (s:Server {id: &#39;</span><span class="si">%s</span><span class="s2">&#39;}) SET s.hits = s.hits + 1&quot;</span>
+          <span class="o">%</span> <span class="n">server_id</span><span class="p">)</span>
+
+<span class="c1"># Instead, do this</span>
+<span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;MATCH (s:Server {id: $sid}) SET s.hits = s.htis + 1&quot;</span><span class="p">,</span>
+          <span class="p">{</span><span class="s1">&#39;sid&#39;</span><span class="p">:</span> <span class="n">server_id</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="adaptation-of-opencypher-values-to-python-types">
+<h2>Adaptation of openCypher values to Python types<a class="headerlink" href="#adaptation-of-opencypher-values-to-python-types" title="Permalink to this headline">¶</a></h2>
+<p>The following table shows the mapping between Python and openCypher types:</p>
+<table class="docutils align-center">
+<colgroup>
+<col style="width: 28%" />
+<col style="width: 72%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>openCypher</p></th>
+<th class="head"><p>Python</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Null</p></td>
+<td><p><code class="xref py py-const docutils literal notranslate"><span class="pre">None</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Boolean</p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Integer</p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Float</p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>String</p></td>
+<td><p><code class="xref py py-const docutils literal notranslate"><span class="pre">str</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>List</p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Map</p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Node</p></td>
+<td><p><a class="reference internal" href="module.html#mgclient.Node" title="mgclient.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">mgclient.Node</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Relationship</p></td>
+<td><p><a class="reference internal" href="module.html#mgclient.Relationship" title="mgclient.Relationship"><code class="xref py py-class docutils literal notranslate"><span class="pre">mgclient.Relationship</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Path</p></td>
+<td><p><a class="reference internal" href="module.html#mgclient.Path" title="mgclient.Path"><code class="xref py py-class docutils literal notranslate"><span class="pre">mgclient.Path</span></code></a></p></td>
+</tr>
+</tbody>
+</table>
+<p>Note that in Bolt protocol, all string data is represented as UTF-8 encoded
+binary data.</p>
+</div>
+<div class="section" id="transactions-control">
+<h2>Transactions control<a class="headerlink" href="#transactions-control" title="Permalink to this headline">¶</a></h2>
+<p>In <a class="reference internal" href="#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> transactions are handled by the <a class="reference internal" href="connection.html#mgclient.Connection" title="mgclient.Connection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code></a> class.
+By default, the first time a command is sent to the database using one of the
+<a class="reference internal" href="cursor.html#mgclient.Cursor" title="mgclient.Cursor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code></a> objects created by it, a new transaction is started (by sending
+<code class="docutils literal notranslate"><span class="pre">BEGIN</span></code> command to Memgraph). All following commands (issued by any of the
+cursors) will be executed in the context of the same transaction. If any of the
+commands fails, the transaction will not be able to commit and no further
+command will successfuly execute until <a class="reference internal" href="connection.html#mgclient.Connection.rollback" title="mgclient.Connection.rollback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rollback()</span></code></a> is called.</p>
+<p>The connection is responsible for terming its transaction, either by calling
+<a class="reference internal" href="connection.html#mgclient.Connection.commit" title="mgclient.Connection.commit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">commit()</span></code></a> or <a class="reference internal" href="connection.html#mgclient.Connection.rollback" title="mgclient.Connection.rollback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rollback()</span></code></a>. Closing the connection using
+<a class="reference internal" href="connection.html#mgclient.Connection.close" title="mgclient.Connection.close"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Connection.close()</span></code></a> or destroying the connection object results
+in an implicit rollback.</p>
+<p>You can set the connection in <em>autocommit</em> mode: that way all commands executed
+will be immediately committed and no rollback is possible. A few commands
+(<code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">INDEX</span></code>, <code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">USER</span></code> and similar) require to be run outside any
+transaction. To set the connection in <em>autocommit</em> mode, set
+<a class="reference internal" href="connection.html#mgclient.Connection.autocommit" title="mgclient.Connection.autocommit"><code class="xref py py-attr docutils literal notranslate"><span class="pre">autocommit</span></code></a> property of the connection to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">pymgclient</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Basic module usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#passing-parameters-to-opencypher-queries">Passing parameters to openCypher queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adaptation-of-opencypher-values-to-python-types">Adaptation of openCypher values to Python types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#transactions-control">Transactions control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="module.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code> module content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="connection.html"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code> class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cursor.html"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code> class</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="introduction.html" title="previous chapter">Introduction</a></li>
+      <li>Next: <a href="module.html" title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code> module content</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Marin Tomic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/usage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,4 +1,0 @@
-recursive-include src *.c *.h
-recursive-include docs/source *.rst
-recursive-include tests *.py
-include LICENSE MANIFEST.in README.md setup.py

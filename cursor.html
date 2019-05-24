@@ -1,0 +1,278 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cursor class &#8212; pymgclient 0.1a1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Connection class" href="connection.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-mgclient">
+<span id="cursor-class"></span><h1><code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code> class<a class="headerlink" href="#module-mgclient" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="mgclient.Cursor">
+<em class="property">class </em><code class="descclassname">mgclient.</code><code class="descname">Cursor</code><a class="headerlink" href="#mgclient.Cursor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allows execution of database commands.</p>
+<p>Cursors are created by the <a class="reference internal" href="connection.html#mgclient.Connection.cursor" title="mgclient.Connection.cursor"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Connection.cursor()</span></code></a> method and they are
+bound to the connection for the entire lifetime. Cursors created by the same
+connection are not isolated, any changes done to the database by one cursor
+are immediately visible by the other cursors.</p>
+<p>Cursor objects are not thread-safe.</p>
+<dl class="attribute">
+<dt id="mgclient.Cursor.arraysize">
+<code class="descname">arraysize</code><a class="headerlink" href="#mgclient.Cursor.arraysize" title="Permalink to this definition">¶</a></dt>
+<dd><p>This read/write attribute specifies the number of rows to fetch at a time
+with <a class="reference internal" href="#mgclient.Cursor.fetchmany" title="mgclient.Cursor.fetchmany"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fetchmany()</span></code></a>. It defaults to 1 meaning to fetch a single row at
+a time.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mgclient.Cursor.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Cursor.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the cursor now.</p>
+<p>The cursor will be unusable from this point forward; an <a class="reference internal" href="module.html#mgclient.InterfaceError" title="mgclient.InterfaceError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">InterfaceError</span></code></a>
+will be raised if any operation is attempted with the cursor.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mgclient.Cursor.description">
+<code class="descname">description</code><a class="headerlink" href="#mgclient.Cursor.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>This read-only attribute is a list of <a class="reference internal" href="#mgclient.Column" title="mgclient.Column"><code class="xref py py-class docutils literal notranslate"><span class="pre">Column</span></code></a> objects.</p>
+<p>Each of those object has attributed describing one result column:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="#mgclient.Column.name" title="mgclient.Column.name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">name</span></code></a></p></li>
+<li><p><a class="reference internal" href="#mgclient.Column.type_code" title="mgclient.Column.type_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">type_code</span></code></a></p></li>
+<li><p><a class="reference internal" href="#mgclient.Column.display_size" title="mgclient.Column.display_size"><code class="xref py py-attr docutils literal notranslate"><span class="pre">display_size</span></code></a></p></li>
+<li><p><a class="reference internal" href="#mgclient.Column.internal_size" title="mgclient.Column.internal_size"><code class="xref py py-attr docutils literal notranslate"><span class="pre">internal_size</span></code></a></p></li>
+<li><p><a class="reference internal" href="#mgclient.Column.precision" title="mgclient.Column.precision"><code class="xref py py-attr docutils literal notranslate"><span class="pre">precision</span></code></a></p></li>
+<li><p><a class="reference internal" href="#mgclient.Column.scale" title="mgclient.Column.scale"><code class="xref py py-attr docutils literal notranslate"><span class="pre">scale</span></code></a></p></li>
+<li><p><a class="reference internal" href="#mgclient.Column.null_ok" title="mgclient.Column.null_ok"><code class="xref py py-attr docutils literal notranslate"><span class="pre">null_ok</span></code></a></p></li>
+</ul>
+</div></blockquote>
+<p>Only the name attribute is set to the name of column returned by the
+database. The rest are always set to <code class="docutils literal notranslate"><span class="pre">None</span></code> and are only here for
+compatibility with DB-API 2.0.</p>
+<p>This attribute will be <code class="docutils literal notranslate"><span class="pre">None</span></code> for operations that do not return rows
+or if the cursor has not had an operation invoked via the <a class="reference internal" href="#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a>
+method yet.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mgclient.Cursor.execute">
+<code class="descname">execute</code><span class="sig-paren">(</span><em>query</em>, <em>params=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Cursor.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute a database operation.</p>
+<p>Parameters may be provided as a mapping and will be bound to variables in
+the operation. Variables are specified with named (<code class="docutils literal notranslate"><span class="pre">$name</span></code>)
+placeholders.</p>
+<p>This method always returns <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mgclient.Cursor.fetchall">
+<code class="descname">fetchall</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Cursor.fetchall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch all (remaining) rows of query results, returning them as a list of
+tuples.</p>
+<p>An <a class="reference internal" href="module.html#mgclient.InterfaceError" title="mgclient.InterfaceError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">InterfaceError</span></code></a> is raised if the previous call to <a class="reference internal" href="#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a>
+did not produce any results or no call was issued yet.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mgclient.Cursor.fetchmany">
+<code class="descname">fetchmany</code><span class="sig-paren">(</span><em>size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Cursor.fetchmany" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the next set of rows of query results, returning a list of tuples.
+An empty list is returned when no more data is available.</p>
+<p>The number of rows to fetch per call is specified by the parameter. If it
+is not given the cursor’s <a class="reference internal" href="#mgclient.Cursor.arraysize" title="mgclient.Cursor.arraysize"><code class="xref py py-attr docutils literal notranslate"><span class="pre">arraysize</span></code></a> determines the number of rows
+to be fetched. Fewer rows may be returned in case there is less rows available
+than requested.</p>
+<p>An <a class="reference internal" href="module.html#mgclient.InterfaceError" title="mgclient.InterfaceError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">InterfaceError</span></code></a> is raised if the previous call to <a class="reference internal" href="#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a>
+did not produce any results or no call was issued yet.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mgclient.Cursor.fetchone">
+<code class="descname">fetchone</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Cursor.fetchone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the next row of query results, returning a single tuple, or <code class="docutils literal notranslate"><span class="pre">None</span></code>
+when no more data is available.</p>
+<p>An <a class="reference internal" href="module.html#mgclient.InterfaceError" title="mgclient.InterfaceError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">InterfaceError</span></code></a> is raised if the previous call to <a class="reference internal" href="#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a>
+did not produce any results or no call was issued yet.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mgclient.Cursor.rowcount">
+<code class="descname">rowcount</code><a class="headerlink" href="#mgclient.Cursor.rowcount" title="Permalink to this definition">¶</a></dt>
+<dd><p>This read-only attribute specifies the number of rows that the last
+<a class="reference internal" href="#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> produced.</p>
+<p>The attribute is -1 in case no <a class="reference internal" href="#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> has been performed or
+the rowcount of the last operation cannot be determined by the interface.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mgclient.Cursor.setinputsizes">
+<code class="descname">setinputsizes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Cursor.setinputsizes" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method does nothing, but it is required by the DB-API 2.0 spec.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mgclient.Cursor.setoutputsizes">
+<code class="descname">setoutputsizes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Cursor.setoutputsizes" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method does nothing, but it is required by the DB-API 2.0 spec.</p>
+</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="column-class">
+<h2><a class="reference internal" href="#mgclient.Column" title="mgclient.Column"><code class="xref py py-class docutils literal notranslate"><span class="pre">Column</span></code></a> class<a class="headerlink" href="#column-class" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="#mgclient.Cursor.description" title="mgclient.Cursor.description"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Cursor.description</span></code></a> list consists of instances of <a class="reference internal" href="#mgclient.Column" title="mgclient.Column"><code class="xref py py-class docutils literal notranslate"><span class="pre">Column</span></code></a> class.</p>
+<dl class="class">
+<dt id="mgclient.Column">
+<em class="property">class </em><code class="descclassname">mgclient.</code><code class="descname">Column</code><a class="headerlink" href="#mgclient.Column" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of a column returned by the query.</p>
+<dl class="attribute">
+<dt id="mgclient.Column.display_size">
+<code class="descname">display_size</code><a class="headerlink" href="#mgclient.Column.display_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>always set to <code class="docutils literal notranslate"><span class="pre">None</span></code> (required by DB-API 2.0 spec, but not supported)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mgclient.Column.internal_size">
+<code class="descname">internal_size</code><a class="headerlink" href="#mgclient.Column.internal_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>always set to <code class="docutils literal notranslate"><span class="pre">None</span></code> (required by DB-API 2.0 spec, but not supported)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mgclient.Column.name">
+<code class="descname">name</code><a class="headerlink" href="#mgclient.Column.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>name of the returned column</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mgclient.Column.null_ok">
+<code class="descname">null_ok</code><a class="headerlink" href="#mgclient.Column.null_ok" title="Permalink to this definition">¶</a></dt>
+<dd><p>always set to <code class="docutils literal notranslate"><span class="pre">None</span></code> (required by DB-API 2.0 spec, but not supported)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mgclient.Column.precision">
+<code class="descname">precision</code><a class="headerlink" href="#mgclient.Column.precision" title="Permalink to this definition">¶</a></dt>
+<dd><p>always set to <code class="docutils literal notranslate"><span class="pre">None</span></code> (required by DB-API 2.0 spec, but not supported)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mgclient.Column.scale">
+<code class="descname">scale</code><a class="headerlink" href="#mgclient.Column.scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>always set to <code class="docutils literal notranslate"><span class="pre">None</span></code> (required by DB-API 2.0 spec, but not supported)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mgclient.Column.type_code">
+<code class="descname">type_code</code><a class="headerlink" href="#mgclient.Column.type_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>always set to <code class="docutils literal notranslate"><span class="pre">None</span></code> (required by DB-API 2.0 spec, but not supported)</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">pymgclient</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Basic module usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code> module content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="connection.html"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code> class</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code> class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#column-class"><code class="xref py py-class docutils literal notranslate"><span class="pre">Column</span></code> class</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="connection.html" title="previous chapter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code> class</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Marin Tomic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/cursor.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

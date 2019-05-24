@@ -16,9 +16,11 @@ import os
 import subprocess
 import sys
 import time
+import tempfile
 
 MEMGRAPH_PATH = os.getenv("MEMGRAPH_PATH", '/usr/lib/memgraph/memgraph')
 MEMGRAPH_PORT = int(os.getenv("MEMGRAPH_PORT", 7687))
+DURABILITY_DIR = tempfile.TemporaryDirectory()
 
 
 def wait_for_server(port):
@@ -40,7 +42,13 @@ def start_memgraph(cert_file="", key_file=""):
     cmd = [MEMGRAPH_PATH,
            "--port", str(MEMGRAPH_PORT),
            "--cert-file", cert_file,
-           "--key-file", key_file]
+           "--key-file", key_file,
+           "--durability-directory", DURABILITY_DIR.name,
+           "--db-recover-on-startup=false",
+           "--durability-enabled=false",
+           "--properties-on-disk", "",
+           "--snapshot-on-exit=false",
+           "--telemetry-enabled=false"]
     memgraph = subprocess.Popen(cmd)
     wait_for_server(MEMGRAPH_PORT)
     return memgraph

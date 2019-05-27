@@ -1,4 +1,6 @@
-# pymgclient -- Memgraph database adapter for Python language
+[![Build status](https://ci.appveyor.com/api/projects/status/u39c029timgsit7a/branch/master?svg=true)](https://ci.appveyor.com/project/tomicm/pymgclient/branch/master)
+
+# pymgclient - Memgraph database adapter for Python language
 
 pymgclient is a [Memgraph](https://memgraph.com/>) database adapter for Python
 programming language compliant with the DB-API 2.0 specification described by

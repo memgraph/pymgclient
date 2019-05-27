@@ -16,7 +16,8 @@ install:
   - sudo pip3 install pytest pyopenssl
 
 build_script:
-  - python3 setup.py install
+  - pwd
+  - sudo python3 setup.py install
 
 test_script:
   - python3 -m pytest

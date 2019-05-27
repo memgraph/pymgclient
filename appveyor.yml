@@ -10,7 +10,8 @@ install:
   - sudo make install
   - cd
   - wget https://memgraph.com/download/memgraph/v0.14.1/memgraph_0.14.1-1_amd64.deb
-  - sudo dpkg -i memgraph_0.14.1-1_amd64.deb
+  - sudo dpkg --force-all -i memgraph_0.14.1-1_amd64.deb
+  - sudo apt-get install -f
   - sudo pip3 install pytest pyopenssl
 
 build_script:

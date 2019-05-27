@@ -12,8 +12,8 @@ install:
   - wget https://memgraph.com/download/memgraph/v0.14.1/memgraph_0.14.1-1_amd64.deb
   - sudo apt-get install -y libcurl3
   - sudo dpkg -i memgraph_0.14.1-1_amd64.deb
-  - sudo apt-get install python3-pip
-  - sudo pip3 install -y pytest pyopenssl
+  - sudo apt-get install -y python3-pip
+  - sudo pip3 install pytest pyopenssl
 
 build_script:
   - python3 setup.py install

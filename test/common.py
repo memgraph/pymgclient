@@ -48,7 +48,8 @@ def start_memgraph(cert_file="", key_file=""):
            "--durability-enabled=false",
            "--properties-on-disk", "",
            "--snapshot-on-exit=false",
-           "--telemetry-enabled=false"]
+           "--telemetry-enabled=false",
+           "--log-file", ""]
     memgraph = subprocess.Popen(cmd)
     wait_for_server(MEMGRAPH_PORT)
     return memgraph

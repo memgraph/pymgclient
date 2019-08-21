@@ -85,7 +85,7 @@ Here is an example of an interactive session showing some of the basic commands:
 >>> import mgclient
 
 # Make a connection to the database
->>> conn = mgclient.connect(host='127.0.0.1', port=7687)
+>>> conn = mgclient.connect(host='127.0.0.1', port=7687, sslmode=mgclient.MG_SSLMODE_REQUIRE)
 
 # Create a cursor for query execution
 >>> cursor = conn.cursor()

@@ -1,10 +1,10 @@
-image: ubuntu1804 
+image: ubuntu1804
 
-install: 
+install:
   - git clone https://github.com/memgraph/mgclient
   - cd mgclient
-  - mkdir build 
-  - cd build 
+  - mkdir build
+  - cd build
   - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF ..
   - make
   - sudo make install

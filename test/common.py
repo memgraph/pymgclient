@@ -40,14 +40,15 @@ def wait_for_server(port):
 
 def start_memgraph(cert_file="", key_file=""):
     cmd = [MEMGRAPH_PATH,
-           "--port", str(MEMGRAPH_PORT),
-           "--cert-file", cert_file,
-           "--key-file", key_file,
-           "--durability-directory", DURABILITY_DIR.name,
-           "--db-recover-on-startup=false",
-           "--durability-enabled=false",
-           "--properties-on-disk", "",
-           "--snapshot-on-exit=false",
+           "--bolt-port", str(MEMGRAPH_PORT),
+           "--bolt-cert-file", cert_file,
+           "--bolt-key-file", key_file,
+           "--data-directory", DURABILITY_DIR.name,
+           "--storage-properties-on-edges=true",
+           "--storage-snapshot-interval-sec=0",
+           "--storage-wal-enabled=false",
+           "--storage-recover-on-startup=false",
+           "--storage-snapshot-on-exit=false",
            "--telemetry-enabled=false",
            "--log-file", ""]
     memgraph = subprocess.Popen(cmd)

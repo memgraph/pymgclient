@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/u39c029timgsit7a/branch/master?svg=true)](https://ci.appveyor.com/project/tomicm/pymgclient/branch/master)
+[![Actions Status](https://github.com/memgraph/pymgclient/workflows/CI/badge.svg)](https://github.com/memgraph/pymgclient/actions)
 
 # pymgclient - Memgraph database adapter for Python language
 

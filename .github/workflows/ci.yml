@@ -12,9 +12,8 @@ jobs:
     - name: Install dependencies (Ubuntu 18.04)
       if: matrix.platform == 'ubuntu-18.04'
       run: |
-        sudo apt install -y libpython3.7 python3-pip # memgraph deps
-        sudo pip3 install networkx # memgraph deps
-        sudo pip3 install pytest pyopenssl # pymgclient python deps
+        sudo apt install -y libpython3.7 python3-pip python3-setuptools
+        sudo pip3 install networkx pytest pyopenssl
         mkdir ~/memgraph
         curl -L https://memgraph.com/download/memgraph/v1.1.0/ubuntu-18.04/memgraph_1.1.0-community-1_amd64.deb > ~/memgraph/memgraph_1.1.0-community-1_amd64.deb
         sudo dpkg -i ~/memgraph/memgraph_1.1.0-community-1_amd64.deb

@@ -2,7 +2,7 @@
 
 # pymgclient - Memgraph database adapter for Python language
 
-pymgclient is a [Memgraph](https://memgraph.com/>) database adapter for Python
+pymgclient is a [Memgraph](https://memgraph.com) database adapter for Python
 programming language compliant with the DB-API 2.0 specification described by
 PEP 249.
 

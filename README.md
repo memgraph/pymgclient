@@ -21,12 +21,14 @@ pymgclient is a C wrapper around the
 [mgclient](https://github.com/memgraph/mgclient) Memgraph client library. To
 install it from sources you will need:
 
-   - Python 3.5 or newer
-   - A C compiler supporting C11 standard
-   - Python header files
-   - mgclient header files
+  * Python 3.5 or newer
+  * A C compiler supporting C11 standard
+  * Python header files
+  * [mgclient headers](https://github.com/memgraph/mgclient/tree/release/1.0)
+    (**v1.0.0** tag or **release/1.0** branch)
 
-Once prerequisites are met, you can install pymgclient using `pip` to download it from PyPI:
+Once prerequisites are met, you can install pymgclient using `pip` to download
+it from PyPI:
 
 ```
 $ pip3 install pymgclient
@@ -52,8 +54,8 @@ the [mgclient](https://github.com/memgraph/mgclient) C library.
 
 ## Running the test suite
 
-Once mgclient is installed, you can run the test suite to verify it
-is working correctly. From the source directory, you can run:
+Once mgclient is installed, you can run the test suite to verify it is working
+correctly. From the source directory, you can run:
 
 ```
 $ python3 -m pytest
@@ -61,12 +63,12 @@ $ python3 -m pytest
 
 To run the tests, you will need to have Memgraph, pytest and pyopenssl
 installed on your machine. The tests will try to start the Memgraph binary from
-the standard installation path (usually `/usr/lib/memgraph/memgraph`)
-listening on port 7687. You can configure a different path or port by setting
-the following environment variables:
+the standard installation path (usually `/usr/lib/memgraph/memgraph`) listening
+on port 7687. You can configure a different path or port by setting the
+following environment variables:
 
-   * `MEMGRAPH_PATH`
-   * `MEMGRAPH_PORT`
+  * `MEMGRAPH_PATH`
+  * `MEMGRAPH_PORT`
 
 ## Documentation
 

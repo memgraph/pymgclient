@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Connection class &#8212; pymgclient 0.1a1 documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Cursor class" href="cursor.html" />
@@ -34,15 +35,15 @@
             
   <div class="section" id="module-mgclient">
 <span id="connection-class"></span><h1><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code> class<a class="headerlink" href="#module-mgclient" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
+<dl class="py class">
 <dt id="mgclient.Connection">
-<em class="property">class </em><code class="descclassname">mgclient.</code><code class="descname">Connection</code><a class="headerlink" href="#mgclient.Connection" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">Connection</code><a class="headerlink" href="#mgclient.Connection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Encapsulates a database connection.</p>
 <p>New instances are created using the factory function <a class="reference internal" href="module.html#mgclient.connect" title="mgclient.connect"><code class="xref py py-func docutils literal notranslate"><span class="pre">connect()</span></code></a>.</p>
 <p>Connections are not thread-safe.</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="mgclient.Connection.autocommit">
-<code class="descname">autocommit</code><a class="headerlink" href="#mgclient.Connection.autocommit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">autocommit</code><a class="headerlink" href="#mgclient.Connection.autocommit" title="Permalink to this definition">¶</a></dt>
 <dd><p>This read/write attribute specifies whether executed statements
 have immediate effect in the database.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, every executed statement has immediate effect.</p>
@@ -51,9 +52,9 @@ command. Transactions must be manually terminated using <a class="reference inte
 <a class="reference internal" href="#mgclient.Connection.rollback" title="mgclient.Connection.rollback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rollback()</span></code></a> methods.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="mgclient.Connection.close">
-<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Connection.close" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Connection.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Close the connection now.</p>
 <p>The connection will be unusable from this point forward; an <a class="reference internal" href="module.html#mgclient.InterfaceError" title="mgclient.InterfaceError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">InterfaceError</span></code></a>
 will be raised if any operation is attempted with the connection. The same applies
@@ -62,29 +63,29 @@ to all <a class="reference internal" href="cursor.html#mgclient.Cursor" title="m
 rollback to be performed.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="mgclient.Connection.commit">
-<code class="descname">commit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Connection.commit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">commit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Connection.commit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Commit any pending transaction to the database.</p>
 <p>If auto-commit is turned on, this method does nothing.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="mgclient.Connection.cursor">
-<code class="descname">cursor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Connection.cursor" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">cursor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Connection.cursor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a new <a class="reference internal" href="cursor.html#mgclient.Cursor" title="mgclient.Cursor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code></a> object using the connection.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="mgclient.Connection.rollback">
-<code class="descname">rollback</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Connection.rollback" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">rollback</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Connection.rollback" title="Permalink to this definition">¶</a></dt>
 <dd><p>Roll back to the start of any pending transaction.</p>
 <p>If auto-commit is turned on, this method does nothing.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="mgclient.Connection.status">
-<code class="descname">status</code><a class="headerlink" href="#mgclient.Connection.status" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">status</code><a class="headerlink" href="#mgclient.Connection.status" title="Permalink to this definition">¶</a></dt>
 <dd><p>Status of the connection.</p>
 <dl class="simple">
 <dt>It’s value can be one of the following macros:</dt><dd><ul class="simple">
@@ -128,7 +129,7 @@ can only be seen for lazy connections.</p>
 <div class="section" id="lazy-connections">
 <span id="id1"></span><h2>Lazy connections<a class="headerlink" href="#lazy-connections" title="Permalink to this headline">¶</a></h2>
 <p>When a query is executed using <a class="reference internal" href="cursor.html#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> on a cursor, the default
-<a class="reference internal" href="module.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> behaviour is to wait for all of the results to be available
+<a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> behaviour is to wait for all of the results to be available
 and store them into cursor’s internal result list. On one hand, that means that
 <a class="reference internal" href="cursor.html#mgclient.Cursor.execute" title="mgclient.Cursor.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> will block until all of the results are ready and all results
 will be stored in memory at the same time. On the other hand, that also means
@@ -230,15 +231,15 @@ None
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -252,10 +253,10 @@ None
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Memgraph Ltd..
+      &copy;2020, Memgraph Ltd..
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Introduction &#8212; pymgclient 0.1a1 documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Basic module usage" href="usage.html" />
@@ -53,7 +54,8 @@ install it from sources you will need:</p>
 <li><p>Python 3.5 or newer</p></li>
 <li><p>A C compiler supporting C11 standard</p></li>
 <li><p>Python header files</p></li>
-<li><p><a class="reference external" href="https://github.com/memgraph/mgclient">mgclient</a> header files</p></li>
+<li><p><a class="reference external" href="https://github.com/memgraph/mgclient/tree/release/1.0">mgclient headers</a>
+(<strong>v1.0.0</strong> tag or <strong>release/1.0</strong> branch)</p></li>
 </ul>
 </div></blockquote>
 <p>To install from source, inside the source directory run:</p>
@@ -137,15 +139,15 @@ the following environment variables:</p>
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -159,10 +161,10 @@ the following environment variables:</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Memgraph Ltd..
+      &copy;2020, Memgraph Ltd..
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

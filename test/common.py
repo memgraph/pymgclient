@@ -27,7 +27,7 @@ def wait_for_server(port):
     cmd = ["nc", "-z", "-w", "1", "127.0.0.1", str(port)]
     count = 0
     while subprocess.call(cmd) != 0:
-        time.sleep(0.01)
+        time.sleep(0.1)
         if count > 100:
             raise RuntimeError(
                 "Could not wait for server on port",

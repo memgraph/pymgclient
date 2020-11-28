@@ -21,11 +21,11 @@ pymgclient is a C wrapper around the
 [mgclient](https://github.com/memgraph/mgclient) Memgraph client library. To
 install it from sources you will need:
 
-    * Python 3.5 or newer
-    * A C compiler supporting C11 standard
-    * Python header files
-    * [mgclient headers](https://github.com/memgraph/mgclient/tree/release/1.0)
-      (*v1.0.0* tag or *release/1.0* branch)
+  * Python 3.5 or newer
+  * A C compiler supporting C11 standard
+  * Python header files
+  * [mgclient headers](https://github.com/memgraph/mgclient/tree/release/1.0)
+    (**v1.0.0** tag or **release/1.0** branch)
 
 Once prerequisites are met, you can install pymgclient using `pip` to download
 it from PyPI:
@@ -67,8 +67,8 @@ the standard installation path (usually `/usr/lib/memgraph/memgraph`) listening
 on port 7687. You can configure a different path or port by setting the
 following environment variables:
 
-   * `MEMGRAPH_PATH`
-   * `MEMGRAPH_PORT`
+  * `MEMGRAPH_PATH`
+  * `MEMGRAPH_PORT`
 
 ## Documentation
 

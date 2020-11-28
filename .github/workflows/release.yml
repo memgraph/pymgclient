@@ -1,16 +1,12 @@
-name: CI
+name: Release
 
-on: [push]
+on: [workflow_dispatch]
 
 jobs:
-  build_test:
-    strategy:
-     matrix:
-        platform: [ubuntu-18.04]
-    runs-on: ${{ matrix.platform }}
+  build_test_release:
+    runs-on: ubuntu-18.04
     steps:
-    - name: Install system dependencies (Ubuntu 18.04)
-      if: matrix.platform == 'ubuntu-18.04'
+    - name: Install system dependencies
       run: |
         sudo apt install -y libpython3.7 python3-pip python3-setuptools
         sudo pip3 install networkx pytest pyopenssl sphinx
@@ -19,7 +15,7 @@ jobs:
         sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
         sudo dpkg -i ~/memgraph/memgraph_1.2.0-community-1_amd64.deb
 
-    - name: Download mgclient
+    - name: Install mgclient
       uses: actions/checkout@v2
       with:
         repository: memgraph/mgclient
@@ -33,9 +29,19 @@ jobs:
         sudo make install
 
     - uses: actions/checkout@v2
-    - name: Install, test and build docs
+    - name: Install and test
       run: |
         sudo python3 setup.py install
         MEMGRAPH_PORT=10000 python3 -m pytest
+
+    - name: Build docs
+      run: |
         cd docs
         make html
+        rm build/html/.buildinfo
+        touch build/html/.nojekyll
+    - name: Deploy docs
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/build/html

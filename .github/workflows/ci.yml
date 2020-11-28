@@ -33,7 +33,20 @@ jobs:
         sudo make install
 
     - uses: actions/checkout@v2
-    - name: Install and test pymgclient
+    - name: Install and test
       run: |
         sudo python3 setup.py install
         MEMGRAPH_PORT=10000 python3 -m pytest
+
+    - name: Build docs
+      run: |
+        cd docs
+        make html
+        rm build/html/.buildinfo
+        touch build/html/.nojekyll
+
+    - name: Deploy docs
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/build/html

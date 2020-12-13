@@ -37,15 +37,21 @@ void connection_handle_error(ConnectionObject *conn) {
 }
 
 int connection_run_without_results(ConnectionObject *conn, const char *query) {
-  int status = mg_session_run(conn->session, query, NULL, NULL);
+  int status = mg_session_run(conn->session, query, NULL, NULL, NULL, NULL);
   if (status != 0) {
     connection_handle_error(conn);
     return -1;
   }
 
+  status = mg_session_pull(conn->session, NULL);
+  if (status != 0) {
+      connection_handle_error(conn);
+      return -1;
+  }
+
   while (1) {
     mg_result *result;
-    int status = mg_session_pull(conn->session, &result);
+    int status = mg_session_fetch(conn->session, &result);
     if (status == 0) {
       break;
     }
@@ -81,7 +87,8 @@ int connection_run(ConnectionObject *conn, const char *query, PyObject *params,
   }
 
   const mg_list *mg_columns;
-  int status = mg_session_run(conn->session, query, mg_params, &mg_columns);
+  int status =
+      mg_session_run(conn->session, query, mg_params, NULL, &mg_columns, NULL);
   mg_map_destroy(mg_params);
 
   if (status != 0) {
@@ -102,23 +109,25 @@ int connection_pull(ConnectionObject *conn, PyObject **row) {
   // that there is a running query.
   assert(conn->status == CONN_STATUS_EXECUTING);
 
-  mg_result *result;
-  int status = mg_session_pull(conn->session, &result);
-
+  // TODO (gitbuda): This should be done once + error handling.
+  mg_map *pull_information = mg_map_make_empty(1);
+  mg_value *pull_info_n = mg_value_make_integer(1);
+  mg_map_insert(pull_information, "n", pull_info_n);
+  int status = mg_session_pull(conn->session, pull_information);
   if (status <= 0) {
     conn->status =
         conn->autocommit ? CONN_STATUS_READY : CONN_STATUS_IN_TRANSACTION;
   }
-
   if (status < 0) {
     connection_handle_error(conn);
     return -1;
   }
 
+  mg_result *result;
+  status = mg_session_fetch(conn->session, &result);
   if (status == 0) {
     return 0;
   }
-
   if (row) {
     PyObject *pyresult = mg_list_to_py_tuple(mg_result_row(result));
     if (!pyresult) {
@@ -155,10 +164,12 @@ void connection_discard_all(ConnectionObject *conn) {
     Py_XDECREF(traceback);
   }
 
-  int status;
-  mg_result *result;
-  while ((status = mg_session_pull(conn->session, &result)) == 1)
+  int status = mg_session_pull(conn->session, NULL);
+  if (status == 0) {
+    mg_result *result;
+    while ((status = mg_session_fetch(conn->session, &result)) == 1)
     ;
+  }
 
   if (status == 0) {
     // We successfuly discarded all of the results.

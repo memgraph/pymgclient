@@ -23,7 +23,8 @@
 #define CONN_STATUS_READY 0
 #define CONN_STATUS_IN_TRANSACTION 1
 #define CONN_STATUS_EXECUTING 2
-#define CONN_STATUS_CLOSED 3
+#define CONN_STATUS_FETCHING 3
+#define CONN_STATUS_CLOSED 4
 #define CONN_STATUS_BAD (-1)
 
 // clang-format off
@@ -48,7 +49,9 @@ int connection_run_without_results(ConnectionObject *conn, const char *query);
 int connection_run(ConnectionObject *conn, const char *query, PyObject *params,
                    PyObject **columns);
 
-int connection_pull(ConnectionObject *conn, PyObject **row);
+int connection_pull(ConnectionObject *conn, long n);
+
+int connection_fetch(ConnectionObject *conn, PyObject **row, int *has_more);
 
 int connection_begin(ConnectionObject *conn);
 

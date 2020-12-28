@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "connection.h"
-
 #include "exceptions.h"
 #include "glue.h"
 
@@ -45,8 +44,8 @@ int connection_run_without_results(ConnectionObject *conn, const char *query) {
 
   status = mg_session_pull(conn->session, NULL);
   if (status != 0) {
-      connection_handle_error(conn);
-      return -1;
+    connection_handle_error(conn);
+    return -1;
   }
 
   while (1) {
@@ -73,8 +72,8 @@ int connection_run_without_results(ConnectionObject *conn, const char *query) {
 
 int connection_run(ConnectionObject *conn, const char *query, PyObject *params,
                    PyObject **columns) {
-  // This should be used to start the execution of a query, so we validate we're
-  // in a valid state for query execution.
+  // This should be used to start the execution of a query, so we validate
+  // we're in a valid state for query execution.
   assert((conn->autocommit && conn->status == CONN_STATUS_READY) ||
          (!conn->autocommit && conn->status == CONN_STATUS_IN_TRANSACTION));
 
@@ -104,31 +103,46 @@ int connection_run(ConnectionObject *conn, const char *query, PyObject *params,
   return 0;
 }
 
-int connection_pull(ConnectionObject *conn, PyObject **row) {
-  // This should be used to pull results during query execution, so we validate
-  // that there is a running query.
+int connection_pull(ConnectionObject *conn, long n) {
   assert(conn->status == CONN_STATUS_EXECUTING);
 
-  // TODO (gitbuda): This should be done once + error handling.
-  mg_map *pull_information = mg_map_make_empty(1);
-  mg_value *pull_info_n = mg_value_make_integer(1);
-  mg_map_insert(pull_information, "n", pull_info_n);
-  int status = mg_session_pull(conn->session, pull_information);
-  if (status <= 0) {
+  int status;
+  if (n == 0) {  // PULL_ALL
+    status = mg_session_pull(conn->session, NULL);
+  } else {  // PULL_N
+    mg_map *pull_information = mg_map_make_empty(1);
+    mg_value *pull_info_n = mg_value_make_integer(n);
+    mg_map_insert(pull_information, "n", pull_info_n);
+    status = mg_session_pull(conn->session, pull_information);
+  }
+  if (status == 0) {
+    conn->status = CONN_STATUS_FETCHING;
+    return 0;
+  } else {
+    connection_handle_error(conn);
+    return -1;
+  }
+}
+
+int connection_fetch(ConnectionObject *conn, PyObject **row, int *has_more) {
+  assert(conn->status == CONN_STATUS_FETCHING);
+
+  mg_result *result;
+  int status = mg_session_fetch(conn->session, &result);
+  if (status == 0 && has_more) {
+    const mg_map *mg_summary = mg_result_summary(result);
+    const mg_value *mg_has_more = mg_map_at(mg_summary, "has_more");
+    *has_more = mg_value_bool(mg_has_more);
+  }
+  if (status == 0 || (has_more && !*has_more)) {
     conn->status =
         conn->autocommit ? CONN_STATUS_READY : CONN_STATUS_IN_TRANSACTION;
   }
   if (status < 0) {
-    connection_handle_error(conn);
+    connection_discard_all(conn);
     return -1;
   }
-
-  mg_result *result;
-  status = mg_session_fetch(conn->session, &result);
-  if (status == 0) {
-    return 0;
-  }
-  if (row) {
+  if (status == 1 && row) {
     PyObject *pyresult = mg_list_to_py_tuple(mg_result_row(result));
     if (!pyresult) {
       connection_discard_all(conn);
@@ -136,7 +150,7 @@ int connection_pull(ConnectionObject *conn, PyObject **row) {
     }
     *row = pyresult;
   }
-  return 1;
+  return status;
 }
 
 int connection_begin(ConnectionObject *conn) {
@@ -168,7 +182,7 @@ void connection_discard_all(ConnectionObject *conn) {
   if (status == 0) {
     mg_result *result;
     while ((status = mg_session_fetch(conn->session, &result)) == 1)
-    ;
+      ;
   }
 
   if (status == 0) {
@@ -196,7 +210,7 @@ void connection_discard_all(ConnectionObject *conn) {
     PyErr_SetString(
         InterfaceError,
         "There was an error fetching query results. While pulling the rest of "
-        "the results from server to discard them, another exception occurred. "
+        "the results from server to discard them, another exception occured. "
         "It is not certain whether the query executed successfuly.");
     PyObject *type, *curr_exc, *traceback;
     PyErr_Fetch(&type, &curr_exc, &traceback);

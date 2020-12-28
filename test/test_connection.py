@@ -30,7 +30,7 @@ def memgraph_server():
 
 def generate_key_and_cert(key_file, cert_file):
     k = crypto.PKey()
-    k.generate_key(crypto.TYPE_RSA, 1024)
+    k.generate_key(crypto.TYPE_RSA, 4096)
 
     cert = crypto.X509()
     cert.get_subject().C = "CA"
@@ -41,7 +41,7 @@ def generate_key_and_cert(key_file, cert_file):
     cert.gmtime_adj_notAfter(86400)
     cert.set_issuer(cert.get_subject())
     cert.set_pubkey(k)
-    cert.sign(k, 'sha256')
+    cert.sign(k, 'sha512')
 
     cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     cert_file.flush()
@@ -94,14 +94,16 @@ def test_connection_secure_fail(memgraph_server):
     host, port = memgraph_server
     with pytest.raises(mgclient.OperationalError):
         mgclient.connect(host=host, port=port,
-                          sslmode=mgclient.MG_SSLMODE_REQUIRE)
+                         sslmode=mgclient.MG_SSLMODE_REQUIRE)
 
 
 def test_connection_secure_success(secure_memgraph_server):
     host, port = secure_memgraph_server
 
     with pytest.raises(mgclient.OperationalError):
-        conn = mgclient.connect(host=host, port=port)
+        conn = mgclient.connect(
+            host=host,
+            port=port)
 
     def good_trust_callback(hostname, ip_address, key_type, fingerprint):
         assert hostname == "localhost"
@@ -239,6 +241,7 @@ def test_rollback(memgraph_server):
 
     cursor = conn.cursor()
     cursor.execute("CREATE (:Node)")
+    cursor.fetchall()
 
     cursor.execute("MATCH (n) RETURN count(n)")
     assert cursor.fetchall() == [(1, )]
@@ -279,5 +282,3 @@ def test_commit_rollback_lazy(memgraph_server):
 
     assert cursor.fetchall() == [(1, )]
     assert conn.status == mgclient.CONN_STATUS_READY
-
-

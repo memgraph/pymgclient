@@ -24,16 +24,16 @@ sources = [
     'column.c', 'connection-int.c', 'connection.c', 'cursor.c',
     'glue.c', 'mgclientmodule.c', 'types.c'
 ]
-
 sources = [os.path.join('src', fn) for fn in sources]
 
 headers = [
     'column.h', 'connection.h', 'cursor.h', 'exceptions.h', 'glue.h',
     'types.h'
 ]
-
 headers = [os.path.join('src', fn) for fn in headers]
 
+mgclient_include_dir = os.getenv('MGCLIENT_INCLUDE_DIR', 'include')
+mgclient_lib_dir = os.getenv('MGCLIENT_LIB_DIR', 'lib')
 
 setup(name="pymgclient",
       version="0.1.0",
@@ -67,6 +67,8 @@ setup(name="pymgclient",
           Extension('mgclient',
                     sources=sources,
                     depends=headers,
+                    include_dirs=[mgclient_include_dir],
+                    library_dirs=[mgclient_lib_dir],
                     libraries=['mgclient'])
       ],
       project_urls={

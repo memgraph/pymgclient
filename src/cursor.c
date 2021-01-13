@@ -225,6 +225,7 @@ PyObject *cursor_execute(CursorObject *cursor, PyObject *args) {
     Py_DECREF(row);
   }
   if (status < 0) {
+    connection_handle_error(cursor->conn);
     goto cleanup;
   }
 
@@ -301,6 +302,9 @@ PyObject *cursor_fetchone(CursorObject *cursor, PyObject *args) {
       cursor_reset(cursor);
       return NULL;
     } else if (fetch_status_first == 0) {
+      if (row) {
+        Py_DECREF(row);
+      }
       if (has_more_first) {
         cursor->status = CURSOR_STATUS_EXECUTING;
       } else {
@@ -350,6 +354,7 @@ did not produce any results or no call was issued yet.");
 
 PyObject *cursor_fetchmany(CursorObject *cursor, PyObject *args,
                            PyObject *kwargs) {
+  // TODO(gitbuda): Implement fetchmany by pulling the exact number of records.
   static char *kwlist[] = {"size", NULL};
   PyObject *pysize = NULL;
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O", kwlist, &pysize)) {

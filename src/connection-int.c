@@ -139,7 +139,6 @@ int connection_fetch(ConnectionObject *conn, PyObject **row, int *has_more) {
         conn->autocommit ? CONN_STATUS_READY : CONN_STATUS_IN_TRANSACTION;
   }
   if (status < 0) {
-    connection_discard_all(conn);
     return -1;
   }
   if (status == 1 && row) {

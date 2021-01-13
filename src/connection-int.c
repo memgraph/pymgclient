@@ -209,7 +209,7 @@ void connection_discard_all(ConnectionObject *conn) {
     PyErr_SetString(
         InterfaceError,
         "There was an error fetching query results. While pulling the rest of "
-        "the results from server to discard them, another exception occured. "
+        "the results from server to discard them, another exception occurred. "
         "It is not certain whether the query executed successfuly.");
     PyObject *type, *curr_exc, *traceback;
     PyErr_Fetch(&type, &curr_exc, &traceback);

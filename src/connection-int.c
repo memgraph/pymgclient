@@ -139,6 +139,12 @@ int connection_fetch(ConnectionObject *conn, PyObject **row, int *has_more) {
         conn->autocommit ? CONN_STATUS_READY : CONN_STATUS_IN_TRANSACTION;
   }
   if (status < 0) {
+    // TODO (gitbuda): Define new CUSOR_STATUS to handle query error.
+    // Since database has to pull data ahead of time because of has_more info,
+    // by saving the status here, pymgclient would be able to "simulate" the
+    // right behaviour and raise error at the right time. Cursor::fetchone has
+    // the most questionable behaviour because it returns error one step
+    // earlier.
     return -1;
   }
   if (status == 1 && row) {

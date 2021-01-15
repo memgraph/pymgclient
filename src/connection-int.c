@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "connection.h"
-
 #include "exceptions.h"
 #include "glue.h"
 
@@ -37,7 +36,13 @@ void connection_handle_error(ConnectionObject *conn) {
 }
 
 int connection_run_without_results(ConnectionObject *conn, const char *query) {
-  int status = mg_session_run(conn->session, query, NULL, NULL);
+  int status = mg_session_run(conn->session, query, NULL, NULL, NULL, NULL);
+  if (status != 0) {
+    connection_handle_error(conn);
+    return -1;
+  }
+
+  status = mg_session_pull(conn->session, NULL);
   if (status != 0) {
     connection_handle_error(conn);
     return -1;
@@ -45,7 +50,7 @@ int connection_run_without_results(ConnectionObject *conn, const char *query) {
 
   while (1) {
     mg_result *result;
-    int status = mg_session_pull(conn->session, &result);
+    int status = mg_session_fetch(conn->session, &result);
     if (status == 0) {
       break;
     }
@@ -67,8 +72,8 @@ int connection_run_without_results(ConnectionObject *conn, const char *query) {
 
 int connection_run(ConnectionObject *conn, const char *query, PyObject *params,
                    PyObject **columns) {
-  // This should be used to start the execution of a query, so we validate we're
-  // in a valid state for query execution.
+  // This should be used to start the execution of a query, so we validate
+  // we're in a valid state for query execution.
   assert((conn->autocommit && conn->status == CONN_STATUS_READY) ||
          (!conn->autocommit && conn->status == CONN_STATUS_IN_TRANSACTION));
 
@@ -81,7 +86,8 @@ int connection_run(ConnectionObject *conn, const char *query, PyObject *params,
   }
 
   const mg_list *mg_columns;
-  int status = mg_session_run(conn->session, query, mg_params, &mg_columns);
+  int status =
+      mg_session_run(conn->session, query, mg_params, NULL, &mg_columns, NULL);
   mg_map_destroy(mg_params);
 
   if (status != 0) {
@@ -97,29 +103,51 @@ int connection_run(ConnectionObject *conn, const char *query, PyObject *params,
   return 0;
 }
 
-int connection_pull(ConnectionObject *conn, PyObject **row) {
-  // This should be used to pull results during query execution, so we validate
-  // that there is a running query.
+int connection_pull(ConnectionObject *conn, long n) {
   assert(conn->status == CONN_STATUS_EXECUTING);
 
-  mg_result *result;
-  int status = mg_session_pull(conn->session, &result);
-
-  if (status <= 0) {
-    conn->status =
-        conn->autocommit ? CONN_STATUS_READY : CONN_STATUS_IN_TRANSACTION;
+  int status;
+  if (n == 0) {  // PULL_ALL
+    status = mg_session_pull(conn->session, NULL);
+  } else {  // PULL_N
+    mg_map *pull_information = mg_map_make_empty(1);
+    mg_value *pull_info_n = mg_value_make_integer(n);
+    mg_map_insert(pull_information, "n", pull_info_n);
+    status = mg_session_pull(conn->session, pull_information);
   }
-
-  if (status < 0) {
+  if (status == 0) {
+    conn->status = CONN_STATUS_FETCHING;
+    return 0;
+  } else {
     connection_handle_error(conn);
     return -1;
   }
+}
 
-  if (status == 0) {
-    return 0;
+int connection_fetch(ConnectionObject *conn, PyObject **row, int *has_more) {
+  assert(conn->status == CONN_STATUS_FETCHING);
+
+  mg_result *result;
+  int status = mg_session_fetch(conn->session, &result);
+  if (status == 0 && has_more) {
+    const mg_map *mg_summary = mg_result_summary(result);
+    const mg_value *mg_has_more = mg_map_at(mg_summary, "has_more");
+    *has_more = mg_value_bool(mg_has_more);
   }
-
-  if (row) {
+  if (status == 0 || (has_more && !*has_more)) {
+    conn->status =
+        conn->autocommit ? CONN_STATUS_READY : CONN_STATUS_IN_TRANSACTION;
+  }
+  if (status < 0) {
+    // TODO (gitbuda): Define new CUSOR_STATUS to handle query error.
+    // Since database has to pull data ahead of time because of has_more info,
+    // by saving the status here, pymgclient would be able to "simulate" the
+    // right behaviour and raise error at the right time. Cursor::fetchone has
+    // the most questionable behaviour because it returns error one step
+    // earlier.
+    return -1;
+  }
+  if (status == 1 && row) {
     PyObject *pyresult = mg_list_to_py_tuple(mg_result_row(result));
     if (!pyresult) {
       connection_discard_all(conn);
@@ -127,7 +155,7 @@ int connection_pull(ConnectionObject *conn, PyObject **row) {
     }
     *row = pyresult;
   }
-  return 1;
+  return status;
 }
 
 int connection_begin(ConnectionObject *conn) {
@@ -155,10 +183,12 @@ void connection_discard_all(ConnectionObject *conn) {
     Py_XDECREF(traceback);
   }
 
-  int status;
-  mg_result *result;
-  while ((status = mg_session_pull(conn->session, &result)) == 1)
-    ;
+  int status = mg_session_pull(conn->session, NULL);
+  if (status == 0) {
+    mg_result *result;
+    while ((status = mg_session_fetch(conn->session, &result)) == 1)
+      ;
+  }
 
   if (status == 0) {
     // We successfuly discarded all of the results.

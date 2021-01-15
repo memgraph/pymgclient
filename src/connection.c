@@ -96,7 +96,7 @@ static int connection_init(ConnectionObject *conn, PyObject *args,
   mg_session_params_set_username(params, username);
   mg_session_params_set_password(params, password);
   if (client_name) {
-    mg_session_params_set_client_name(params, client_name);
+    mg_session_params_set_user_agent(params, client_name);
   }
   mg_session_params_set_sslmode(params, sslmode);
   mg_session_params_set_sslcert(params, sslcert);

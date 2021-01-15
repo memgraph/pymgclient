@@ -13,11 +13,12 @@
 // limitations under the License.
 
 #include "cursor.h"
+
+#include <structmember.h>
+
 #include "column.h"
 #include "connection.h"
 #include "exceptions.h"
-
-#include <structmember.h>
 
 static void cursor_dealloc(CursorObject *cursor) {
   Py_CLEAR(cursor->conn);
@@ -210,24 +211,27 @@ PyObject *cursor_execute(CursorObject *cursor, PyObject *args) {
   }
 
   int status;
+  status = connection_pull(cursor->conn, 0);  // PULL_ALL
+  if (status != 0) {
+    goto cleanup;
+  }
 
   PyObject *row;
-  while ((status = connection_pull(cursor->conn, &row)) == 1) {
+  while ((status = connection_fetch(cursor->conn, &row, NULL)) == 1) {
     if (PyList_Append(cursor->rows, row) < 0) {
       Py_DECREF(row);
       goto discard_all;
     }
     Py_DECREF(row);
   }
-
   if (status < 0) {
+    connection_handle_error(cursor->conn);
     goto cleanup;
   }
 
   cursor->hasresults = 1;
   cursor->rowindex = 0;
   cursor->rowcount = PyList_Size(cursor->rows);
-
   Py_RETURN_NONE;
 
 discard_all:
@@ -266,18 +270,58 @@ PyObject *cursor_fetchone(CursorObject *cursor, PyObject *args) {
       // All rows are pulled so we have to return None.
       Py_RETURN_NONE;
     }
-    PyObject *row;
-    int status = connection_pull(cursor->conn, &row);
-    if (status < 0) {
+
+    if (cursor->status == CURSOR_STATUS_EXECUTING) {
+      int pull_status = connection_pull(cursor->conn, 1);
+      if (pull_status != 0) {
+        cursor_reset(cursor);
+        return NULL;
+      }
+    }
+
+    PyObject *row = NULL;
+    // fetchone returns an exact result, this method can't be called twice for
+    // a single pull call. If called twice for one pull call the second call
+    // has to return something which is not correct form the cursor interface
+    // point of view.
+    //
+    // The problem is also if the second fetch call ends up with a database
+    // error, from the user perspective that will look like an error related to
+    // the first pull.
+    int has_more_first = 0;
+    int has_more_second = 0;
+    int fetch_status_first =
+        connection_fetch(cursor->conn, &row, &has_more_first);
+    int fetch_status_second =
+        connection_fetch(cursor->conn, NULL, &has_more_second);
+    if (fetch_status_first == -1 || fetch_status_second == -1) {
+      if (row) {
+        Py_DECREF(row);
+      }
+      connection_handle_error(cursor->conn);
       cursor_reset(cursor);
       return NULL;
-    }
-    if (status == 0) {
-      // No more rows, we're not executing anymore.
-      cursor->status = CURSOR_STATUS_READY;
+    } else if (fetch_status_first == 0) {
+      if (row) {
+        Py_DECREF(row);
+      }
+      if (has_more_first) {
+        cursor->status = CURSOR_STATUS_EXECUTING;
+      } else {
+        cursor->status = CURSOR_STATUS_READY;
+      }
       Py_RETURN_NONE;
+    } else if (fetch_status_first == 1) {
+      if (has_more_second) {
+        cursor->status = CURSOR_STATUS_EXECUTING;
+      } else {
+        cursor->status = CURSOR_STATUS_READY;
+      }
+      return row;
+    } else {
+      // This should never happen, if it happens, some case is not covered.
+      assert(0);
     }
-    return row;
   }
 
   assert(cursor->rowcount >= 0);
@@ -310,6 +354,7 @@ did not produce any results or no call was issued yet.");
 
 PyObject *cursor_fetchmany(CursorObject *cursor, PyObject *args,
                            PyObject *kwargs) {
+  // TODO(gitbuda): Implement fetchmany by pulling the exact number of records.
   static char *kwlist[] = {"size", NULL};
   PyObject *pysize = NULL;
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O", kwlist, &pysize)) {
@@ -396,20 +441,44 @@ PyObject *cursor_fetchall(CursorObject *cursor, PyObject *args) {
     if (!(results = PyList_New(0))) {
       return NULL;
     }
-    while (1) {
-      PyObject *row = cursor_fetchone(cursor, NULL);
-      if (!row) {
+
+    if (cursor->status == CURSOR_STATUS_READY) {
+      return results;
+    }
+
+    if (cursor->status == CURSOR_STATUS_EXECUTING) {
+      int pull_status = 0;
+      pull_status = connection_pull(cursor->conn, 0);
+      if (pull_status != 0) {
         Py_DECREF(results);
+        connection_handle_error(cursor->conn);
+        cursor_reset(cursor);
         return NULL;
       }
-      if (row == Py_None) {
+    }
+
+    while (1) {
+      PyObject *row = NULL;
+      int fetch_status = connection_fetch(cursor->conn, &row, NULL);
+      if (fetch_status == 0) {
+        cursor->status = CURSOR_STATUS_READY;
         break;
-      }
-      if (PyList_Append(results, row) < 0) {
-        Py_DECREF(row);
+      } else if (fetch_status == 1) {
+        if (PyList_Append(results, row) < 0) {
+          Py_DECREF(row);
+          Py_DECREF(results);
+          connection_discard_all(cursor->conn);
+          cursor_reset(cursor);
+          return NULL;
+        }
+      } else {
         Py_DECREF(results);
-        connection_discard_all(cursor->conn);
+        connection_handle_error(cursor->conn);
         cursor_reset(cursor);
+        return NULL;
+      }
+      if (!row) {
+        Py_DECREF(results);
         return NULL;
       }
     }

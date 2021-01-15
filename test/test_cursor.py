@@ -186,8 +186,6 @@ class TestCursorInRegularConnection:
 
         with pytest.raises(mgclient.DatabaseError):
             cursor.execute("UNWIND [true, true, false] AS p RETURN assert(p)")
-
-        with pytest.raises(mgclient.InterfaceError):
             cursor.fetchall()
 
         cursor.execute("RETURN 200")
@@ -225,11 +223,14 @@ class TestCursorInAsyncConnection:
 
         cursor2.close()
 
-        assert cursor.fetchmany(10) == [(n, ) for n in range(1, 11)]
-
+        # NOTE: This here is a bit strange again because of double fetch /
+        # server ahead of time pull because of the need for has_more info. As
+        # soon as the last record is returned, the cursor will become
+        # closeable.
+        assert cursor.fetchmany(9) == [(n, ) for n in range(1, 10)]
         with pytest.raises(mgclient.InterfaceError):
             cursor.close()
-
+        assert cursor.fetchone() == (10,)
         assert cursor.fetchone() is None
 
         cursor.close()
@@ -363,14 +364,15 @@ class TestCursorInAsyncConnection:
         cursor = conn.cursor()
 
         cursor.execute("RETURN 100")
-        cursor.fetchall()
+        assert cursor.fetchall() == [(100, )]
 
         cursor.execute("UNWIND [true, true, false] AS p RETURN assert(p)")
-
-        assert cursor.fetchone() == (True, )
-        assert cursor.fetchone() == (True, )
-
         with pytest.raises(mgclient.DatabaseError):
+            assert cursor.fetchone() == (True, )
+            # NOTE: The exception is going to happen here which is unexpected.
+            # The reason for that is because server pulls one more result ahead
+            # of time to know are there more results.
+            assert cursor.fetchone() == (True, )  # <- HERE
             cursor.fetchone()
 
         cursor.execute("UNWIND [true, true, false] AS p RETURN assert(p)")

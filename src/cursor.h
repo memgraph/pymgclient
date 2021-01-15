@@ -21,7 +21,7 @@ struct ConnectionObject;
 
 #define CURSOR_STATUS_READY 0
 #define CURSOR_STATUS_EXECUTING 1
-#define CURSOR_STATUS_CLOSED 2
+#define CURSOR_STATUS_CLOSED 3
 
 // clang-format off
 typedef struct {

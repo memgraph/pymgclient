@@ -19,7 +19,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: memgraph/mgclient
-        ref: 'v1.0.0'
+        ref: 'v1.1.0'
     - name: Install mgclient
       run: |
         mkdir build

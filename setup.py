@@ -13,8 +13,24 @@
 # limitations under the License.
 
 import os
+import subprocess
 
 from setuptools import setup, Extension
+
+sys_deps = ['git', 'gcc', 'cmake']
+ext_libs = ['mgclient']
+
+for sys_dep in sys_deps:
+    try:
+        out = subprocess.check_output([sys_dep, '--version'])
+    except OSError:
+        raise RuntimeError(
+            f'{sys_dep} must be installed to build {ext_libs}')
+
+# TODO(gitbuda): Clone and checkout mgclient (better than submodules because
+# user has to take care to properly initialize them).
+
+# TODO(gitbuda): Build mgclient.
 
 with open("README.md", "r") as fh:
     readme = fh.read()
@@ -36,9 +52,9 @@ mgclient_include_dir = os.getenv('MGCLIENT_INCLUDE_DIR', 'include')
 mgclient_lib_dir = os.getenv('MGCLIENT_LIB_DIR', 'lib')
 
 setup(name="pymgclient",
-      version="0.1.0",
-      maintainer="Marin Tomic",
-      maintainer_email="marin.tomic@memgraph.com",
+      version="0.2.0",
+      maintainer="Marko Budiselic",
+      maintainer_email="marko.budiselic@memgraph.com",
       author="Marin Tomic",
       author_email="marin.tomic@memgraph.com",
       license="Apache2",

@@ -19,20 +19,9 @@ jobs:
         sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
         sudo dpkg -i ~/memgraph/memgraph_1.2.0-community-1_amd64.deb
 
-    - name: Download mgclient
-      uses: actions/checkout@v2
-      with:
-        repository: memgraph/mgclient
-        ref: 'v1.1.0'
-    - name: Install mgclient
-      run: |
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF ..
-        make
-        sudo make install
-
     - uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Install, test and build docs
       run: |
         sudo python3 setup.py install

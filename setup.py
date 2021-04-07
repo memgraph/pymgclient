@@ -13,12 +13,17 @@
 # limitations under the License.
 
 import os
+import pathlib
 
 from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 
-with open("README.md", "r") as fh:
+with open('README.md', 'r') as fh:
     readme = fh.read()
-    long_description = "\n".join(readme.split("\n")[2:]).lstrip()
+    long_description = '\n'.join(readme.split('\n')[2:]).lstrip()
+
+MGCLIENT_EXTENSION_NAME = 'mgclient'
+MGCLIENT_SOURCE_DIR_NAME = 'mgclient'
 
 sources = [
     'column.c', 'connection-int.c', 'connection.c', 'cursor.c',
@@ -32,21 +37,92 @@ headers = [
 ]
 headers = [os.path.join('src', fn) for fn in headers]
 
-mgclient_include_dir = os.getenv('MGCLIENT_INCLUDE_DIR', 'include')
-mgclient_lib_dir = os.getenv('MGCLIENT_LIB_DIR', 'lib')
 
-setup(name="pymgclient",
-      version="0.1.0",
-      maintainer="Marin Tomic",
-      maintainer_email="marin.tomic@memgraph.com",
-      author="Marin Tomic",
-      author_email="marin.tomic@memgraph.com",
-      license="Apache2",
-      platforms=["linux"],
+class BuildMgclientExt(build_ext):
+    '''
+    Builds using cmake instead of the python setuptools implicit build
+    '''
+
+    def run(self):
+        '''
+        Perform build_cmake before doing the 'normal' stuff
+        '''
+
+        for extension in self.extensions:
+
+            if extension.name == MGCLIENT_EXTENSION_NAME:
+
+                self.build_mgclient_for(extension)
+
+        super().run()
+
+    def build_mgclient_for(self, extension: Extension):
+        '''
+        Builds mgclient library and configures the extension to be able to use
+        the mgclient static library
+        # '''
+
+        self.announce('Preparing the build environment for mgclient', level=3)
+
+        extension_build_dir = pathlib.Path(self.build_temp).absolute()
+
+        mgclient_build_path = os.path.join(
+            extension_build_dir, 'mgclient_build')
+
+        mgclient_install_path = os.path.join(
+            extension_build_dir, 'mgclient_install')
+
+        self.announce(
+            f'Using {mgclient_build_path} as build directory for mgclient',
+            level=3)
+
+        self.announce(
+            f'Using {mgclient_install_path} as install directory for mgclient',
+            level=3)
+
+        os.makedirs(mgclient_build_path, exist_ok=True)
+
+        mgclient_source_path = os.path.join(pathlib.Path(
+            __file__).absolute().parent, MGCLIENT_SOURCE_DIR_NAME)
+
+        self.announce('Configuring mgclient', level=3)
+
+        build_type = 'Debug' if self.debug else 'Release'
+
+        self.spawn(['cmake',
+                    '-S', mgclient_source_path,
+                    '-B', mgclient_build_path,
+                    f'-DCMAKE_BUILD_TYPE={build_type}',
+                    f'-DCMAKE_INSTALL_PREFIX={mgclient_install_path}',
+                    '-DBUILD_TESTING=OFF',
+                    '-DCMAKE_POSITION_INDEPENDENT_CODE=ON'])
+
+        self.announce('Building mgclient binaries', level=3)
+
+        self.spawn(['cmake',
+                    '--build', mgclient_build_path,
+                   '--config', build_type,
+                    '--target', 'install'])
+
+        extension.include_dirs.append(os.path.join(
+            mgclient_install_path, 'include'))
+        extension.extra_objects.append(os.path.join(
+            mgclient_install_path, 'lib', 'libmgclient.a'))
+        extension.libraries.append('ssl')
+
+
+setup(name='pymgclient',
+      version='0.1.0',
+      maintainer='Marin Tomic',
+      maintainer_email='marin.tomic@memgraph.com',
+      author='Marin Tomic',
+      author_email='marin.tomic@memgraph.com',
+      license='Apache2',
+      platforms=['linux'],
       python_requires='>=3.5',
-      description="Memgraph database adapter for Python language",
+      description='Memgraph database adapter for Python language',
       long_description=long_description,
-      long_description_content_type="text/markdown",
+      long_description_content_type='text/markdown',
       url='https://github.com/memgraph/pymgclient',
       classifiers=[
           'Development Status :: 3 - Alpha',
@@ -64,14 +140,14 @@ setup(name="pymgclient",
           'Operating System :: POSIX :: Linux'
       ],
       ext_modules=[
-          Extension('mgclient',
+          Extension(MGCLIENT_EXTENSION_NAME,
                     sources=sources,
-                    depends=headers,
-                    include_dirs=[mgclient_include_dir],
-                    library_dirs=[mgclient_lib_dir],
-                    libraries=['mgclient'])
+                    depends=headers)
       ],
       project_urls={
           'Source': 'https://github.com/memgraph/pymgclient',
           'Documentation': 'https://memgraph.github.io/pymgclient',
+      },
+      cmdclass={
+          'build_ext': BuildMgclientExt
       })

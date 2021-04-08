@@ -131,11 +131,11 @@ class BuildMgclientExt(build_ext):
 
 
 setup(name='pymgclient',
-      version='0.1.0',
-      maintainer='Marin Tomic',
-      maintainer_email='marin.tomic@memgraph.com',
-      author='Marin Tomic',
-      author_email='marin.tomic@memgraph.com',
+      version='0.2.0',
+      maintainer='Memgraph Ltd.',
+      # maintainer_email='@memgraph.com',
+      author='Memgraph Ltd.',
+      # author_email='@memgraph.com',
       license='Apache2',
       platforms=['linux'],
       python_requires='>=3.5',

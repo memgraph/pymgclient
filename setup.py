@@ -22,8 +22,11 @@ with open('README.md', 'r') as fh:
     readme = fh.read()
     long_description = '\n'.join(readme.split('\n')[2:]).lstrip()
 
-MGCLIENT_EXTENSION_NAME = 'mgclient'
-MGCLIENT_SOURCE_DIR_NAME = 'mgclient'
+# Throughout this file "mgclient" can mean two different things:
+# 1. The mgclient library which is the official Memgraph client library.
+# 2. The mgclient python extension module which is a wrapper around the
+#    client library.
+EXTENSION_NAME = 'mgclient'
 
 sources = [
     'column.c', 'connection-int.c', 'connection.c', 'cursor.c',
@@ -50,7 +53,7 @@ class BuildMgclientExt(build_ext):
 
         for extension in self.extensions:
 
-            if extension.name == MGCLIENT_EXTENSION_NAME:
+            if extension.name == EXTENSION_NAME:
 
                 self.build_mgclient_for(extension)
 
@@ -59,7 +62,10 @@ class BuildMgclientExt(build_ext):
     def build_mgclient_for(self, extension: Extension):
         '''
         Builds mgclient library and configures the extension to be able to use
-        the mgclient static library
+        the mgclient library as a static library.
+
+        In this function all usage of mgclient refers to the client library
+        and not the python extension module.
         # '''
 
         self.announce('Preparing the build environment for mgclient', level=3)
@@ -68,27 +74,23 @@ class BuildMgclientExt(build_ext):
 
         mgclient_build_path = os.path.join(
             extension_build_dir, 'mgclient_build')
-
         mgclient_install_path = os.path.join(
             extension_build_dir, 'mgclient_install')
 
         self.announce(
             f'Using {mgclient_build_path} as build directory for mgclient',
             level=3)
-
         self.announce(
             f'Using {mgclient_install_path} as install directory for mgclient',
             level=3)
 
         os.makedirs(mgclient_build_path, exist_ok=True)
-
         mgclient_source_path = os.path.join(pathlib.Path(
-            __file__).absolute().parent, MGCLIENT_SOURCE_DIR_NAME)
+            __file__).absolute().parent, 'mgclient')
 
         self.announce('Configuring mgclient', level=3)
 
         build_type = 'Debug' if self.debug else 'Release'
-
         self.spawn(['cmake',
                     '-S', mgclient_source_path,
                     '-B', mgclient_build_path,
@@ -140,7 +142,7 @@ setup(name='pymgclient',
           'Operating System :: POSIX :: Linux'
       ],
       ext_modules=[
-          Extension(MGCLIENT_EXTENSION_NAME,
+          Extension(EXTENSION_NAME,
                     sources=sources,
                     depends=headers)
       ],

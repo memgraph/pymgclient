@@ -41,6 +41,14 @@ headers = [
 headers = [os.path.join('src', fn) for fn in headers]
 
 
+def list_all_files_in_dir(path):
+    result = []
+    for root, _dirs, files in os.walk(path):
+        result.extend(os.path.join(root, f) for f in files)
+
+    return result
+
+
 class BuildMgclientExt(build_ext):
     '''
     Builds using cmake instead of the python setuptools implicit build
@@ -106,11 +114,20 @@ class BuildMgclientExt(build_ext):
                    '--config', build_type,
                     '--target', 'install'])
 
+        mgclient_sources = [os.path.join(
+            mgclient_source_path, 'CMakeLists.txt')]
+
+        for subdir in ['src', 'include', 'cmake']:
+            mgclient_sources.extend(
+                list_all_files_in_dir(
+                    os.path.join(mgclient_source_path, subdir)))
+
         extension.include_dirs.append(os.path.join(
             mgclient_install_path, 'include'))
         extension.extra_objects.append(os.path.join(
             mgclient_install_path, 'lib', 'libmgclient.a'))
         extension.libraries.append('ssl')
+        extension.depends.extend(mgclient_sources)
 
 
 setup(name='pymgclient',

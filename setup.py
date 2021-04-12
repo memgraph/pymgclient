@@ -77,8 +77,6 @@ class BuildMgclientExt(build_ext):
         In this function all usage of mgclient refers to the client library
         and not the python extension module.
         # '''
-        INSTAL_LIBDIR = 'lib'
-        INSTAL_INCLUDEDIR = 'include'
 
         self.announce('Checking if cmake is available', level=log.INFO)
 
@@ -93,7 +91,6 @@ class BuildMgclientExt(build_ext):
             'Preparing the build environment for mgclient', level=log.INFO)
 
         extension_build_dir = pathlib.Path(self.build_temp).absolute()
-
         mgclient_build_path = os.path.join(
             extension_build_dir, 'mgclient_build')
         mgclient_install_path = os.path.join(
@@ -113,20 +110,19 @@ class BuildMgclientExt(build_ext):
         self.announce('Configuring mgclient', level=log.INFO)
 
         build_type = 'Debug' if self.debug else 'Release'
-
         install_libdir = 'lib'
         install_includedir = 'include'
 
         try:
-        self.spawn(['cmake',
-                    '-S', mgclient_source_path,
-                    '-B', mgclient_build_path,
-                    f'-DCMAKE_INSTALL_LIBDIR={INSTAL_LIBDIR}',
-                    f'-DCMAKE_INSTALL_INCLUDEDIR={INSTAL_INCLUDEDIR}',
-                    f'-DCMAKE_BUILD_TYPE={build_type}',
-                    f'-DCMAKE_INSTALL_PREFIX={mgclient_install_path}',
-                    '-DBUILD_TESTING=OFF',
-                    '-DCMAKE_POSITION_INDEPENDENT_CODE=ON'])
+            self.spawn(['cmake',
+                        '-S', mgclient_source_path,
+                        '-B', mgclient_build_path,
+                        f'-DCMAKE_INSTALL_LIBDIR={install_libdir}',
+                        f'-DCMAKE_INSTALL_INCLUDEDIR={install_includedir}',
+                        f'-DCMAKE_BUILD_TYPE={build_type}',
+                        f'-DCMAKE_INSTALL_PREFIX={mgclient_install_path}',
+                        '-DBUILD_TESTING=OFF',
+                        '-DCMAKE_POSITION_INDEPENDENT_CODE=ON'])
         except DistutilsExecError as dee:
             self.announce('Error happened during configuring mgclient! Is '
                           'OpenSSL installed correctly?')
@@ -135,11 +131,11 @@ class BuildMgclientExt(build_ext):
         self.announce('Building mgclient binaries', level=log.FATAL)
 
         try:
-        self.spawn(['cmake',
-                    '--build', mgclient_build_path,
-                   '--config', build_type,
-                    '--target', 'install',
-                    '--parallel'])
+            self.spawn(['cmake',
+                        '--build', mgclient_build_path,
+                        '--config', build_type,
+                        '--target', 'install',
+                        '--parallel'])
         except DistutilsExecError as dee:
             self.announce(
                 'Error happened during building mgclient binaries!',
@@ -155,9 +151,9 @@ class BuildMgclientExt(build_ext):
                     os.path.join(mgclient_source_path, subdir)))
 
         extension.include_dirs.append(os.path.join(
-            mgclient_install_path, INSTAL_INCLUDEDIR))
+            mgclient_install_path, install_includedir))
         extension.extra_objects.append(os.path.join(
-            mgclient_install_path, INSTAL_LIBDIR, 'libmgclient.a'))
+            mgclient_install_path, install_libdir, 'libmgclient.a'))
         extension.libraries.append('ssl')
         extension.depends.extend(mgclient_sources)
 

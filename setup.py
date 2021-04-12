@@ -112,7 +112,8 @@ class BuildMgclientExt(build_ext):
         self.spawn(['cmake',
                     '--build', mgclient_build_path,
                    '--config', build_type,
-                    '--target', 'install'])
+                    '--target', 'install',
+                    '--parallel'])
 
         mgclient_sources = [os.path.join(
             mgclient_source_path, 'CMakeLists.txt')]

@@ -75,6 +75,8 @@ class BuildMgclientExt(build_ext):
         In this function all usage of mgclient refers to the client library
         and not the python extension module.
         # '''
+        INSTAL_LIBDIR = 'lib'
+        INSTAL_INCLUDEDIR = 'include'
 
         self.announce('Preparing the build environment for mgclient', level=3)
 
@@ -102,6 +104,8 @@ class BuildMgclientExt(build_ext):
         self.spawn(['cmake',
                     '-S', mgclient_source_path,
                     '-B', mgclient_build_path,
+                    f'-DCMAKE_INSTALL_LIBDIR={INSTAL_LIBDIR}',
+                    f'-DCMAKE_INSTALL_INCLUDEDIR={INSTAL_INCLUDEDIR}',
                     f'-DCMAKE_BUILD_TYPE={build_type}',
                     f'-DCMAKE_INSTALL_PREFIX={mgclient_install_path}',
                     '-DBUILD_TESTING=OFF',
@@ -124,9 +128,9 @@ class BuildMgclientExt(build_ext):
                     os.path.join(mgclient_source_path, subdir)))
 
         extension.include_dirs.append(os.path.join(
-            mgclient_install_path, 'include'))
+            mgclient_install_path, INSTAL_INCLUDEDIR))
         extension.extra_objects.append(os.path.join(
-            mgclient_install_path, 'lib', 'libmgclient.a'))
+            mgclient_install_path, INSTAL_LIBDIR, 'libmgclient.a'))
         extension.libraries.append('ssl')
         extension.depends.extend(mgclient_sources)
 

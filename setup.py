@@ -17,6 +17,8 @@ import pathlib
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+from distutils import log
+from distutils.core import DistutilsExecError
 
 with open('README.md', 'r') as fh:
     readme = fh.read()
@@ -78,7 +80,17 @@ class BuildMgclientExt(build_ext):
         INSTAL_LIBDIR = 'lib'
         INSTAL_INCLUDEDIR = 'include'
 
-        self.announce('Preparing the build environment for mgclient', level=3)
+        self.announce('Checking if cmake is available', level=log.INFO)
+
+        try:
+            self.spawn(['cmake', '--version'])
+        except DistutilsExecError as dee:
+            self.announce(
+                'CMake cannot be found! Is it installed?', level=log.FATAL)
+            raise dee
+
+        self.announce(
+            'Preparing the build environment for mgclient', level=log.INFO)
 
         extension_build_dir = pathlib.Path(self.build_temp).absolute()
 
@@ -89,18 +101,23 @@ class BuildMgclientExt(build_ext):
 
         self.announce(
             f'Using {mgclient_build_path} as build directory for mgclient',
-            level=3)
+            level=log.INFO)
         self.announce(
             f'Using {mgclient_install_path} as install directory for mgclient',
-            level=3)
+            level=log.INFO)
 
         os.makedirs(mgclient_build_path, exist_ok=True)
         mgclient_source_path = os.path.join(pathlib.Path(
             __file__).absolute().parent, 'mgclient')
 
-        self.announce('Configuring mgclient', level=3)
+        self.announce('Configuring mgclient', level=log.INFO)
 
         build_type = 'Debug' if self.debug else 'Release'
+
+        install_libdir = 'lib'
+        install_includedir = 'include'
+
+        try:
         self.spawn(['cmake',
                     '-S', mgclient_source_path,
                     '-B', mgclient_build_path,
@@ -110,14 +127,24 @@ class BuildMgclientExt(build_ext):
                     f'-DCMAKE_INSTALL_PREFIX={mgclient_install_path}',
                     '-DBUILD_TESTING=OFF',
                     '-DCMAKE_POSITION_INDEPENDENT_CODE=ON'])
+        except DistutilsExecError as dee:
+            self.announce('Error happened during configuring mgclient! Is '
+                          'OpenSSL installed correctly?')
+            raise dee
 
-        self.announce('Building mgclient binaries', level=3)
+        self.announce('Building mgclient binaries', level=log.FATAL)
 
+        try:
         self.spawn(['cmake',
                     '--build', mgclient_build_path,
                    '--config', build_type,
                     '--target', 'install',
                     '--parallel'])
+        except DistutilsExecError as dee:
+            self.announce(
+                'Error happened during building mgclient binaries!',
+                level=log.FATAL)
+            raise dee
 
         mgclient_sources = [os.path.join(
             mgclient_source_path, 'CMakeLists.txt')]

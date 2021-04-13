@@ -76,12 +76,13 @@ class BuildMgclientExt(build_ext):
 
         In this function all usage of mgclient refers to the client library
         and not the python extension module.
-        # '''
+        '''
+        cmake_binary = 'cmake'
 
         self.announce('Checking if cmake is available', level=log.INFO)
 
         try:
-            self.spawn(['cmake', '--version'])
+            self.spawn([cmake_binary, '--version'])
         except DistutilsExecError as dee:
             self.announce(
                 'CMake cannot be found! Is it installed?', level=log.FATAL)
@@ -107,6 +108,10 @@ class BuildMgclientExt(build_ext):
         mgclient_source_path = os.path.join(pathlib.Path(
             __file__).absolute().parent, 'mgclient')
 
+        # CMake <3.13 versions doesn't support explicit build directory
+        prev_working_dir = os.getcwd()
+        os.chdir(mgclient_build_path)
+
         self.announce('Configuring mgclient', level=log.INFO)
 
         build_type = 'Debug' if self.debug else 'Release'
@@ -114,9 +119,8 @@ class BuildMgclientExt(build_ext):
         install_includedir = 'include'
 
         try:
-            self.spawn(['cmake',
-                        '-S', mgclient_source_path,
-                        '-B', mgclient_build_path,
+            self.spawn([cmake_binary,
+                        mgclient_source_path,
                         f'-DCMAKE_INSTALL_LIBDIR={install_libdir}',
                         f'-DCMAKE_INSTALL_INCLUDEDIR={install_includedir}',
                         f'-DCMAKE_BUILD_TYPE={build_type}',
@@ -131,7 +135,7 @@ class BuildMgclientExt(build_ext):
         self.announce('Building mgclient binaries', level=log.FATAL)
 
         try:
-            self.spawn(['cmake',
+            self.spawn([cmake_binary,
                         '--build', mgclient_build_path,
                         '--config', build_type,
                         '--target', 'install',
@@ -141,6 +145,8 @@ class BuildMgclientExt(build_ext):
                 'Error happened during building mgclient binaries!',
                 level=log.FATAL)
             raise dee
+
+        os.chdir(prev_working_dir)
 
         mgclient_sources = [os.path.join(
             mgclient_source_path, 'CMakeLists.txt')]

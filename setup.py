@@ -62,9 +62,7 @@ class BuildMgclientExt(build_ext):
         '''
 
         for extension in self.extensions:
-
             if extension.name == EXTENSION_NAME:
-
                 self.build_mgclient_for(extension)
 
         super().run()

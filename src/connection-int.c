@@ -28,9 +28,13 @@ int connection_raise_if_bad_status(const ConnectionObject *conn) {
   return 0;
 }
 
-void connection_handle_error(ConnectionObject *conn) {
+void connection_handle_error(ConnectionObject *conn, int error) {
   if (mg_session_status(conn->session) == MG_SESSION_BAD) {
     conn->status = CONN_STATUS_BAD;
+  } else if (error == MG_ERROR_TRANSIENT_ERROR ||
+             error == MG_ERROR_DATABASE_ERROR ||
+             error == MG_ERROR_CLIENT_ERROR) {
+    conn->status = CONN_STATUS_READY;
   }
   PyErr_SetString(DatabaseError, mg_session_error(conn->session));
 }
@@ -38,13 +42,13 @@ void connection_handle_error(ConnectionObject *conn) {
 int connection_run_without_results(ConnectionObject *conn, const char *query) {
   int status = mg_session_run(conn->session, query, NULL, NULL, NULL, NULL);
   if (status != 0) {
-    connection_handle_error(conn);
+    connection_handle_error(conn, status);
     return -1;
   }
 
   status = mg_session_pull(conn->session, NULL);
   if (status != 0) {
-    connection_handle_error(conn);
+    connection_handle_error(conn, status);
     return -1;
   }
 
@@ -62,7 +66,7 @@ int connection_run_without_results(ConnectionObject *conn, const char *query) {
       }
     }
     if (status < 0) {
-      connection_handle_error(conn);
+      connection_handle_error(conn, status);
       return -1;
     }
   }
@@ -91,7 +95,7 @@ int connection_run(ConnectionObject *conn, const char *query, PyObject *params,
   mg_map_destroy(mg_params);
 
   if (status != 0) {
-    connection_handle_error(conn);
+    connection_handle_error(conn, status);
     return -1;
   }
 
@@ -119,7 +123,7 @@ int connection_pull(ConnectionObject *conn, long n) {
     conn->status = CONN_STATUS_FETCHING;
     return 0;
   } else {
-    connection_handle_error(conn);
+    connection_handle_error(conn, status);
     return -1;
   }
 }
@@ -202,7 +206,7 @@ void connection_discard_all(ConnectionObject *conn) {
     PyErr_Restore(type, curr_exc, traceback);
   } else {
     // There was a database error while pulling the rest of the results.
-    connection_handle_error(conn);
+    connection_handle_error(conn, status);
     PyObject *pulling_exc;
     {
       PyObject *type, *traceback;

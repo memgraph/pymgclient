@@ -225,7 +225,7 @@ PyObject *cursor_execute(CursorObject *cursor, PyObject *args) {
     Py_DECREF(row);
   }
   if (status < 0) {
-    connection_handle_error(cursor->conn);
+    connection_handle_error(cursor->conn, status);
     goto cleanup;
   }
 
@@ -298,7 +298,7 @@ PyObject *cursor_fetchone(CursorObject *cursor, PyObject *args) {
       if (row) {
         Py_DECREF(row);
       }
-      connection_handle_error(cursor->conn);
+      connection_handle_error(cursor->conn, -1);
       cursor_reset(cursor);
       return NULL;
     } else if (fetch_status_first == 0) {
@@ -451,7 +451,7 @@ PyObject *cursor_fetchall(CursorObject *cursor, PyObject *args) {
       pull_status = connection_pull(cursor->conn, 0);
       if (pull_status != 0) {
         Py_DECREF(results);
-        connection_handle_error(cursor->conn);
+        connection_handle_error(cursor->conn, pull_status);
         cursor_reset(cursor);
         return NULL;
       }
@@ -473,7 +473,7 @@ PyObject *cursor_fetchall(CursorObject *cursor, PyObject *args) {
         }
       } else {
         Py_DECREF(results);
-        connection_handle_error(cursor->conn);
+        connection_handle_error(cursor->conn, fetch_status);
         cursor_reset(cursor);
         return NULL;
       }

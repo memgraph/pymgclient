@@ -130,7 +130,7 @@ class BuildMgclientExt(build_ext):
                           'OpenSSL installed correctly?')
             raise dee
 
-        self.announce('Building mgclient binaries', level=log.FATAL)
+        self.announce('Building mgclient binaries', level=log.INFO)
 
         try:
             self.spawn([cmake_binary,

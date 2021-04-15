@@ -21,11 +21,16 @@ pymgclient is a C wrapper around the
 [mgclient](https://github.com/memgraph/mgclient) Memgraph client library. To
 install it from sources you will need:
 
-  * Python 3.5 or newer
-  * A C compiler supporting C11 standard
-  * Python header files
-  * [mgclient headers](https://github.com/memgraph/mgclient/tree/release/1.0)
-    (**v1.0.0** tag or **release/1.0** branch)
+  - [Python](https://www.python.org/) 3.6 or newer
+  - [Python](https://www.python.org/) 3.6 or newer header files
+  - A C compiler supporting C11 standard
+  - Preqrequisites of [mgclient](mgclient):
+    - [CMake](https://cmake.org/) 3.8 or newer
+    - [OpenSSL](https://www.openssl.org/) 1.0.2 or newer
+
+Though [mgclient](mgclient) mentions Apple LLVM/clang as a build requirement, it doesn't hold for pymgclient, because it is only necessary for building the tests for mgclient. As pymgclient has its own tests, the tests of mgclient are not built when building pymgclient.
+
+By default pymgclient will try to use `cmake3` and `cmake` (in this order) to call CMake, if the `PYMGCLIENT_CMAKE` environment variable is not set. Otherwise the value of `PYMGCLIENT_CMAKE` will be used without further checks.
 
 Once prerequisites are met, you can install pymgclient using `pip` to download
 it from PyPI:
@@ -43,14 +48,8 @@ $ python3 setup.py install
 
 ### Runtime requirements
 
-mgclient Python module requires mgclient shared library at runtime (usually
-distributed as `libmgclient.so`). The module relies on the host OS to find the
-location. If the library is installed in a standard location, there should be
-no problems. Otherwise, you will have to let the mgclient module how to find it
-(usually by setting the `LD_LIBRARY_PATH` environment variable).
-
-You will also need [OpenSSL](https://www.openssl.org/) libraries required by
-the [mgclient](https://github.com/memgraph/mgclient) C library.
+You will need [OpenSSL](https://www.openssl.org/) libraries required by
+the [mgclient](mgclient) C library.
 
 ## Running the test suite
 
@@ -67,8 +66,8 @@ the standard installation path (usually `/usr/lib/memgraph/memgraph`) listening
 on port 7687. You can configure a different path or port by setting the
 following environment variables:
 
-  * `MEMGRAPH_PATH`
-  * `MEMGRAPH_PORT`
+  - `MEMGRAPH_PATH`
+  - `MEMGRAPH_PORT`
 
 ## Documentation
 

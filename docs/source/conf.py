@@ -19,11 +19,11 @@ import inspect
 # -- Project information -----------------------------------------------------
 
 project = 'pymgclient'
-copyright = '2020, Memgraph Ltd.'
-author = 'Marin Tomic'
+copyright = '2021, Memgraph Ltd.'
+author = 'Memgraph Ltd.'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1a1'
+release = '0.2.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -74,7 +74,7 @@ def setup(app):
 
         try:
             sig = inspect.signature(obj)
-            return (str(inspect.signature(obj)), return_annotation)
+            return (str(sig), return_annotation)
         except BaseException:
             return (None, None)
 

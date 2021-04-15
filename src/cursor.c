@@ -292,8 +292,11 @@ PyObject *cursor_fetchone(CursorObject *cursor, PyObject *args) {
     int has_more_second = 0;
     int fetch_status_first =
         connection_fetch(cursor->conn, &row, &has_more_first);
-    int fetch_status_second =
+    int fetch_status_second = 0;
+    if (fetch_status_first == 1) {
+      fetch_status_second =
         connection_fetch(cursor->conn, NULL, &has_more_second);
+    }
     if (fetch_status_first == -1 || fetch_status_second == -1) {
       if (row) {
         Py_DECREF(row);

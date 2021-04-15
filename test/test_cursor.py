@@ -207,6 +207,23 @@ class TestCursorInRegularConnection:
 
         assert cursor.description is None
 
+    def test_cursor_fetchone_without_result(self, memgraph_server):
+        host, port = memgraph_server
+        conn = mgclient.connect(host=host, port=port)
+        cursor = conn.cursor()
+
+        cursor.execute('MATCH (n:NonExistingLabel) RETURN n')
+        result = cursor.fetchone()
+        assert result is None
+
+    def test_cursor_fetchmany_without_result(self, memgraph_server):
+        host, port = memgraph_server
+        conn = mgclient.connect(host=host, port=port)
+        cursor = conn.cursor()
+
+        cursor.execute('MATCH (n:NonExistingLabel) RETURN n')
+        assert cursor.fetchmany() == []
+
 
 class TestCursorInAsyncConnection:
     def test_cursor_close(self, memgraph_server):
@@ -406,3 +423,20 @@ class TestCursorInAsyncConnection:
             cursor.execute("jdfklfjkdalfja")
 
         assert cursor.description is None
+
+    def test_cursor_fetchone_without_result(self, memgraph_server):
+        host, port = memgraph_server
+        conn = mgclient.connect(host=host, port=port, lazy=True)
+        cursor = conn.cursor()
+
+        cursor.execute('MATCH (n:NonExistingLabel) RETURN n')
+        result = cursor.fetchone()
+        assert result is None
+
+    def test_cursor_fetchmany_without_result(self, memgraph_server):
+        host, port = memgraph_server
+        conn = mgclient.connect(host=host, port=port, lazy=True)
+        cursor = conn.cursor()
+
+        cursor.execute('MATCH (n:NonExistingLabel) RETURN n')
+        assert cursor.fetchmany() == []

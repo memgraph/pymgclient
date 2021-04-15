@@ -42,8 +42,6 @@ extern PyTypeObject ConnectionType;
 
 int connection_raise_if_bad_status(const ConnectionObject *conn);
 
-void connection_handle_error(ConnectionObject *conn, int error);
-
 int connection_run_without_results(ConnectionObject *conn, const char *query);
 
 int connection_run(ConnectionObject *conn, const char *query, PyObject *params,

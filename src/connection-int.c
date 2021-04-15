@@ -149,16 +149,20 @@ int connection_fetch(ConnectionObject *conn, PyObject **row, int *has_more) {
     // right behaviour and raise error at the right time. Cursor::fetchone has
     // the most questionable behaviour because it returns error one step
     // earlier.
+    connection_handle_error(conn, status);
     return -1;
   }
   if (status == 1 && row) {
     PyObject *pyresult = mg_list_to_py_tuple(mg_result_row(result));
     if (!pyresult) {
       connection_discard_all(conn);
+      // the connection_handle_error mustn't be called here, as the error
+      // doesn't affect the status of the connection
       return -1;
     }
     *row = pyresult;
   }
+  assert(status == 0 || status == 1);
   return status;
 }
 

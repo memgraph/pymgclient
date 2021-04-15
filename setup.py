@@ -124,7 +124,7 @@ class BuildMgclientExt(build_ext):
         mgclient_source_path = os.path.join(pathlib.Path(
             __file__).absolute().parent, 'mgclient')
 
-        # CMake <3.13 versions doesn't support explicit build directory
+        # CMake <3.13 versions don't support explicit build directory
         prev_working_dir = os.getcwd()
         os.chdir(mgclient_build_path)
 

@@ -14,6 +14,7 @@
 
 import os
 import pathlib
+import shutil
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
@@ -67,6 +68,32 @@ class BuildMgclientExt(build_ext):
 
         super().run()
 
+    def get_cmake_coammnd(self):
+        cmake_env_var_name = 'PYMGCLIENT_CMAKE'
+        custom_cmake = os.getenv(cmake_env_var_name)
+        if custom_cmake is None:
+            # cmake3 is checked before cmake, because on CentOS cmake refers
+            # to CMake 2.*
+            for possible_cmake in ['cmake3', 'cmake']:
+                self.announce(
+                    f'Checking if {possible_cmake} can be used',
+                    level=log.INFO)
+
+                which_cmake = shutil.which(possible_cmake)
+                if which_cmake is not None:
+                    self.announce(
+                        f'Using {possible_cmake}', level=log.INFO)
+                    return os.path.abspath(which_cmake)
+
+                self.announce(
+                    f'{possible_cmake} is not accesible', level=log.INFO)
+            raise DistutilsExecError('Cannot found suitable cmake')
+        else:
+            self.announce(
+                f'Using the value of {cmake_env_var_name} for CMake, which is'
+                f'{custom_cmake}', level=log.INFO)
+            return custom_cmake
+
     def build_mgclient_for(self, extension: Extension):
         '''
         Builds mgclient library and configures the extension to be able to use
@@ -75,16 +102,7 @@ class BuildMgclientExt(build_ext):
         In this function all usage of mgclient refers to the client library
         and not the python extension module.
         '''
-        cmake_binary = 'cmake'
-
-        self.announce('Checking if cmake is available', level=log.INFO)
-
-        try:
-            self.spawn([cmake_binary, '--version'])
-        except DistutilsExecError as dee:
-            self.announce(
-                'CMake cannot be found! Is it installed?', level=log.FATAL)
-            raise dee
+        cmake_binary = self.get_cmake_coammnd()
 
         self.announce(
             'Preparing the build environment for mgclient', level=log.INFO)

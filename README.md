@@ -25,10 +25,12 @@ install it from sources you will need:
   - [Python](https://www.python.org/) 3.6 or newer header files
   - A C compiler supporting C11 standard
   - Preqrequisites of [mgclient](mgclient):
-    - [CMake](https://cmake.org/) version >= 3.8
-    - [OpenSSL](https://www.openssl.org/) version >= 1.0.2
+    - [CMake](https://cmake.org/) 3.8 or newer
+    - [OpenSSL](https://www.openssl.org/) 1.0.2 or newer
 
 Though [mgclient](mgclient) mentions Apple LLVM/clang as a build requirement, it doesn't hold for pymgclient, because it is only necessary for building the tests for mgclient. As pymgclient has its own tests, the tests of mgclient are not built when building pymgclient.
+
+By default pymgclient will try to use `cmake3` and `cmake` (in this order) to call CMake, if the `PYMGCLIENT_CMAKE` environment variable is not set. Otherwise the value of `PYMGCLIENT_CMAKE` will be used without further checks.
 
 Once prerequisites are met, you can install pymgclient using `pip` to download
 it from PyPI:

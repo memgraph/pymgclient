@@ -154,8 +154,7 @@ class BuildMgclientExt(build_ext):
             self.spawn([cmake_binary,
                         '--build', mgclient_build_path,
                         '--config', build_type,
-                        '--target', 'install',
-                        '--parallel'])
+                        '--target', 'install'])
         except DistutilsExecError as dee:
             self.announce(
                 'Error happened during building mgclient binaries!',

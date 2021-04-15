@@ -68,7 +68,7 @@ class BuildMgclientExt(build_ext):
 
         super().run()
 
-    def get_cmake_coammnd(self):
+    def get_cmake_command(self):
         cmake_env_var_name = 'PYMGCLIENT_CMAKE'
         custom_cmake = os.getenv(cmake_env_var_name)
         if custom_cmake is None:
@@ -102,7 +102,7 @@ class BuildMgclientExt(build_ext):
         In this function all usage of mgclient refers to the client library
         and not the python extension module.
         '''
-        cmake_binary = self.get_cmake_coammnd()
+        cmake_binary = self.get_cmake_command()
 
         self.announce(
             'Preparing the build environment for mgclient', level=log.INFO)

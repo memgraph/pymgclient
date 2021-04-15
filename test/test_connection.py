@@ -282,3 +282,21 @@ def test_commit_rollback_lazy(memgraph_server):
 
     assert cursor.fetchall() == [(1, )]
     assert conn.status == mgclient.CONN_STATUS_READY
+
+
+def test_autocommit_failure(memgraph_server):
+    host, port = memgraph_server
+    conn = mgclient.connect(host=host, port=port)
+    conn.autocommit = False
+
+    assert conn.status == mgclient.CONN_STATUS_READY
+    cursor = conn.cursor()
+    cursor.execute('RETURN 5')
+    assert conn.status == mgclient.CONN_STATUS_IN_TRANSACTION
+
+    with pytest.raises(mgclient.DatabaseError):
+        cursor.execute('SHOW INDEX INFO')
+
+    assert conn.status == mgclient.CONN_STATUS_READY
+    cursor.execute('RETURN 5')
+    assert conn.status == mgclient.CONN_STATUS_IN_TRANSACTION

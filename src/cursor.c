@@ -390,8 +390,9 @@ PyObject *cursor_fetchmany(CursorObject *cursor, PyObject *args,
       if (row == Py_None) {
         break;
       }
-      if (PyList_Append(results, row) < 0) {
-        Py_DECREF(row);
+      int append_result = PyList_Append(results, row);
+      Py_DECREF(row);
+      if (append_result < 0) {
         Py_DECREF(results);
         connection_discard_all(cursor->conn);
         cursor_reset(cursor);

@@ -297,15 +297,11 @@ PyObject *cursor_fetchone(CursorObject *cursor, PyObject *args) {
           connection_fetch(cursor->conn, NULL, &has_more_second);
     }
     if (fetch_status_first == -1 || fetch_status_second == -1) {
-      if (row) {
-        Py_DECREF(row);
-      }
+      Py_XDECREF(row);
       cursor_reset(cursor);
       return NULL;
     } else if (fetch_status_first == 0) {
-      if (row) {
-        Py_DECREF(row);
-      }
+      Py_XDECREF(row);
       if (has_more_first) {
         cursor->status = CURSOR_STATUS_EXECUTING;
       } else {

@@ -15,6 +15,7 @@
 # limitations under the License.
 
 
+import sys
 from common import start_memgraph, MEMGRAPH_PORT
 import mgclient
 import pytest
@@ -98,18 +99,60 @@ def test_list(memgraph_connection):
 
     cursor.execute("RETURN $value",
                    {'value': [1, 2, None, True, False, 'abc', []]})
-    assert cursor.fetchall() == [([1, 2, None, True, False, 'abc', []], )]
+    result = cursor.fetchall()
+    assert result == [([1, 2, None, True, False, 'abc', []], )]
+    value_from_result = result[0][0][6]
+    # This checks the reference number of the values in a mg_list are correct.
+    # Ref count should be 3, because:
+    #  * one reference because the list is referenced in result
+    #  * one reference because of value_from_result
+    #  * one temporary reference because sys.getrefcount increases the ref
+    #    count
+    assert sys.getrefcount(value_from_result) == 3
 
 
 def test_map(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()
+    key_in_a_map = '''
+    Another long name for the same reason
+    '''
+    value_in_a_map = [1, 2, 3]
+
     cursor.execute(
         "RETURN $value", {
             'value': {
-                'x': 1, 'y': 2, 'map': {
-                    'key': 'value'}}})
-    assert cursor.fetchall() == [({'x': 1, 'y': 2, 'map': {'key': 'value'}}, )]
+                'x': 1,
+                'y': 2,
+                'map': {key_in_a_map: 'value'},
+                'list': value_in_a_map
+            }})
+
+    result = cursor.fetchall()
+    assert result == [({
+        'x': 1,
+        'y': 2,
+        'map': {key_in_a_map: 'value'},
+        'list': value_in_a_map
+    },)]
+
+    value_in_a_map_from_result = result[0][0]['list']
+    # This checks if the reference number of the values in a mg_map are
+    # correct.
+    # Ref count should be 3, because:
+    #  * one reference because the list is referenced in result
+    #  * one reference because of value_in_a_map_from_result
+    #  * one temporary reference because sys.getrefcount increases the ref
+    #    count
+    assert sys.getrefcount(value_in_a_map_from_result) == 3
+    # This checks if the reference number of the keys in a mg_map are correct.
+    # Ref count should be 3, because:
+    #  * one reference because the string is referenced in result
+    #  * one reference because of key_in_the_map (refs to the same strings are
+    #    globally counted)
+    #  * one temporary reference because sys.getrefcount increases the ref
+    #    count
+    assert sys.getrefcount(key_in_a_map) == 3
 
 
 def test_node(memgraph_connection):
@@ -164,3 +207,22 @@ def test_path(memgraph_connection):
 
     with pytest.raises(ValueError):
         cursor.execute("RETURN $path", {'path': rows[0][5]})
+
+
+def test_tuple(memgraph_connection):
+    conn = memgraph_connection
+    cursor = conn.cursor()
+
+    cursor.execute("RETURN $value1, $value2", {'value1': [], 'value2': []})
+    result = cursor.fetchall()
+    assert result == [([], [])]
+    for i in [0, 1]:
+        value_in_tuple = result[0][i]
+        # This checks the reference number of the values in a tuple created
+        # from an mg_list are correct.
+        # Ref count should be 3, because:
+        #  * one reference because the list is referenced in result
+        #  * one reference because of value_in_tuple
+        #  * one temporary reference because sys.getrefcount increases the ref
+        #    count
+        assert sys.getrefcount(value_in_tuple) == 3

@@ -465,7 +465,7 @@ PyObject *cursor_fetchall(CursorObject *cursor, PyObject *args) {
         break;
       } else if (fetch_status == 1) {
         int append_result = PyList_Append(results, row);
-          Py_DECREF(row);
+        Py_DECREF(row);
         if (append_result < 0) {
           Py_DECREF(results);
           connection_discard_all(cursor->conn);

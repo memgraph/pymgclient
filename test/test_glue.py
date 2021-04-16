@@ -115,7 +115,7 @@ def test_map(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()
     key_in_a_map = '''
-    Another long name for the same reason
+    A long name because refs to strings are globally counted
     '''
     value_in_a_map = [1, 2, 3]
 

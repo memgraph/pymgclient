@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 import mgclient
 import pytest
 
@@ -223,6 +224,50 @@ class TestCursorInRegularConnection:
 
         cursor.execute('MATCH (n:NonExistingLabel) RETURN n')
         assert cursor.fetchmany() == []
+
+    def test_cursor_result_ref_counts(self, memgraph_server):
+        host, port = memgraph_server
+        conn = mgclient.connect(host=host, port=port)
+        cursor = conn.cursor()
+
+        cursor.execute('UNWIND [1, 2, 3, 4, 5] AS n RETURN n')
+
+        fetchone_result = cursor.fetchone()
+        # Refs are the following:
+        # 1. fetchone_result
+        # 2. temp reference in sys.getrefcount
+        # 3. cursor->rows
+        assert sys.getrefcount(fetchone_result) == 3
+
+        fetchmany_result = cursor.fetchmany(2)
+        # Refs are the following:
+        # 1. fetchmany_result
+        # 2. temp reference in sys.getrefcount
+        assert sys.getrefcount(fetchmany_result) == 2
+        row1 = fetchmany_result[0]
+        row2 = fetchmany_result[1]
+        del fetchmany_result
+        # Refs are the following:
+        # 1. row{1,2}
+        # 2. temp reference in sys.getrefcount
+        # 3. cursor->rows
+        assert sys.getrefcount(row1) == 3
+        assert sys.getrefcount(row2) == 3
+
+        fetchall_result = cursor.fetchall()
+        # Refs are the following:
+        # 1. fetchall_result
+        # 2. temp reference in sys.getrefcount
+        assert sys.getrefcount(fetchall_result) == 2
+        row1 = fetchall_result[0]
+        row2 = fetchall_result[1]
+        del fetchall_result
+        # Refs are the following:
+        # 1. row{1,2}
+        # 2. temp reference in sys.getrefcount
+        # 3. cursor->rows
+        assert sys.getrefcount(row1) == 3
+        assert sys.getrefcount(row2) == 3
 
 
 class TestCursorInAsyncConnection:
@@ -440,3 +485,44 @@ class TestCursorInAsyncConnection:
 
         cursor.execute('MATCH (n:NonExistingLabel) RETURN n')
         assert cursor.fetchmany() == []
+
+    def test_cursor_result_ref_counts(self, memgraph_server):
+        host, port = memgraph_server
+        conn = mgclient.connect(host=host, port=port, lazy=True)
+        cursor = conn.cursor()
+
+        cursor.execute('UNWIND [1, 2, 3, 4, 5] AS n RETURN n')
+
+        fetchone_result = cursor.fetchone()
+        # Refs are the following:
+        # 1. fetchone_result
+        # 2. temp reference in sys.getrefcount
+        assert sys.getrefcount(fetchone_result) == 2
+
+        fetchmany_result = cursor.fetchmany(2)
+        # Refs are the following:
+        # 1. fetchmany_result
+        # 2. temp reference in sys.getrefcount
+        assert sys.getrefcount(fetchmany_result) == 2
+        row1 = fetchmany_result[0]
+        row2 = fetchmany_result[1]
+        del fetchmany_result
+        # Refs are the following:
+        # 1. row{1,2}
+        # 2. temp reference in sys.getrefcount
+        assert sys.getrefcount(row1) == 2
+        assert sys.getrefcount(row2) == 2
+
+        fetchall_result = cursor.fetchall()
+        # Refs are the following:
+        # 1. fetchall_result
+        # 2. temp reference in sys.getrefcount
+        assert sys.getrefcount(fetchall_result) == 2
+        row1 = fetchall_result[0]
+        row2 = fetchall_result[1]
+        del fetchall_result
+        # Refs are the following:
+        # 1. row{1,2}
+        # 2. temp reference in sys.getrefcount
+        assert sys.getrefcount(row1) == 2
+        assert sys.getrefcount(row2) == 2

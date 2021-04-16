@@ -218,11 +218,11 @@ PyObject *cursor_execute(CursorObject *cursor, PyObject *args) {
 
   PyObject *row;
   while ((status = connection_fetch(cursor->conn, &row, NULL)) == 1) {
-    if (PyList_Append(cursor->rows, row) < 0) {
-      Py_DECREF(row);
+    int append_result = PyList_Append(cursor->rows, row);
+    Py_DECREF(row);
+    if (append_result < 0) {
       goto discard_all;
     }
-    Py_DECREF(row);
   }
   if (status < 0) {
     goto cleanup;

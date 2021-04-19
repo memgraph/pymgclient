@@ -24,8 +24,8 @@ Bug Fixes
 
   * Fix various memory leaks.
   * Fix transaction handling when an error happens in explicit transactional
-    mode. The running transaction is reset and a new one is going to be started
-    with the next command.
+    mode. The running transaction is reset and a new one is started with the
+    next command.
 
 ######
 0.1.0

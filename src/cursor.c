@@ -218,11 +218,11 @@ PyObject *cursor_execute(CursorObject *cursor, PyObject *args) {
 
   PyObject *row;
   while ((status = connection_fetch(cursor->conn, &row, NULL)) == 1) {
-    if (PyList_Append(cursor->rows, row) < 0) {
-      Py_DECREF(row);
+    int append_result = PyList_Append(cursor->rows, row);
+    Py_DECREF(row);
+    if (append_result < 0) {
       goto discard_all;
     }
-    Py_DECREF(row);
   }
   if (status < 0) {
     goto cleanup;
@@ -297,15 +297,11 @@ PyObject *cursor_fetchone(CursorObject *cursor, PyObject *args) {
           connection_fetch(cursor->conn, NULL, &has_more_second);
     }
     if (fetch_status_first == -1 || fetch_status_second == -1) {
-      if (row) {
-        Py_DECREF(row);
-      }
+      Py_XDECREF(row);
       cursor_reset(cursor);
       return NULL;
     } else if (fetch_status_first == 0) {
-      if (row) {
-        Py_DECREF(row);
-      }
+      Py_XDECREF(row);
       if (has_more_first) {
         cursor->status = CURSOR_STATUS_EXECUTING;
       } else {
@@ -390,8 +386,9 @@ PyObject *cursor_fetchmany(CursorObject *cursor, PyObject *args,
       if (row == Py_None) {
         break;
       }
-      if (PyList_Append(results, row) < 0) {
-        Py_DECREF(row);
+      int append_result = PyList_Append(results, row);
+      Py_DECREF(row);
+      if (append_result < 0) {
         Py_DECREF(results);
         connection_discard_all(cursor->conn);
         cursor_reset(cursor);
@@ -464,8 +461,9 @@ PyObject *cursor_fetchall(CursorObject *cursor, PyObject *args) {
         cursor->status = CURSOR_STATUS_READY;
         break;
       } else if (fetch_status == 1) {
-        if (PyList_Append(results, row) < 0) {
-          Py_DECREF(row);
+        int append_result = PyList_Append(results, row);
+        Py_DECREF(row);
+        if (append_result < 0) {
           Py_DECREF(results);
           connection_discard_all(cursor->conn);
           cursor_reset(cursor);

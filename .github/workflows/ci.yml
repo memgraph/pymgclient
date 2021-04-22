@@ -56,7 +56,7 @@ jobs:
           update: true
           install: git mingw-w64-${{ matrix.msystem_arch }}-toolchain mingw-w64-${{ matrix.msystem_arch }}-cmake mingw-w64-${{ matrix.msystem_arch }}-openssl
       - name: Add mingw64 to PATH
-        run: echo "C:\\msys64\\mingw64\\bin" >> $GITHUB_PATH
+        run: echo "C:/msys64/mingw64/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
       - name: Fix gcc
         run: choco uninstall mingw -y
       - name: Build pymgclient

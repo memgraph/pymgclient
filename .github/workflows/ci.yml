@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix:
         include: [
-          { msystem: MINGW64, msys_version: w64, msys_arch: x86_64, mgversion: "1.4.0", python_arch: "x64", python_version: "3.8", python_abi_version: "cp36"}
+          { msystem: MINGW64, msys_version: w64, msys_arch: x86_64, mgversion: "1.4.0", python_arch: "x64", python_version: "3.8", python_abi_version: "cp36"},
           { msystem: MINGW32, msys_version: w32, msys_arch: i686, mgversion: "1.4.0", python_arch: "x86", python_version: "3.8", python_abi_version: "cp36"}
         ]
     env:
@@ -64,3 +64,8 @@ jobs:
         run: choco uninstall mingw -y
       - name: Build pymgclient
         run: python setup.py bdist_wheel --py-limited-api=${{ matrix.python_abi_version }}
+      - name: Save wheel package
+        uses: actions/upload-artifact@v2
+        with:
+          name: "Windows ${{matrix.python_arch}} wheel"
+          path: pymgclient*.whl

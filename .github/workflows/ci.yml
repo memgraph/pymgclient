@@ -53,5 +53,9 @@ jobs:
           install: git mingw-w64-${{ matrix.msystem_arch }}-toolchain mingw-w64-${{ matrix.msystem_arch }}-cmake mingw-w64-${{ matrix.msystem_arch }}-openssl
       - name: Add mingw64 to PATH
         run: echo "C:\\msys64\\mingw64\\bin" >> $GITHUB_PATH
+      - name: Set CC and CXX
+        run: |
+          echo "CC=C:\\msys64\\mingw64\\bin\\gcc" >> $GITHUB_ENV
+          echo "CXX=C:\\msys64\\mingw64\\bin\\g++" >> $GITHUB_ENV
       - name: Build pymgclient
-        run: CC=C:\msys64\mingw64\bin\gcc CXX=C:\msys64\mingw64\bin\g++ python setup.py bdist_wheel --py-limited-api=${{ matrix.python_abi_version }}
+        run: python setup.py bdist_wheel --py-limited-api=${{ matrix.python_abi_version }}

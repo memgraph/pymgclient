@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 import os
 import pathlib
 import shutil
@@ -20,6 +21,14 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils import log
 from distutils.core import DistutilsExecError
+
+
+IS_WINDOWS = sys.platform == 'win32'
+
+if IS_WINDOWS:
+    # https://stackoverflow.com/a/57109148/6639989
+    import distutils.cygwinccompiler
+    distutils.cygwinccompiler.get_msvcr = lambda: []
 
 with open('README.md', 'r') as fh:
     readme = fh.read()
@@ -68,7 +77,7 @@ class BuildMgclientExt(build_ext):
 
         super().run()
 
-    def get_cmake_command(self):
+    def get_cmake_binary(self):
         cmake_env_var_name = 'PYMGCLIENT_CMAKE'
         custom_cmake = os.getenv(cmake_env_var_name)
         if custom_cmake is None:
@@ -82,7 +91,7 @@ class BuildMgclientExt(build_ext):
                 which_cmake = shutil.which(possible_cmake)
                 if which_cmake is not None:
                     self.announce(
-                        f'Using {possible_cmake}', level=log.INFO)
+                        f'Using {which_cmake}', level=log.INFO)
                     return os.path.abspath(which_cmake)
 
                 self.announce(
@@ -94,6 +103,23 @@ class BuildMgclientExt(build_ext):
                 f'{custom_cmake}', level=log.INFO)
             return custom_cmake
 
+    def get_cmake_generator(self):
+        if IS_WINDOWS:
+            return 'MinGW Makefiles'
+        return None
+
+    def get_extra_libraries(self):
+        extra_libs = ['ssl']
+        if IS_WINDOWS:
+            extra_libs.extend(['crypto', 'ws2_32'])
+        return extra_libs
+
+    def get_extra_link_args(self):
+        extra_link_args = []
+        if IS_WINDOWS:
+            extra_link_args.append('-Wl,--default-image-base-low')
+        return extra_link_args
+
     def build_mgclient_for(self, extension: Extension):
         '''
         Builds mgclient library and configures the extension to be able to use
@@ -102,7 +128,7 @@ class BuildMgclientExt(build_ext):
         In this function all usage of mgclient refers to the client library
         and not the python extension module.
         '''
-        cmake_binary = self.get_cmake_command()
+        cmake_binary = self.get_cmake_binary()
 
         self.announce(
             'Preparing the build environment for mgclient', level=log.INFO)
@@ -133,16 +159,20 @@ class BuildMgclientExt(build_ext):
         build_type = 'Debug' if self.debug else 'Release'
         install_libdir = 'lib'
         install_includedir = 'include'
+        cmake_config_command = [cmake_binary,
+                                mgclient_source_path,
+                                f'-DCMAKE_INSTALL_LIBDIR={install_libdir}',
+                                f'-DCMAKE_INSTALL_INCLUDEDIR={install_includedir}',
+                                f'-DCMAKE_BUILD_TYPE={build_type}',
+                                f'-DCMAKE_INSTALL_PREFIX={mgclient_install_path}',
+                                '-DBUILD_TESTING=OFF',
+                                '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']
+        generator = self.get_cmake_generator()
+        if generator is not None:
+            cmake_config_command.append(f'-G{generator}')
 
         try:
-            self.spawn([cmake_binary,
-                        mgclient_source_path,
-                        f'-DCMAKE_INSTALL_LIBDIR={install_libdir}',
-                        f'-DCMAKE_INSTALL_INCLUDEDIR={install_includedir}',
-                        f'-DCMAKE_BUILD_TYPE={build_type}',
-                        f'-DCMAKE_INSTALL_PREFIX={mgclient_install_path}',
-                        '-DBUILD_TESTING=OFF',
-                        '-DCMAKE_POSITION_INDEPENDENT_CODE=ON'])
+            self.spawn(cmake_config_command)
         except DistutilsExecError as dee:
             self.announce('Error happened during configuring mgclient! Is '
                           'OpenSSL installed correctly?')
@@ -175,8 +205,10 @@ class BuildMgclientExt(build_ext):
             mgclient_install_path, install_includedir))
         extension.extra_objects.append(os.path.join(
             mgclient_install_path, install_libdir, 'libmgclient.a'))
-        extension.libraries.append('ssl')
+        extension.libraries.extend(self.get_extra_libraries())
         extension.depends.extend(mgclient_sources)
+        extension.define_macros.append(('MGCLIENT_STATIC_DEFINE', ''))
+        extension.extra_link_args.extend(self.get_extra_link_args())
 
 
 setup(name='pymgclient',

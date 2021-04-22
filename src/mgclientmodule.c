@@ -71,7 +71,9 @@ PyDoc_STRVAR(
     "Exception raised in a case a method or database API was used which is not "
     "supported by the database.");
 
-static struct {
+
+int add_module_exceptions(PyObject *module) {
+  struct {
   const char *name;
   PyObject **exc;
   PyObject **base;
@@ -94,7 +96,6 @@ static struct {
      NotSupportedError_doc},
     {NULL, NULL, NULL, NULL}};
 
-int add_module_exceptions(PyObject *module) {
   for (size_t i = 0; module_exceptions[i].name; ++i) {
     *module_exceptions[i].exc = NULL;
   }

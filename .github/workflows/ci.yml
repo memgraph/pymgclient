@@ -65,4 +65,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: "Windows ${{matrix.python_arch}} wheel"
-          path: pymgclient*.whl
+          path: dist/pymgclient*.whl

@@ -3,7 +3,7 @@ name: CI
 on: [push]
 
 jobs:
-  build_test:
+  build_and_test_ubuntu:
     strategy:
      matrix:
         platform: [ubuntu-18.04]
@@ -28,3 +28,28 @@ jobs:
         MEMGRAPH_PORT=10000 python3 -m pytest
         cd docs
         make html
+
+  build_windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include: [
+          { msystem: MINGW64, msystem_arch: x86_64, mgversion: "1.4.0", python_arch: "win64", python_version: "3.8", python_abi_version: "cp36"}
+        ]
+    steps:
+      - name: Set-up repository
+        uses: actions/checkout@v2
+      - name: Setup python
+        uses: actions/setup-python@v2.2.2
+        with:
+          python-version: ${{ matrix.python_version }}
+          architecture: ${{ matrix.python_arch }}
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          update: true
+          install: git mingw-w64-${{ matrix.msystem_arch }}-toolchain mingw-w64-${{ matrix.msystem_arch }}-cmake mingw-w64-${{ matrix.msystem_arch }}-openssl
+      - name: Add mingw64 to PATH
+        run: echo "C:\\msys64\\mingw64\\bin" >> $GITHUB_PATH
+      - name: Build pymgclient
+        run: python setup.py bdist_wheel --py-limited-api=${{ matrix.python_abi_version }}

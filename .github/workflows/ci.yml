@@ -34,12 +34,12 @@ jobs:
     strategy:
       matrix:
         include: [
-          { msystem: MINGW64, msystem_arch: x86_64, mgversion: "1.4.0", python_arch: "x64", python_version: "3.8", python_abi_version: "cp36"}
+          { msystem: MINGW64, msys_version: w64, msys_arch: x86_64, mgversion: "1.4.0", python_arch: "x64", python_version: "3.8", python_abi_version: "cp36"}
+          { msystem: MINGW32, msys_version: w32, msys_arch: i686, mgversion: "1.4.0", python_arch: "x86", python_version: "3.8", python_abi_version: "cp36"}
         ]
     env:
-      CC: "C:\\msys64\\mingw64\\bin\\gcc"
-      CXX: "C:\\msys64\\mingw64\\bin\\g++"
-      CMAKE_MAKE_PROGRAM: "C:\\msys64\\mingw64\\bin\\mingw32-make"
+      CC: "C:\\msys64\\ming${{ matrix.msys_version }}\\bin\\gcc"
+      CXX: "C:\\msys64\\ming${{ matrix.msys_version }}\\bin\\g++"
     steps:
       - uses: actions/checkout@v2
         with:
@@ -54,11 +54,11 @@ jobs:
         with:
           msystem: ${{ matrix.msystem }}
           update: true
-          install: git mingw-w64-${{ matrix.msystem_arch }}-toolchain mingw-w64-${{ matrix.msystem_arch }}-cmake mingw-w64-${{ matrix.msystem_arch }}-openssl
-      - name: Add mingw64 to PATH
+          install: git mingw-${{ matrix.msys_version }}-${{ matrix.msys_arch }}-toolchain mingw-${{ matrix.msys_version }}-${{ matrix.msys_arch }}-cmake mingw-${{ matrix.msys_version }}-${{ matrix.msys_arch }}-openssl
+      - name: Add mingw-${{ matrix.msys_version }} to PATH
         run: |
           # First make sure python would resolve to the windows native python, not mingw one
-          echo "C:/msys64/mingw64/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+          echo "C:/msys64/ming${{ matrix.msys_version }}/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
           echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
       - name: Fix gcc
         run: choco uninstall mingw -y

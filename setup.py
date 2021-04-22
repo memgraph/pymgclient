@@ -15,6 +15,7 @@
 import sys
 import os
 import pathlib
+import platform
 import shutil
 
 from setuptools import setup, Extension
@@ -24,6 +25,7 @@ from distutils.core import DistutilsExecError, DistutilsPlatformError
 
 
 IS_WINDOWS = sys.platform == 'win32'
+IS_X64 = platform.architecture() == '64bit'
 
 if IS_WINDOWS:
     # https://stackoverflow.com/a/57109148/6639989
@@ -124,7 +126,7 @@ class BuildMgclientExt(build_ext):
 
     def get_extra_link_args(self):
         extra_link_args = []
-        if IS_WINDOWS:
+        if IS_WINDOWS and IS_X64:
             extra_link_args.append('-Wl,--default-image-base-low')
         return extra_link_args
 

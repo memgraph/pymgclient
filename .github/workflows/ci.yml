@@ -55,12 +55,12 @@ jobs:
           msystem: MINGW${{ matrix.mingw_arch }}
           update: true
           install: git mingw-w64-${{ matrix.msys_arch }}-toolchain mingw-w64-${{ matrix.msys_arch }}-cmake mingw-w64-${{ matrix.msys_arch }}-openssl
-      - name: Add ming${{ matrix.mingw_arch }} to PATH
+      - name: Add mingw${{ matrix.mingw_arch }} to PATH
         run: |
           # First make sure python would resolve to the windows native python, not mingw one
           echo "C:/msys64/ming${{ matrix.mingw_arch }}/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
           echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-      - name: Fix gcc
+      - name: Remove chocolatey gcc
         run: choco uninstall mingw -y
       - name: Build pymgclient
         run: python setup.py bdist_wheel --py-limited-api=${{ matrix.python_abi_version }}

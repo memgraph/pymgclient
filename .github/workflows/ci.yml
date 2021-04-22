@@ -33,10 +33,12 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        include: [
-          { mingw_arch: "64", msys_arch: x86_64, mgversion: "1.4.0", python_arch: "x64", python_version: "3.8", python_abi_version: "cp36"},
-          { mingw_arch: "32", msys_arch: i686, mgversion: "1.4.0", python_arch: "x86", python_version: "3.8", python_abi_version: "cp36"}
-        ]
+        arch:
+          - { mingw: "64", msys: x86_64, python: "x64"},
+          - { mingw: "32", msys: i686, python: "x86"}
+        python_version:
+          - 3.6
+          - 3.9
     steps:
       - uses: actions/checkout@v2
         with:
@@ -45,24 +47,24 @@ jobs:
         uses: actions/setup-python@v2.2.2
         with:
           python-version: ${{ matrix.python_version }}
-          architecture: ${{ matrix.python_arch }}
+          architecture: ${{ matrix.arch.python }}
       - run: python -m pip install -U pip wheel setuptools
       - uses: msys2/setup-msys2@v2
         with:
-          msystem: MINGW${{ matrix.mingw_arch }}
+          msystem: MINGW${{ matrix.arch.mingw }}
           update: true
-          install: git mingw-w64-${{ matrix.msys_arch }}-toolchain mingw-w64-${{ matrix.msys_arch }}-cmake mingw-w64-${{ matrix.msys_arch }}-openssl
-      - name: Add mingw${{ matrix.mingw_arch }} to PATH
+          install: git mingw-w64-${{ matrix.arch.msys }}-toolchain mingw-w64-${{ matrix.arch.msys }}-cmake mingw-w64-${{ matrix.arch.msys }}-openssl
+      - name: Add mingw${{ matrix.arch.mingw }} to PATH
         run: |
           # First make sure python would resolve to the windows native python, not mingw one
-          echo "C:/msys64/mingw${{ matrix.mingw_arch }}/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+          echo "C:/msys64/mingw${{ matrix.arch.mingw }}/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
           echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
       - name: Remove chocolatey gcc
         run: choco uninstall mingw -y
       - name: Build pymgclient
-        run: python setup.py bdist_wheel --py-limited-api=${{ matrix.python_abi_version }}
+        run: python setup.py bdist_wheel
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:
-          name: pymgclient-win${{matrix.mingw_arch }}-${{matrix.python_version }}-${{matrix.python_abi_version }}
+          name: pymgclient-win${{matrix.arch.mingw }}-${{matrix.python_version }}
           path: dist/

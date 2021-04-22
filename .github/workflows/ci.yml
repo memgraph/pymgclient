@@ -37,8 +37,8 @@ jobs:
           { msystem: MINGW64, msystem_arch: x86_64, mgversion: "1.4.0", python_arch: "x64", python_version: "3.8", python_abi_version: "cp36"}
         ]
     env:
-      - CC: "C:\\msys64\\mingw64\\bin\\gcc"
-      - CXX: "C:\\msys64\\mingw64\\bin\\g++"
+      CC: "C:\\msys64\\mingw64\\bin\\gcc"
+      CXX: "C:\\msys64\\mingw64\\bin\\g++"
     steps:
       - uses: actions/checkout@v2
         with:

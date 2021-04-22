@@ -37,8 +37,9 @@ jobs:
           { msystem: MINGW64, msystem_arch: x86_64, mgversion: "1.4.0", python_arch: "win64", python_version: "3.8", python_abi_version: "cp36"}
         ]
     steps:
-      - name: Set-up repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
       - name: Setup python
         uses: actions/setup-python@v2.2.2
         with:

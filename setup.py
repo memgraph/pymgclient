@@ -20,7 +20,7 @@ import shutil
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils import log
-from distutils.core import DistutilsExecError
+from distutils.core import DistutilsExecError, DistutilsPlatformError
 
 
 IS_WINDOWS = sys.platform == 'win32'
@@ -74,6 +74,14 @@ class BuildMgclientExt(build_ext):
         for extension in self.extensions:
             if extension.name == EXTENSION_NAME:
                 self.build_mgclient_for(extension)
+
+        if IS_WINDOWS:
+            if self.compiler is None:
+                self.compiler = 'mingw32'
+            elif self.compiler != 'mingw32':
+                raise DistutilsPlatformError(
+                    f'The specified compiler {self.compiler} is not supported '
+                    'on windows, only mingw32 is supported.')
 
         super().run()
 

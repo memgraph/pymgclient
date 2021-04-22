@@ -64,5 +64,5 @@ jobs:
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:
-          name: "Windows ${{matrix.python_arch}} wheel"
-          path: dist/pymgclient*.whl
+          name: pymgclient-win${{matrix.mingw_arch }}-${{matrix.python_version }}-${{matrix.python_abi_version }}
+          path: dist/

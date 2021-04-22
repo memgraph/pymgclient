@@ -54,4 +54,4 @@ jobs:
       - name: Add mingw64 to PATH
         run: echo "C:\\msys64\\mingw64\\bin" >> $GITHUB_PATH
       - name: Build pymgclient
-        run: python setup.py bdist_wheel --py-limited-api=${{ matrix.python_abi_version }}
+        run: CC=C:\msys64\mingw64\bin\gcc CXX=C:\msys64\mingw64\bin\g++ python setup.py bdist_wheel --py-limited-api=${{ matrix.python_abi_version }}

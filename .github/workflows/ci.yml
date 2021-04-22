@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix:
         include: [
-          { msystem: MINGW64, msystem_arch: x86_64, mgversion: "1.4.0", python_arch: "win64", python_version: "3.8", python_abi_version: "cp36"}
+          { msystem: MINGW64, msystem_arch: x86_64, mgversion: "1.4.0", python_arch: "x64", python_version: "3.8", python_abi_version: "cp36"}
         ]
     steps:
       - uses: actions/checkout@v2

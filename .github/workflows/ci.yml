@@ -39,6 +39,7 @@ jobs:
     env:
       CC: "C:\\msys64\\mingw64\\bin\\gcc"
       CXX: "C:\\msys64\\mingw64\\bin\\g++"
+      CMAKE_MAKE_PROGRAM: "C:\\msys64\\mingw64\\bin\\mingw32-make"
     steps:
       - uses: actions/checkout@v2
         with:

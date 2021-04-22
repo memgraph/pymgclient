@@ -37,9 +37,6 @@ jobs:
           { mingw_arch: "64", msys_arch: x86_64, mgversion: "1.4.0", python_arch: "x64", python_version: "3.8", python_abi_version: "cp36"},
           { mingw_arch: "32", msys_arch: i686, mgversion: "1.4.0", python_arch: "x86", python_version: "3.8", python_abi_version: "cp36"}
         ]
-    env:
-      CC: "C:\\msys64\\ming${{ matrix.mingw_arch }}\\bin\\gcc"
-      CXX: "C:\\msys64\\ming${{ matrix.mingw_arch }}\\bin\\g++"
     steps:
       - uses: actions/checkout@v2
         with:
@@ -58,7 +55,7 @@ jobs:
       - name: Add mingw${{ matrix.mingw_arch }} to PATH
         run: |
           # First make sure python would resolve to the windows native python, not mingw one
-          echo "C:/msys64/ming${{ matrix.mingw_arch }}/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+          echo "C:/msys64/mingw${{ matrix.mingw_arch }}/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
           echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
       - name: Remove chocolatey gcc
         run: choco uninstall mingw -y

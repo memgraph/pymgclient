@@ -74,11 +74,11 @@ PyDoc_STRVAR(
 
 int add_module_exceptions(PyObject *module) {
   struct {
-  const char *name;
-  PyObject **exc;
-  PyObject **base;
-  const char *docstring;
-} module_exceptions[] = {
+    const char *name;
+    PyObject **exc;
+    PyObject **base;
+    const char *docstring;
+  } module_exceptions[] = {
     {"mgclient.Warning", &Warning, &PyExc_Exception, Warning_doc},
     {"mgclient.Error", &Error, &PyExc_Exception, Error_doc},
     {"mgclient.InterfaceError", &InterfaceError, &Error, InterfaceError_doc},
@@ -299,6 +299,9 @@ PyMODINIT_FUNC PyInit_mgclient(void) {
     return NULL;
   }
   if (add_module_types(m) < 0) {
+    return NULL;
+  }
+  if (mg_init() != MG_SUCCESS) {
     return NULL;
   }
   return m;

@@ -25,7 +25,7 @@ from distutils.core import DistutilsExecError, DistutilsPlatformError
 
 
 IS_WINDOWS = sys.platform == 'win32'
-IS_X64 = platform.architecture() == '64bit'
+IS_X64 = platform.architecture()[0] == '64bit'
 
 if IS_WINDOWS:
     # https://stackoverflow.com/a/57109148/6639989

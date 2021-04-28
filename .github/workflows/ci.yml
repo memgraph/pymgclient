@@ -60,7 +60,10 @@ jobs:
           echo "C:/msys64/mingw${{ matrix.arch.mingw }}/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
           echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
       - name: Remove chocolatey gcc
-        run: choco uninstall mingw -y
+        run: |
+          # The python build command should be executed in the general windows shell where the choco-installed mingw conflicts with
+          # the mingw installed by setup-msys action, because they are both in the PATH.
+          choco uninstall mingw -y
       - name: Build pymgclient
         run: python setup.py bdist_wheel
       - name: Save wheel package

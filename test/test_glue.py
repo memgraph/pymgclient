@@ -16,7 +16,7 @@
 
 
 import sys
-from common import start_memgraph, MEMGRAPH_PORT
+from common import start_memgraph, Memgraph
 import mgclient
 import pytest
 
@@ -24,7 +24,8 @@ import pytest
 @pytest.fixture(scope="function")
 def memgraph_connection():
     memgraph = start_memgraph()
-    conn = mgclient.connect(host="127.0.0.1", port=MEMGRAPH_PORT)
+    conn = mgclient.connect(
+        host=memgraph.host, port=memgraph.port, sslmode=memgraph.sslmode())
     conn.autocommit = True
     yield conn
 

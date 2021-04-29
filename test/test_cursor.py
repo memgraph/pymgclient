@@ -22,27 +22,29 @@ from common import start_memgraph, MEMGRAPH_PORT
 @pytest.fixture(scope="function")
 def memgraph_server():
     memgraph = start_memgraph()
-    yield "127.0.0.1", MEMGRAPH_PORT
+    yield memgraph.host, memgraph.port, memgraph.sslmode(), memgraph.is_long_running
 
     memgraph.kill()
 
 
 def test_cursor_visibility(memgraph_server):
-    host, port = memgraph_server
-    conn = mgclient.connect(host=host, port=port)
+    host, port, sslmode, _ = memgraph_server
+    conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
 
     cursor1 = conn.cursor()
+    cursor1.execute("MATCH (n) RETURN count(n)")
+    original_count = cursor1.fetchall()[0][0]
     cursor1.execute("CREATE (:Node)")
 
     cursor2 = conn.cursor()
     cursor2.execute("MATCH (n) RETURN count(n)")
-    assert cursor2.fetchall() == [(1, )]
+    assert cursor2.fetchall() == [(original_count + 1, )]
 
 
 class TestCursorInRegularConnection:
     def test_execute_closed_connection(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
 
         cursor = conn.cursor()
         conn.close()
@@ -51,8 +53,8 @@ class TestCursorInRegularConnection:
             cursor.execute("RETURN 100")
 
     def test_cursor_close(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
 
         cursor = conn.cursor()
         cursor.execute("UNWIND range(1, 10) AS n RETURN n")
@@ -81,8 +83,8 @@ class TestCursorInRegularConnection:
             cursor.setoutputsizes(100)
 
     def test_cursor_fetchone(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
 
         cursor = conn.cursor()
 
@@ -102,8 +104,8 @@ class TestCursorInRegularConnection:
         assert cursor.fetchone() is None
 
     def test_cursor_fetchmany(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
 
         cursor = conn.cursor()
 
@@ -131,8 +133,8 @@ class TestCursorInRegularConnection:
         assert cursor.fetchone() is None
 
     def test_cursor_fetchall(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
 
         cursor = conn.cursor()
 
@@ -152,8 +154,8 @@ class TestCursorInRegularConnection:
         assert cursor.fetchone() is None
 
     def test_cursor_multiple_queries(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
 
         cursor1 = conn.cursor()
         cursor2 = conn.cursor()
@@ -166,8 +168,8 @@ class TestCursorInRegularConnection:
             assert cursor2.fetchone() == (n, )
 
     def test_cursor_syntax_error(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute("RETURN 100")
@@ -179,8 +181,8 @@ class TestCursorInRegularConnection:
             cursor.fetchall()
 
     def test_cursor_runtime_error(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute("RETURN 100")
@@ -194,8 +196,8 @@ class TestCursorInRegularConnection:
         assert cursor.fetchall() == [(200, )]
 
     def test_cursor_description(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute("RETURN 5 AS x, 6 AS y")
@@ -209,8 +211,8 @@ class TestCursorInRegularConnection:
         assert cursor.description is None
 
     def test_cursor_fetchone_without_result(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute('MATCH (n:NonExistingLabel) RETURN n')
@@ -218,16 +220,16 @@ class TestCursorInRegularConnection:
         assert result is None
 
     def test_cursor_fetchmany_without_result(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute('MATCH (n:NonExistingLabel) RETURN n')
         assert cursor.fetchmany() == []
 
     def test_cursor_result_ref_counts(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute('UNWIND [1, 2, 3, 4, 5] AS n RETURN n')
@@ -272,8 +274,9 @@ class TestCursorInRegularConnection:
 
 class TestCursorInAsyncConnection:
     def test_cursor_close(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port, lazy=True)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port,
+                                lazy=True, sslmode=sslmode)
 
         cursor = conn.cursor()
         cursor.execute("UNWIND range(1, 10) AS n RETURN n")
@@ -319,8 +322,9 @@ class TestCursorInAsyncConnection:
             cursor.setoutputsizes(100)
 
     def test_cursor_multiple_queries(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port, lazy=True)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port,
+                                lazy=True, sslmode=sslmode)
 
         cursor1 = conn.cursor()
         cursor2 = conn.cursor()
@@ -336,8 +340,9 @@ class TestCursorInAsyncConnection:
             cursor2.fetchall()
 
     def test_cursor_fetchone(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port, lazy=True)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port,
+                                lazy=True, sslmode=sslmode)
 
         cursor = conn.cursor()
 
@@ -357,8 +362,9 @@ class TestCursorInAsyncConnection:
         assert cursor.fetchone() is None
 
     def test_cursor_fetchmany(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port, lazy=True)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port,
+                                lazy=True, sslmode=sslmode)
 
         cursor = conn.cursor()
 
@@ -386,8 +392,9 @@ class TestCursorInAsyncConnection:
         assert cursor.fetchone() is None
 
     def test_cursor_fetchall(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port, lazy=True)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port,
+                                lazy=True, sslmode=sslmode)
 
         cursor = conn.cursor()
 
@@ -407,8 +414,9 @@ class TestCursorInAsyncConnection:
         assert cursor.fetchone() is None
 
     def test_cursor_syntax_error(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port, lazy=True)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port,
+                                lazy=True, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute("RETURN 100")
@@ -421,8 +429,9 @@ class TestCursorInAsyncConnection:
             cursor.fetchall()
 
     def test_cursor_runtime_error(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port, lazy=True)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port,
+                                lazy=True, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute("RETURN 100")
@@ -448,8 +457,9 @@ class TestCursorInAsyncConnection:
             cursor.fetchall()
 
     def test_cursor_description(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port, lazy=True)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port,
+                                lazy=True, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute("RETURN 5 AS x, 6 AS y")
@@ -470,8 +480,9 @@ class TestCursorInAsyncConnection:
         assert cursor.description is None
 
     def test_cursor_fetchone_without_result(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port, lazy=True)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port,
+                                lazy=True, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute('MATCH (n:NonExistingLabel) RETURN n')
@@ -479,16 +490,18 @@ class TestCursorInAsyncConnection:
         assert result is None
 
     def test_cursor_fetchmany_without_result(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port, lazy=True)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port,
+                                lazy=True, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute('MATCH (n:NonExistingLabel) RETURN n')
         assert cursor.fetchmany() == []
 
     def test_cursor_result_ref_counts(self, memgraph_server):
-        host, port = memgraph_server
-        conn = mgclient.connect(host=host, port=port, lazy=True)
+        host, port, sslmode, _ = memgraph_server
+        conn = mgclient.connect(host=host, port=port,
+                                lazy=True, sslmode=sslmode)
         cursor = conn.cursor()
 
         cursor.execute('UNWIND [1, 2, 3, 4, 5] AS n RETURN n')

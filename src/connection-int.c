@@ -133,15 +133,21 @@ int connection_fetch(ConnectionObject *conn, PyObject **row, int *has_more) {
 
   mg_result *result;
   int status = mg_session_fetch(conn->session, &result);
-  if (status == 0 && has_more) {
+  if (status == 0) {
     const mg_map *mg_summary = mg_result_summary(result);
     const mg_value *mg_has_more = mg_map_at(mg_summary, "has_more");
-    *has_more = mg_value_bool(mg_has_more);
+    const int my_has_more = mg_value_bool(mg_has_more);
+    if (!my_has_more) {
+      conn->status =
+          conn->autocommit ? CONN_STATUS_READY : CONN_STATUS_IN_TRANSACTION;
+    } else {
+      conn->status = CONN_STATUS_EXECUTING;
+    }
+    if (has_more) {
+      *has_more = my_has_more;
+    }
   }
-  if (status == 0 || (has_more && !*has_more)) {
-    conn->status =
-        conn->autocommit ? CONN_STATUS_READY : CONN_STATUS_IN_TRANSACTION;
-  }
+
   if (status < 0) {
     // TODO (gitbuda): Define new CUSOR_STATUS to handle query error.
     // Since database has to pull data ahead of time because of has_more info,

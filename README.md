@@ -51,6 +51,17 @@ $ python3 setup.py build
 $ python3 setup.py install
 ```
 
+#### Building on Windows
+
+If the binary packages from PyPI don't work for you, then you can build your
+own version of pymgclient. Currently only 64bit versions are built and tested.
+
+In order to build pymgclient on Windows, you have setup the necessary
+[environment](https://github.com/memgraph/mgclient#building-and-installing-on-windows)
+to build mgclient. Once it is done, add the `<path to msys>\mingw64\bin`
+folder to the `PATH` environment variable. After that the above python commands
+should work.
+
 ### Runtime requirements
 
 You will need [OpenSSL](https://www.openssl.org/) libraries required by
@@ -58,8 +69,8 @@ the [mgclient](mgclient) C library.
 
 ## Running the test suite
 
-Once mgclient is installed, you can run the test suite to verify it is working
-correctly. From the source directory, you can run:
+Once pymgclient is installed, you can run the test suite to verify it is
+working correctly. From the source directory, you can run:
 
 ```
 $ python3 -m pytest

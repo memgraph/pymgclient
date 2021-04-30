@@ -28,12 +28,14 @@ def memgraph_server():
 
 
 def test_cursor_visibility(memgraph_server):
-    host, port, sslmode, _ = memgraph_server
+    host, port, sslmode, is_long_running = memgraph_server
     conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
 
     cursor1 = conn.cursor()
     cursor1.execute("MATCH (n) RETURN count(n)")
     original_count = cursor1.fetchall()[0][0]
+    assert is_long_running or original_count == 0
+
     cursor1.execute("CREATE (:Node)")
 
     cursor2 = conn.cursor()

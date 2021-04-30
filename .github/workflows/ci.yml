@@ -35,7 +35,6 @@ jobs:
       matrix:
         arch:
           - { mingw: "64", msys: x86_64, python: "x64"}
-          - { mingw: "32", msys: i686, python: "x86"}
         python_version:
           - 3.6
           - 3.9

@@ -59,8 +59,8 @@ own version of pymgclient. Currently only 64bit versions are built and tested.
 In order to build pymgclient on Windows, you have setup the necessary
 [environment](https://github.com/memgraph/mgclient#building-and-installing-on-windows)
 to build mgclient. Once it is done, add the `<path to msys>\mingw64\bin`
-folder to the `PATH` environment variable. After that the above python commands
-should work.
+folder to the `PATH` environment variable. After that the  python commands
+shown above should work from the Windows command prompt.
 
 ### Runtime requirements
 

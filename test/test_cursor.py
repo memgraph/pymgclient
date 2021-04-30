@@ -16,7 +16,7 @@ import sys
 import mgclient
 import pytest
 
-from common import start_memgraph, MEMGRAPH_PORT
+from common import start_memgraph, Memgraph
 
 
 @pytest.fixture(scope="function")

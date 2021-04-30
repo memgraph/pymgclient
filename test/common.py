@@ -17,9 +17,13 @@ import subprocess
 import sys
 import time
 import tempfile
+import pytest
+import mgclient
 
 MEMGRAPH_PATH = os.getenv("MEMGRAPH_PATH", '/usr/lib/memgraph/memgraph')
 MEMGRAPH_PORT = int(os.getenv("MEMGRAPH_PORT", 7687))
+MEMGRAPH_HOST = os.getenv("MEMGRAPH_HOST", None)
+MEMGRAPH_STARTED_WITH_SSL = os.getenv('MEMGRAPH_STARTED_WITH_SSL', None)
 DURABILITY_DIR = tempfile.TemporaryDirectory()
 
 
@@ -35,10 +39,42 @@ def wait_for_server(port):
                 "to startup!")
             sys.exit(1)
         count += 1
-    time.sleep(0.01)
+
+
+requires_ssl_enabled = pytest.mark.skipif(
+    MEMGRAPH_HOST is not None
+    and MEMGRAPH_STARTED_WITH_SSL is None,
+    reason="requires secure connection")
+
+requires_ssl_disabled = pytest.mark.skipif(
+    MEMGRAPH_HOST is not None
+    and MEMGRAPH_STARTED_WITH_SSL is not None,
+    reason="requires insecure connection")
+
+
+class Memgraph:
+    def __init__(self, host, port, use_ssl, process):
+        self.host = host
+        self.port = port
+        self.use_ssl = use_ssl
+        self.process = process
+
+    def is_long_running(self):
+        return self.process is None
+
+    def sslmode(self):
+        return mgclient.MG_SSLMODE_REQUIRE if self.use_ssl else mgclient.MG_SSLMODE_DISABLE
+
+    def kill(self):
+        if self.process:
+            self.process.kill()
 
 
 def start_memgraph(cert_file="", key_file=""):
+    if MEMGRAPH_HOST:
+        use_ssl = MEMGRAPH_STARTED_WITH_SSL is not None
+        return Memgraph(MEMGRAPH_HOST, MEMGRAPH_PORT, use_ssl, None)
+
     cmd = [MEMGRAPH_PATH,
            "--bolt-port", str(MEMGRAPH_PORT),
            "--bolt-cert-file", cert_file,
@@ -51,6 +87,7 @@ def start_memgraph(cert_file="", key_file=""):
            "--storage-snapshot-on-exit=false",
            "--telemetry-enabled=false",
            "--log-file", ""]
-    memgraph = subprocess.Popen(cmd)
+    memgraph_process = subprocess.Popen(cmd)
     wait_for_server(MEMGRAPH_PORT)
-    return memgraph
+    use_ssl = True if key_file.strip() else False
+    return Memgraph('localhost', MEMGRAPH_PORT, use_ssl, memgraph_process)

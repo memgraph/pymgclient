@@ -124,12 +124,6 @@ class BuildMgclientExt(build_ext):
             extra_libs.extend(['crypto', 'ws2_32'])
         return extra_libs
 
-    def get_extra_link_args(self):
-        extra_link_args = []
-        if IS_WINDOWS and IS_X64:
-            extra_link_args.append('-Wl,--default-image-base-low')
-        return extra_link_args
-
     def build_mgclient_for(self, extension: Extension):
         '''
         Builds mgclient library and configures the extension to be able to use
@@ -219,7 +213,6 @@ class BuildMgclientExt(build_ext):
         extension.libraries.extend(self.get_extra_libraries())
         extension.depends.extend(mgclient_sources)
         extension.define_macros.append(('MGCLIENT_STATIC_DEFINE', ''))
-        extension.extra_link_args.extend(self.get_extra_link_args())
 
 
 setup(name='pymgclient',

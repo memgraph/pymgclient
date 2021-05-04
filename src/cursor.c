@@ -540,7 +540,7 @@ static PyMethodDef cursor_methods[] = {
      cursor_setinputsizes_doc},
     {"setoutputsizes", (PyCFunction)cursor_setoutputsizes, METH_VARARGS,
      cursor_setoutputsizes_doc},
-    {NULL, NULL, 0, NULL}};
+    {NULL}};
 
 // clang-format off
 PyDoc_STRVAR(CursorType_rowcount_doc,
@@ -584,7 +584,7 @@ static PyMemberDef cursor_members[] = {
      CursorType_arraysize_doc},
     {"description", T_OBJECT, offsetof(CursorObject, description), READONLY,
      CursorType_description_doc},
-    {NULL, 0, 0, 0, NULL}};
+    {NULL}};
 
 // clang-format off
 PyDoc_STRVAR(cursor_doc,

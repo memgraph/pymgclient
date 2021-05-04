@@ -29,7 +29,7 @@ jobs:
         cd docs
         make html
 
-  build_windows:
+  build_windows_and_test:
     runs-on: windows-latest
     strategy:
       matrix:
@@ -89,5 +89,5 @@ jobs:
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:
-          name: pymgclient-win${{matrix.arch.mingw }}-${{matrix.python_version }}
+          name: pymgclient-win${{ matrix.arch.mingw }}-${{ matrix.python_version }}
           path: dist/

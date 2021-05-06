@@ -22,12 +22,21 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: true
-    - name: Install, test and build docs
+    - name: Build source distribution
+      run: python3 setup.py sdist
+    - name: Install pymgclient
+      run: sudo python3 -m pip install -f dist --no-index pymgclient
+    - name: Run tests
+      run: MEMGRAPH_PORT=10000 python3 -m pytest
+    - name: Build docs
       run: |
-        sudo python3 setup.py install
-        MEMGRAPH_PORT=10000 python3 -m pytest
         cd docs
         make html
+    - name: Save source distribution package
+      uses: actions/upload-artifact@v2
+      with:
+        name: pymgclient
+        path: dist/
 
   build_windows_and_test:
     runs-on: windows-latest

@@ -25,7 +25,7 @@ jobs:
     - name: Build source distribution
       run: python3 setup.py sdist
     - name: Install pymgclient
-      run: sudo python3 -m pip install -f dist --no-index pymgclient
+      run: python3 -m pip install ./dist/pymgclient-*
     - name: Run tests
       run: MEMGRAPH_PORT=10000 python3 -m pytest
     - name: Build docs

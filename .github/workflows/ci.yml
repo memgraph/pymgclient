@@ -22,14 +22,23 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: true
-    - name: Install, test and build docs
+    - name: Build source distribution
+      run: python3 setup.py sdist
+    - name: Install pymgclient
+      run: python3 -m pip install ./dist/pymgclient-*
+    - name: Run tests
+      run: MEMGRAPH_PORT=10000 python3 -m pytest
+    - name: Build docs
       run: |
-        sudo python3 setup.py install
-        MEMGRAPH_PORT=10000 python3 -m pytest
         cd docs
         make html
+    - name: Save source distribution package
+      uses: actions/upload-artifact@v2
+      with:
+        name: pymgclient
+        path: dist/
 
-  build_windows:
+  build_windows_and_test:
     runs-on: windows-latest
     strategy:
       matrix:
@@ -89,5 +98,35 @@ jobs:
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:
-          name: pymgclient-win${{matrix.arch.mingw }}-${{matrix.python_version }}
+          name: pymgclient-win${{ matrix.arch.mingw }}-${{ matrix.python_version }}
+          path: dist/
+
+  build_macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python_version:
+          - 3.7
+          - 3.9
+    env:
+      PYTHON_EXECUTABLE: /usr/local/opt/python@${{ matrix.python_version }}/bin/python3
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install python and OpenSSL
+        run: |
+          brew install python@${{ matrix.python_version }} openssl@1.1
+      - name: Install pytest and pyopenssl
+        run: ${{ env.PYTHON_EXECUTABLE }} -m pip install pyopenssl pytest
+      - name: Build pymgclient
+        run: ${{ env.PYTHON_EXECUTABLE }} setup.py bdist_wheel
+      - name: Install pymgclient
+        run: ${{ env.PYTHON_EXECUTABLE }} -m pip install -f dist --no-index pymgclient
+      - name: Import mgclient to validate installation
+        run: ${{ env.PYTHON_EXECUTABLE }} -c "import mgclient"
+      - name: Save wheel package
+        uses: actions/upload-artifact@v2
+        with:
+          name: pymgclient-macos-${{ matrix.python_version }}
           path: dist/

@@ -106,7 +106,7 @@ static PyMemberDef column_members[] = {
      ColumnType_unsupported_doc},
     {"null_ok", T_OBJECT, offsetof(ColumnObject, null_ok), READONLY,
      ColumnType_unsupported_doc},
-    {NULL, 0, 0, 0, NULL}};
+    {NULL}};
 
 PyDoc_STRVAR(ColumnType_doc, "Description of a column returned by the query.");
 

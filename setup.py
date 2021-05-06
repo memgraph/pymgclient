@@ -25,6 +25,7 @@ from distutils.core import DistutilsExecError, DistutilsPlatformError
 
 
 IS_WINDOWS = sys.platform == 'win32'
+IS_APPLE = sys.platform == 'darwin'
 IS_X64 = platform.architecture()[0] == '64bit'
 
 if IS_WINDOWS:
@@ -124,11 +125,38 @@ class BuildMgclientExt(build_ext):
             extra_libs.extend(['crypto', 'ws2_32'])
         return extra_libs
 
-    def get_extra_link_args(self):
-        extra_link_args = []
-        if IS_WINDOWS and IS_X64:
-            extra_link_args.append('-Wl,--default-image-base-low')
-        return extra_link_args
+    def get_extra_cmake_config_args(self):
+        if not IS_APPLE:
+            return []
+
+        openssl_root_dir_env_var = 'OPENSSL_ROOT_DIR'
+        openssl_root_dir = os.getenv(openssl_root_dir_env_var)
+
+        if openssl_root_dir:
+            self.announce(
+                f'Using the value of {openssl_root_dir_env_var} for OpenSSL,'
+                f'which is {openssl_root_dir}', level=log.INFO)
+            return [f'-DOPENSSL_ROOT_DIR={openssl_root_dir}']
+
+        default_openssl_root_dir = '/usr/local/Cellar/openssl@1.1'
+
+        if not os.path.isdir(default_openssl_root_dir):
+            # Maybe CMake can find OpenSSL properly without this
+            return []
+
+        self.announce('d', level=log.INFO)
+        openssl_versions = sorted(
+            pathlib.Path(default_openssl_root_dir).iterdir(),
+            key=os.path.getmtime,
+            reverse=True)
+
+        if not openssl_versions:
+            return []
+
+        openssl_root_dir = str(openssl_versions[0])
+        self.announce(
+            f'Found OpenSSL in {openssl_root_dir}', level=log.INFO)
+        return [f'-DOPENSSL_ROOT_DIR={openssl_root_dir}']
 
     def build_mgclient_for(self, extension: Extension):
         '''
@@ -169,15 +197,19 @@ class BuildMgclientExt(build_ext):
         build_type = 'Debug' if self.debug else 'Release'
         install_libdir = 'lib'
         install_includedir = 'include'
-        cmake_config_command = [cmake_binary,
-                                mgclient_source_path,
-                                f'-DCMAKE_INSTALL_LIBDIR={install_libdir}',
-                                f'-DCMAKE_INSTALL_INCLUDEDIR={install_includedir}',
-                                f'-DCMAKE_BUILD_TYPE={build_type}',
-                                f'-DCMAKE_INSTALL_PREFIX={mgclient_install_path}',
-                                '-DBUILD_TESTING=OFF',
-                                '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']
+        cmake_config_command = [
+            cmake_binary,
+            mgclient_source_path,
+            f'-DCMAKE_INSTALL_LIBDIR={install_libdir}',
+            f'-DCMAKE_INSTALL_INCLUDEDIR={install_includedir}',
+            f'-DCMAKE_BUILD_TYPE={build_type}',
+            f'-DCMAKE_INSTALL_PREFIX={mgclient_install_path}',
+            '-DBUILD_TESTING=OFF',
+            '-DCMAKE_POSITION_INDEPENDENT_CODE=ON'
+        ]
+        cmake_config_command.extend(self.get_extra_cmake_config_args())
         generator = self.get_cmake_generator()
+
         if generator is not None:
             cmake_config_command.append(f'-G{generator}')
 
@@ -219,11 +251,10 @@ class BuildMgclientExt(build_ext):
         extension.libraries.extend(self.get_extra_libraries())
         extension.depends.extend(mgclient_sources)
         extension.define_macros.append(('MGCLIENT_STATIC_DEFINE', ''))
-        extension.extra_link_args.extend(self.get_extra_link_args())
 
 
 setup(name='pymgclient',
-      version='0.2.0',
+      version='0.2.dev2',
       maintainer='Benjamin Antal',
       maintainer_email='benjamin.antal@memgraph.com',
       author="Marin Tomic",

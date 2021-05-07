@@ -7,17 +7,20 @@ jobs:
     strategy:
      matrix:
         platform: [ubuntu-18.04]
+        mgversion:
+          - 1.2.0
+          - 1.3.0
+          - 1.4.0
     runs-on: ${{ matrix.platform }}
     steps:
     - name: Install system dependencies (Ubuntu 18.04)
-      if: matrix.platform == 'ubuntu-18.04'
       run: |
         sudo apt install -y libpython3.7 python3-pip python3-setuptools
         sudo pip3 install networkx pytest pyopenssl sphinx
         mkdir ~/memgraph
-        curl -L https://memgraph.com/download/memgraph/v1.2.0/ubuntu-18.04/memgraph_1.2.0-community-1_amd64.deb > ~/memgraph/memgraph_1.2.0-community-1_amd64.deb
+        curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-18.04/memgraph_${{matrix.mgversion}}-community-1_amd64.deb > ~/memgraph/memgraph-community.deb
         sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
-        sudo dpkg -i ~/memgraph/memgraph_1.2.0-community-1_amd64.deb
+        sudo dpkg -i ~/memgraph/memgraph-community.deb
 
     - uses: actions/checkout@v2
       with:

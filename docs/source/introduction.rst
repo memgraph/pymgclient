@@ -110,7 +110,7 @@ After the prerequisites are installed pymgclient can be installed via pip::
 
 This will download the source package of pymgclient and build the binary
 package before installing it. Alternatively pymgclient can be installed by
-using :file:`setup.py`:
+using :file:`setup.py`::
 
   $ python3 setup.py install
 
@@ -163,7 +163,7 @@ pymgclient can be installed via pip::
 
   $ pip install --user pymgclient --no-binary :all:
 
-Alternatively pymgclient can be installed by using :file:`setup.py`:
+Alternatively pymgclient can be installed by using :file:`setup.py`::
 
   $ python setup.py install
 

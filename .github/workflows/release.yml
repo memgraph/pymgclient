@@ -6,8 +6,8 @@ on:
       version:
         required: true
       publish_doc:
-        description: 'Specifies whether the documentation should be published'
-        default: false
+        description: 'If set to true, then the documentation will be published'
+        default: 'false'
         required: false
 
 jobs:
@@ -50,7 +50,7 @@ jobs:
         name: pymgclient-${{ github.event.inputs.version }}
         path: dist/
     - name: Deploy docs
-      if: ${{ github.event.inputs.publish_doc }}
+      if: ${{ github.event.inputs.publish_doc == 'true' }}
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}

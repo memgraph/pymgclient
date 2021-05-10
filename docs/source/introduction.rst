@@ -87,6 +87,7 @@ build it from you will need:
 * Python 3.6 or newer
 * Python 3.6 or newer header files
 * A C compiler supporting C11 standard
+* A C++ compiler (it is not used directly, but necessary for CMake to work)
 * Preqrequisites of `mgclient`_:
 
   * CMake 3.8 or newer

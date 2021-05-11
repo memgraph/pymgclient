@@ -3,7 +3,7 @@ Changelog
 =========
 
 ######
-Future
+1.0.0
 ######
 
 
@@ -17,7 +17,7 @@ Major Feature and Improvements
 
   * Include `mgclient` to decouple pymgclient from the installed version of
     `mgclient`, thus make the building and usage easier.
-  * Add support MacOS and Windows.
+  * Add support macOS and Windows.
 
 *********
 Bug Fixes

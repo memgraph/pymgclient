@@ -13,50 +13,169 @@ the Python programming language.
 
 :py:mod:`mgclient` only works with Python 3.
 
+
 #############
-Prerequisites
+Installation
 #############
+
+pymgclient has prebuilt binary packages for
+
+* macOS 10.15+ x86_64 (not arm64) with `Python
+  <https://www.python.org/downloads/>`_ 3.7+
+
+* Windows 10 x86_64 with `Python <https://www.python.org/downloads/>`_ 3.6+
+
+To intall pymgclient binaries on these platforms see `Install binaries`_
+section or check `Install from source`_ for other platforms.
+
+Install binaries
+################
+
+********************
+Runtime requirements
+********************
+
+The only runtime requirement of pymgclient is OpenSSL.
+
+* On macOS OpenSSL can be installed easily via `brew`_.
+  Once brew is installed, run::
+
+  $ brew install openssl
+
+* On Windows OpenSSL can be installed easily with an `installer
+  <https://slproweb.com/products/Win32OpenSSL.html>`_. The Win64 version is
+  required, but the "Light" version is enough. Both EXE and MSI variants
+  should work.
+
+After OpenSSL is installed, pymgclient can be installed.
+
+******************
+Install pymgclient
+******************
+
+On macOS run::
+
+  $ pip3 install --user pymgclient
+
+On Windows run::
+
+  $ py -3 -m pip install --user pymgclient
+
+Alternatively on Windows, if the launcher is not installed, just run::
+
+  $ pip install --user pymgclient
+
+Install from source
+###################
+
+pymgclient can be installed from source on:
+
+* all platforms that have prebuilt binaries
+* on various Linux distributions, including:
+
+  * Ubuntu 18.04+
+  * Debian 10+
+  * CentOS 8+
 
 *******************
 Build prerequisites
 *******************
 
 pymgclient is a C wrapper around the `mgclient`_ Memgraph client library. To
-install it from sources you will need:
+build it from you will need:
 
-  * Python 3.5 or newer
-  * A C compiler supporting C11 standard
-  * Python header files
-  * `mgclient headers <https://github.com/memgraph/mgclient/tree/release/1.0>`_
-    (**v1.0.0** tag or **release/1.0** branch)
+* Python 3.6 or newer
+* Python 3.6 or newer header files
+* A C compiler supporting C11 standard
+* A C++ compiler (it is not used directly, but necessary for CMake to work)
+* Preqrequisites of `mgclient`_:
 
-To install from source, inside the source directory run::
+  * CMake 3.8 or newer
+  * OpenSSL 1.0.2 or newer
 
-   $ python3 setup.py build
-   $ python3 setup.py install
+Building on Linux
+*****************
 
-********************
-Runtime requirements
-********************
+First install the prerequisites:
 
-:py:mod:`mgclient` module requires `mgclient` shared library at runtime
-(usually distributed as :file:`libmgclient.so`). The module relies on the host
-OS to find the location. If the library is installed in a standard location,
-there should be no problems. Otherwise, you will have to let mgclient module
-how to find it (usually by setting the :envvar:`LD_LIBRARY_PATH` environment
-variable).
+* On Debian/Ubuntu::
 
-You will also need `OpenSSL <https://www.openssl.org/>`_ libraries required by
-the `mgclient`_ C library.
+  $ sudo apt install python3-dev cmake make gcc g++ libssl-dev
+* On CentOS::
+
+  $ sudo yum install -y python3-devel cmake3 make gcc gcc-c++ openssl-devel
+
+After the prerequisites are installed pymgclient can be installed via pip::
+
+  $ pip3 install --user pymgclient
+
+This will download the source package of pymgclient and build the binary
+package before installing it. Alternatively pymgclient can be installed by
+using :file:`setup.py`::
+
+  $ python3 setup.py install
+
+Building on macOS
+*****************
+
+To install the C/C++ compiler, run::
+
+  $ xcode-select --install
+
+The rest of the build prerequisites can be installed easily via `brew`_::
+
+  $ brew install python3 openssl cmake
+
+After the prerequisites are installed pymgclient can be installed via pip::
+
+  $ pip3 install --user pymgclient --no-binary :all:
+
+This will download the source package of pymgclient and build the binary
+package before installing it. Alternatively pymgclient can be installed by
+using :file:`setup.py`:
+
+  $ python3 setup.py install
+
+Building on Windows
+*******************
+
+Building pymgclient on Windows is only advised for advanced users, therefore
+the following description assumes technical knowledge about Windows,
+compiling C/C++ applications and Python package.
+
+To build pymgclient on Windows, the `MSYS2 <https://www.msys2.org/>`_
+environment is needed. Once it is installed, run "MSYS2 MSYS" from Start menu
+and install the necessary packages::
+
+  $ pacman -Su
+  $ pacman -S --needed base-devel mingw-w64-x86_64-toolchain \
+      mingw-w64-x86_64-cmake mingw-w64-x86_64-openssl
+
+After installation, add the :file:`<path to msys>/mingw64/bin` (by default this
+is :file:`C:/msys64/mingw64/bin`) to the :envvar:`PATH` environment variable to
+make the installed applications accessible from the default Windows command
+prompt. Once it is done, start the Windows command prompt and make sure the
+applications are available, e.g. checking the version of gcc::
+
+  $ gcc --version
+
+When the environment is done, start the Windows command prompt and install
+pymgclient can be installed via pip::
+
+  $ pip install --user pymgclient --no-binary :all:
+
+Alternatively pymgclient can be installed by using :file:`setup.py`::
+
+  $ python setup.py install
 
 ######################
 Running the test suite
 ######################
 
-Once :py:mod:`mgclient` is installed, you can run the test suite to verify it
-is working correctly. From the source directory, you can run::
+If pymgclient is installed from downloaded source, you can run the test suite
+to verify it is working correctly. From the source directory, you can run::
 
-   $ python3 -m pytest
+  $ python3 -m pytest
 
 To run the tests, you will need to have Memgraph, pytest and pyopenssl
 installed on your machine. The tests will try to start the Memgraph binary from
@@ -64,7 +183,25 @@ the standard installation path (usually :file:`/usr/lib/memgraph/memgraph`)
 listening on port 7687. You can configure a different path or port by setting
 the following environment variables:
 
-  * :envvar:`MEMGRAPH_PATH`
-  * :envvar:`MEMGRAPH_PORT`
+* :envvar:`MEMGRAPH_PATH`
+* :envvar:`MEMGRAPH_PORT`
+
+Alternatively you can also run the tests with an already running Memgraph
+by configuring the host and port by setting the following environment
+variables:
+
+* :envvar:`MEMGRAPH_HOST`
+* :envvar:`MEMGRAPH_PORT`
+
+When an already running Memgraph is used, then some of the tests might get
+skipped if Memgraph hasn't been started with a suitable configuration. The
+:envvar:`MEMGRAPH_STARTED_WITH_SSL` environment variable can be used to
+indicate whether Memgraph is started using SSL or not. If the environment
+variable is defined (regardless its value), then the tests connect via secure
+Bolt connection, otherwise they connect with regular Bolt connection.
+
+The **tests insert data into Memgraph**, so they shouldn't be used with
+a Memgraph running in "production" environment.
 
  .. _mgclient: https://github.com/memgraph/mgclient
+ .. _brew: https://brew.sh

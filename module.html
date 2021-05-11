@@ -4,15 +4,15 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>mgclient module content &#8212; pymgclient 0.1a1 documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>mgclient module content &#8212; pymgclient 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Connection class" href="connection.html" />
@@ -33,12 +33,12 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="mgclient-module-content">
+  <section id="mgclient-module-content">
 <h1><a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> module content<a class="headerlink" href="#mgclient-module-content" title="Permalink to this headline">¶</a></h1>
 <p>The module interface respects the DB-API 2.0 standard defined in <span class="target" id="index-0"></span><a class="pep reference external" href="https://www.python.org/dev/peps/pep-0249"><strong>PEP 249</strong></a>.</p>
 <span class="target" id="module-mgclient"></span><dl class="py function">
-<dt id="mgclient.connect">
-<code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">connect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">host</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">address</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">port</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">username</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">password</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">client_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sslmode</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">sslcert</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sslkey</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">trust_callback</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">lazy</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.connect" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.connect">
+<span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sslmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sslcert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sslkey</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trust_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lazy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.connect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes a new connection to the database server and returns a
 <a class="reference internal" href="connection.html#mgclient.Connection" title="mgclient.Connection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code></a> object.</p>
 <p>Currently recognized parameters are:</p>
@@ -133,95 +133,95 @@ immediately be terminated.</p>
 
 <p>See <a class="reference internal" href="connection.html#lazy-connections"><span class="std std-ref">Lazy connections</span></a> section to learn about
 advantages and limitations of using the <code class="docutils literal notranslate"><span class="pre">lazy</span></code> parameter.</p>
-<div class="section" id="module-constants">
+<section id="module-constants">
 <h2>Module constants<a class="headerlink" href="#module-constants" title="Permalink to this headline">¶</a></h2>
 <p>DB-API 2.0 requires the following constants to be defined:</p>
 <dl class="py data">
-<dt id="mgclient.mgclient.apilevel">
-<code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">apilevel</code><a class="headerlink" href="#mgclient.mgclient.apilevel" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.mgclient.apilevel">
+<span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">apilevel</span></span><a class="headerlink" href="#mgclient.mgclient.apilevel" title="Permalink to this definition">¶</a></dt>
 <dd><p>String constant stating the supported DB API level. For <a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> it
 is <code class="docutils literal notranslate"><span class="pre">2.0</span></code>.</p>
 </dd></dl>
 
 <dl class="py data">
-<dt id="mgclient.mgclient.threadsafety">
-<code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">threadsafety</code><a class="headerlink" href="#mgclient.mgclient.threadsafety" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.mgclient.threadsafety">
+<span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">threadsafety</span></span><a class="headerlink" href="#mgclient.mgclient.threadsafety" title="Permalink to this definition">¶</a></dt>
 <dd><p>Integer constant stating the level of thread safety the interface supports.
 For <a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> it is 1, meaning that threads may share the module, but
 not connections.</p>
 </dd></dl>
 
 <dl class="py data">
-<dt id="mgclient.mgclient.paramstyle">
-<code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">paramstyle</code><a class="headerlink" href="#mgclient.mgclient.paramstyle" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.mgclient.paramstyle">
+<span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">paramstyle</span></span><a class="headerlink" href="#mgclient.mgclient.paramstyle" title="Permalink to this definition">¶</a></dt>
 <dd><p>String constant stating the type of parameter marker formatting expected by
 the interface. For <a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> it is <code class="docutils literal notranslate"><span class="pre">cypher</span></code>, which is not a valid
 value by DB-API 2.0 specification. See Passing parameters section for more
 details.</p>
 </dd></dl>
 
-</div>
-<div class="section" id="exceptions">
+</section>
+<section id="exceptions">
 <h2>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h2>
 <p>By DB-API 2.0 specification, the module makes all error information available
 through these exceptions or subclasses thereof:</p>
 <dl class="py exception">
-<dt id="mgclient.Warning">
-<em class="property">exception </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">Warning</code><a class="headerlink" href="#mgclient.Warning" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Warning">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">Warning</span></span><a class="headerlink" href="#mgclient.Warning" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception raised for important warnings.</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="mgclient.Error">
-<em class="property">exception </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">Error</code><a class="headerlink" href="#mgclient.Error" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Error">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">Error</span></span><a class="headerlink" href="#mgclient.Error" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base class of all other error exceptions.</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="mgclient.InterfaceError">
-<em class="property">exception </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">InterfaceError</code><a class="headerlink" href="#mgclient.InterfaceError" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.InterfaceError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">InterfaceError</span></span><a class="headerlink" href="#mgclient.InterfaceError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception raised for errors related to the database interface rather than the database itself.</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="mgclient.DatabaseError">
-<em class="property">exception </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">DatabaseError</code><a class="headerlink" href="#mgclient.DatabaseError" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.DatabaseError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">DatabaseError</span></span><a class="headerlink" href="#mgclient.DatabaseError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception raised for errors related to the database.</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="mgclient.DataError">
-<em class="property">exception </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">DataError</code><a class="headerlink" href="#mgclient.DataError" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.DataError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">DataError</span></span><a class="headerlink" href="#mgclient.DataError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception raised for errors that are due to problems with the processed data.</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="mgclient.OperationalError">
-<em class="property">exception </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">OperationalError</code><a class="headerlink" href="#mgclient.OperationalError" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.OperationalError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">OperationalError</span></span><a class="headerlink" href="#mgclient.OperationalError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception raised for errors related to the database’s operation, not necessarily under the control of the programmer (e.g. unexpected disconnect, failed allocation).</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="mgclient.IntegrityError">
-<em class="property">exception </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">IntegrityError</code><a class="headerlink" href="#mgclient.IntegrityError" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.IntegrityError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">IntegrityError</span></span><a class="headerlink" href="#mgclient.IntegrityError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception raised when the relational integrity of the database is affected.</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="mgclient.InternalError">
-<em class="property">exception </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">InternalError</code><a class="headerlink" href="#mgclient.InternalError" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.InternalError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">InternalError</span></span><a class="headerlink" href="#mgclient.InternalError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception raised when the database encounters an internal error.</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="mgclient.ProgrammingError">
-<em class="property">exception </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">ProgrammingError</code><a class="headerlink" href="#mgclient.ProgrammingError" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.ProgrammingError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">ProgrammingError</span></span><a class="headerlink" href="#mgclient.ProgrammingError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception raised for programming errors (e.g. syntax error, invalid parameters)</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="mgclient.NotSupportedError">
-<em class="property">exception </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">NotSupportedError</code><a class="headerlink" href="#mgclient.NotSupportedError" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.NotSupportedError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">NotSupportedError</span></span><a class="headerlink" href="#mgclient.NotSupportedError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception raised in a case a method or database API was used which is not supported by the database.</p>
 </dd></dl>
 
@@ -230,92 +230,92 @@ through these exceptions or subclasses thereof:</p>
 <p>In the current state, <a class="reference internal" href="#mgclient.OperationalError" title="mgclient.OperationalError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">OperationalError</span></code></a> is raised for all errors
 obtained from the database. This will probably be improved in the future.</p>
 </div>
-</div>
-<div class="section" id="graph-type-objects">
+</section>
+<section id="graph-type-objects">
 <h2>Graph type objects<a class="headerlink" href="#graph-type-objects" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
-<dt id="mgclient.Node">
-<em class="property">class </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">Node</code><a class="headerlink" href="#mgclient.Node" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Node">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">Node</span></span><a class="headerlink" href="#mgclient.Node" title="Permalink to this definition">¶</a></dt>
 <dd><p>A node in the graph with optional properties and labels.</p>
 <dl class="py attribute">
-<dt id="mgclient.Node.id">
-<code class="sig-name descname">id</code><a class="headerlink" href="#mgclient.Node.id" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Node.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#mgclient.Node.id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Unique node identifier (within the scope of its origin graph).</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="mgclient.Node.labels">
-<code class="sig-name descname">labels</code><a class="headerlink" href="#mgclient.Node.labels" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Node.labels">
+<span class="sig-name descname"><span class="pre">labels</span></span><a class="headerlink" href="#mgclient.Node.labels" title="Permalink to this definition">¶</a></dt>
 <dd><p>A list of node labels.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="mgclient.Node.properties">
-<code class="sig-name descname">properties</code><a class="headerlink" href="#mgclient.Node.properties" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Node.properties">
+<span class="sig-name descname"><span class="pre">properties</span></span><a class="headerlink" href="#mgclient.Node.properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>A dictionary of node properties.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt id="mgclient.Relationship">
-<em class="property">class </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">Relationship</code><a class="headerlink" href="#mgclient.Relationship" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Relationship">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">Relationship</span></span><a class="headerlink" href="#mgclient.Relationship" title="Permalink to this definition">¶</a></dt>
 <dd><p>A directed, typed connection between two nodes with optional properties.</p>
 <dl class="py attribute">
-<dt id="mgclient.Relationship.id">
-<code class="sig-name descname">id</code><a class="headerlink" href="#mgclient.Relationship.id" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Relationship.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#mgclient.Relationship.id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Unique relationship identifier (within the scope of its origin graph).</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="mgclient.Relationship.start_id">
-<code class="sig-name descname">start_id</code><a class="headerlink" href="#mgclient.Relationship.start_id" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Relationship.start_id">
+<span class="sig-name descname"><span class="pre">start_id</span></span><a class="headerlink" href="#mgclient.Relationship.start_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Identifier of relationship start node (or -1 if it was not supplied by the database).</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="mgclient.Relationship.end_id">
-<code class="sig-name descname">end_id</code><a class="headerlink" href="#mgclient.Relationship.end_id" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Relationship.end_id">
+<span class="sig-name descname"><span class="pre">end_id</span></span><a class="headerlink" href="#mgclient.Relationship.end_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Identifier of relationship end node (or -1 if it was not supplied by the database).</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="mgclient.Relationship.type">
-<code class="sig-name descname">type</code><a class="headerlink" href="#mgclient.Relationship.type" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Relationship.type">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#mgclient.Relationship.type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Relationship type.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="mgclient.Relationship.properties">
-<code class="sig-name descname">properties</code><a class="headerlink" href="#mgclient.Relationship.properties" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Relationship.properties">
+<span class="sig-name descname"><span class="pre">properties</span></span><a class="headerlink" href="#mgclient.Relationship.properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>A dictionary of relationship properties.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt id="mgclient.Path">
-<em class="property">class </em><code class="sig-prename descclassname">mgclient.</code><code class="sig-name descname">Path</code><a class="headerlink" href="#mgclient.Path" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Path">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">Path</span></span><a class="headerlink" href="#mgclient.Path" title="Permalink to this definition">¶</a></dt>
 <dd><p>A sequence of alternating nodes and relationships corresponding to a walk
 in the graph.</p>
 <dl class="py attribute">
-<dt id="mgclient.Path.nodes">
-<code class="sig-name descname">nodes</code><a class="headerlink" href="#mgclient.Path.nodes" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Path.nodes">
+<span class="sig-name descname"><span class="pre">nodes</span></span><a class="headerlink" href="#mgclient.Path.nodes" title="Permalink to this definition">¶</a></dt>
 <dd><p>A list of nodes in the order they appear in the path. It has one element
 more than the <a class="reference internal" href="#mgclient.Path.relationships" title="mgclient.Path.relationships"><code class="xref py py-attr docutils literal notranslate"><span class="pre">relationships</span></code></a> list.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="mgclient.Path.relationships">
-<code class="sig-name descname">relationships</code><a class="headerlink" href="#mgclient.Path.relationships" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="mgclient.Path.relationships">
+<span class="sig-name descname"><span class="pre">relationships</span></span><a class="headerlink" href="#mgclient.Path.relationships" title="Permalink to this definition">¶</a></dt>
 <dd><p>A list of relationships in the order they appear in the path. It has one
 element less than the <a class="reference internal" href="#mgclient.Path.nodes" title="mgclient.Path.nodes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">nodes</span></code></a> list.</p>
 </dd></dl>
 
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
           </div>
@@ -380,10 +380,10 @@ element less than the <a class="reference internal" href="#mgclient.Path.nodes" 
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Memgraph Ltd..
+      &copy;2021, Memgraph Ltd..
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

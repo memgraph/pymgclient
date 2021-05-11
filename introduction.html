@@ -4,15 +4,15 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Introduction &#8212; pymgclient 0.1a1 documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Introduction &#8212; pymgclient 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Basic module usage" href="usage.html" />
@@ -33,7 +33,7 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="introduction">
+  <section id="introduction">
 <h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
 <p>pymgclient is a <a class="reference external" href="https://memgraph.com/">Memgraph</a> database adapter for
 Python language compliant with the DB-API 2.0 specification described by
@@ -43,43 +43,163 @@ implemented in C as a wrapper around <a class="reference external" href="https:/
 library. As a C extension, it is only compatible with CPython implementation of
 the Python programming language.</p>
 <p><a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> only works with Python 3.</p>
-<div class="section" id="prerequisites">
-<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="build-prerequisites">
-<h3>Build prerequisites<a class="headerlink" href="#build-prerequisites" title="Permalink to this headline">¶</a></h3>
-<p>pymgclient is a C wrapper around the <a class="reference external" href="https://github.com/memgraph/mgclient">mgclient</a> Memgraph client library. To
-install it from sources you will need:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Python 3.5 or newer</p></li>
-<li><p>A C compiler supporting C11 standard</p></li>
-<li><p>Python header files</p></li>
-<li><p><a class="reference external" href="https://github.com/memgraph/mgclient/tree/release/1.0">mgclient headers</a>
-(<strong>v1.0.0</strong> tag or <strong>release/1.0</strong> branch)</p></li>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>pymgclient has prebuilt binary packages for</p>
+<ul class="simple">
+<li><p>macOS 10.15+ x86_64 (not arm64) with <a class="reference external" href="https://www.python.org/downloads/">Python</a> 3.7+</p></li>
+<li><p>Windows 10 x86_64 with <a class="reference external" href="https://www.python.org/downloads/">Python</a> 3.6+</p></li>
 </ul>
-</div></blockquote>
-<p>To install from source, inside the source directory run:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python3 setup.py build
-$ python3 setup.py install
+<p>To intall pymgclient binaries on these platforms see <a class="reference internal" href="#install-binaries">Install binaries</a>
+section or check <a class="reference internal" href="#install-from-source">Install from source</a> for other platforms.</p>
+<section id="install-binaries">
+<h3>Install binaries<a class="headerlink" href="#install-binaries" title="Permalink to this headline">¶</a></h3>
+<section id="runtime-requirements">
+<h4>Runtime requirements<a class="headerlink" href="#runtime-requirements" title="Permalink to this headline">¶</a></h4>
+<p>The only runtime requirement of pymgclient is OpenSSL.</p>
+<ul>
+<li><p>On macOS OpenSSL can be installed easily via <a class="reference external" href="https://brew.sh">brew</a>.
+Once brew is installed, run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ brew install openssl
 </pre></div>
 </div>
+</li>
+<li><p>On Windows OpenSSL can be installed easily with an <a class="reference external" href="https://slproweb.com/products/Win32OpenSSL.html">installer</a>. The Win64 version is
+required, but the “Light” version is enough. Both EXE and MSI variants
+should work.</p></li>
+</ul>
+<p>After OpenSSL is installed, pymgclient can be installed.</p>
+</section>
+<section id="install-pymgclient">
+<h4>Install pymgclient<a class="headerlink" href="#install-pymgclient" title="Permalink to this headline">¶</a></h4>
+<p>On macOS run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip3 install --user pymgclient
+</pre></div>
 </div>
-<div class="section" id="runtime-requirements">
-<h3>Runtime requirements<a class="headerlink" href="#runtime-requirements" title="Permalink to this headline">¶</a></h3>
-<p><a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> module requires <cite>mgclient</cite> shared library at runtime
-(usually distributed as <code class="file docutils literal notranslate"><span class="pre">libmgclient.so</span></code>). The module relies on the host
-OS to find the location. If the library is installed in a standard location,
-there should be no problems. Otherwise, you will have to let mgclient module
-how to find it (usually by setting the <span class="target" id="index-1"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">LD_LIBRARY_PATH</span></code> environment
-variable).</p>
-<p>You will also need <a class="reference external" href="https://www.openssl.org/">OpenSSL</a> libraries required by
-the <a class="reference external" href="https://github.com/memgraph/mgclient">mgclient</a> C library.</p>
+<p>On Windows run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ py -3 -m pip install --user pymgclient
+</pre></div>
 </div>
+<p>Alternatively on Windows, if the launcher is not installed, just run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install --user pymgclient
+</pre></div>
 </div>
-<div class="section" id="running-the-test-suite">
+</section>
+</section>
+<section id="install-from-source">
+<h3>Install from source<a class="headerlink" href="#install-from-source" title="Permalink to this headline">¶</a></h3>
+<p>pymgclient can be installed from source on:</p>
+<ul class="simple">
+<li><p>all platforms that have prebuilt binaries</p></li>
+<li><p>on various Linux distributions, including:</p>
+<ul>
+<li><p>Ubuntu 18.04+</p></li>
+<li><p>Debian 10+</p></li>
+<li><p>CentOS 8+</p></li>
+</ul>
+</li>
+</ul>
+<section id="build-prerequisites">
+<h4>Build prerequisites<a class="headerlink" href="#build-prerequisites" title="Permalink to this headline">¶</a></h4>
+<p>pymgclient is a C wrapper around the <a class="reference external" href="https://github.com/memgraph/mgclient">mgclient</a> Memgraph client library. To
+build it from you will need:</p>
+<ul class="simple">
+<li><p>Python 3.6 or newer</p></li>
+<li><p>Python 3.6 or newer header files</p></li>
+<li><p>A C compiler supporting C11 standard</p></li>
+<li><p>A C++ compiler (it is not used directly, but necessary for CMake to work)</p></li>
+<li><p>Preqrequisites of <a class="reference external" href="https://github.com/memgraph/mgclient">mgclient</a>:</p>
+<ul>
+<li><p>CMake 3.8 or newer</p></li>
+<li><p>OpenSSL 1.0.2 or newer</p></li>
+</ul>
+</li>
+</ul>
+<section id="building-on-linux">
+<h5>Building on Linux<a class="headerlink" href="#building-on-linux" title="Permalink to this headline">¶</a></h5>
+<p>First install the prerequisites:</p>
+<ul>
+<li><p>On Debian/Ubuntu:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sudo apt install python3-dev cmake make gcc g++ libssl-dev
+</pre></div>
+</div>
+</li>
+<li><p>On CentOS:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sudo yum install -y python3-devel cmake3 make gcc gcc-c++ openssl-devel
+</pre></div>
+</div>
+</li>
+</ul>
+<p>After the prerequisites are installed pymgclient can be installed via pip:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip3 install --user pymgclient
+</pre></div>
+</div>
+<p>This will download the source package of pymgclient and build the binary
+package before installing it. Alternatively pymgclient can be installed by
+using <code class="file docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python3 setup.py install
+</pre></div>
+</div>
+</section>
+<section id="building-on-macos">
+<h5>Building on macOS<a class="headerlink" href="#building-on-macos" title="Permalink to this headline">¶</a></h5>
+<p>To install the C/C++ compiler, run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ xcode-select --install
+</pre></div>
+</div>
+<p>The rest of the build prerequisites can be installed easily via <a class="reference external" href="https://brew.sh">brew</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ brew install python3 openssl cmake
+</pre></div>
+</div>
+<p>After the prerequisites are installed pymgclient can be installed via pip:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip3 install --user pymgclient --no-binary :all:
+</pre></div>
+</div>
+<p>This will download the source package of pymgclient and build the binary
+package before installing it. Alternatively pymgclient can be installed by
+using <code class="file docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
+<blockquote>
+<div><p>$ python3 setup.py install</p>
+</div></blockquote>
+</section>
+<section id="building-on-windows">
+<h5>Building on Windows<a class="headerlink" href="#building-on-windows" title="Permalink to this headline">¶</a></h5>
+<p>Building pymgclient on Windows is only advised for advanced users, therefore
+the following description assumes technical knowledge about Windows,
+compiling C/C++ applications and Python package.</p>
+<p>To build pymgclient on Windows, the <a class="reference external" href="https://www.msys2.org/">MSYS2</a>
+environment is needed. Once it is installed, run “MSYS2 MSYS” from Start menu
+and install the necessary packages:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pacman -Su
+$ pacman -S --needed base-devel mingw-w64-x86_64-toolchain \
+    mingw-w64-x86_64-cmake mingw-w64-x86_64-openssl
+</pre></div>
+</div>
+<p>After installation, add the <code class="file docutils literal notranslate"><span class="pre">&lt;path</span> <span class="pre">to</span> <span class="pre">msys&gt;/mingw64/bin</span></code> (by default this
+is <code class="file docutils literal notranslate"><span class="pre">C:/msys64/mingw64/bin</span></code>) to the <span class="target" id="index-1"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">PATH</span></code> environment variable to
+make the installed applications accessible from the default Windows command
+prompt. Once it is done, start the Windows command prompt and make sure the
+applications are available, e.g. checking the version of gcc:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ gcc --version
+</pre></div>
+</div>
+<p>When the environment is done, start the Windows command prompt and install
+pymgclient can be installed via pip:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install --user pymgclient --no-binary :all:
+</pre></div>
+</div>
+<p>Alternatively pymgclient can be installed by using <code class="file docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python setup.py install
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+<section id="running-the-test-suite">
 <h2>Running the test suite<a class="headerlink" href="#running-the-test-suite" title="Permalink to this headline">¶</a></h2>
-<p>Once <a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> is installed, you can run the test suite to verify it
-is working correctly. From the source directory, you can run:</p>
+<p>If pymgclient is installed from downloaded source, you can run the test suite
+to verify it is working correctly. From the source directory, you can run:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python3 -m pytest
 </pre></div>
 </div>
@@ -88,16 +208,29 @@ installed on your machine. The tests will try to start the Memgraph binary from
 the standard installation path (usually <code class="file docutils literal notranslate"><span class="pre">/usr/lib/memgraph/memgraph</span></code>)
 listening on port 7687. You can configure a different path or port by setting
 the following environment variables:</p>
-<blockquote>
-<div><blockquote>
-<div><ul class="simple">
+<ul class="simple">
 <li><p><span class="target" id="index-2"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">MEMGRAPH_PATH</span></code></p></li>
 <li><p><span class="target" id="index-3"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">MEMGRAPH_PORT</span></code></p></li>
 </ul>
-</div></blockquote>
-</div></blockquote>
-</div>
-</div>
+<p>Alternatively you can also run the tests with an already running Memgraph
+by configuring the host and port by setting the following environment
+variables:</p>
+<ul class="simple">
+<li><p><span class="target" id="index-4"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">MEMGRAPH_HOST</span></code></p></li>
+<li><p><span class="target" id="index-5"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">MEMGRAPH_PORT</span></code></p></li>
+</ul>
+<p>When an already running Memgraph is used, then some of the tests might get
+skipped if Memgraph hasn’t been started with a suitable configuration. The
+<span class="target" id="index-6"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">MEMGRAPH_STARTED_WITH_SSL</span></code> environment variable can be used to
+indicate whether Memgraph is started using SSL or not. If the environment
+variable is defined (regardless its value), then the tests connect via secure
+Bolt connection, otherwise they connect with regular Bolt connection.</p>
+<p>The <strong>tests insert data into Memgraph</strong>, so they shouldn’t be used with
+a Memgraph running in “production” environment.</p>
+<blockquote>
+<div></div></blockquote>
+</section>
+</section>
 
 
           </div>
@@ -119,7 +252,7 @@ the following environment variables:</p>
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#running-the-test-suite">Running the test suite</a></li>
 </ul>
 </li>
@@ -161,10 +294,10 @@ the following environment variables:</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Memgraph Ltd..
+      &copy;2021, Memgraph Ltd..
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

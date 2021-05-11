@@ -68,9 +68,15 @@ PyObject *mg_map_to_py_dict(const mg_map *map) {
   for (uint32_t i = 0; i < mg_map_size(map); ++i) {
     PyObject *key = mg_string_to_py_unicode(mg_map_key_at(map, i));
     PyObject *value = mg_value_to_py_object(mg_map_value_at(map, i));
-    if (!key || !value || PyDict_SetItem(dict, key, value) < 0) {
+    if (!key || !value) {
       Py_XDECREF(key);
       Py_XDECREF(value);
+      goto cleanup;
+    }
+    int insert_status = PyDict_SetItem(dict, key, value);
+    Py_DECREF(key);
+    Py_DECREF(value);
+    if (insert_status < 0) {
       goto cleanup;
     }
   }

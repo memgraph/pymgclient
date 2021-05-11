@@ -71,12 +71,14 @@ PyDoc_STRVAR(
     "Exception raised in a case a method or database API was used which is not "
     "supported by the database.");
 
-static struct {
-  const char *name;
-  PyObject **exc;
-  PyObject **base;
-  const char *docstring;
-} module_exceptions[] = {
+
+int add_module_exceptions(PyObject *module) {
+  struct {
+    const char *name;
+    PyObject **exc;
+    PyObject **base;
+    const char *docstring;
+  } module_exceptions[] = {
     {"mgclient.Warning", &Warning, &PyExc_Exception, Warning_doc},
     {"mgclient.Error", &Error, &PyExc_Exception, Error_doc},
     {"mgclient.InterfaceError", &InterfaceError, &Error, InterfaceError_doc},
@@ -94,7 +96,6 @@ static struct {
      NotSupportedError_doc},
     {NULL, NULL, NULL, NULL}};
 
-int add_module_exceptions(PyObject *module) {
   for (size_t i = 0; module_exceptions[i].name; ++i) {
     *module_exceptions[i].exc = NULL;
   }
@@ -298,6 +299,9 @@ PyMODINIT_FUNC PyInit_mgclient(void) {
     return NULL;
   }
   if (add_module_types(m) < 0) {
+    return NULL;
+  }
+  if (mg_init() != MG_SUCCESS) {
     return NULL;
   }
   return m;

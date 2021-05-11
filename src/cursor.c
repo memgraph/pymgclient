@@ -218,14 +218,13 @@ PyObject *cursor_execute(CursorObject *cursor, PyObject *args) {
 
   PyObject *row;
   while ((status = connection_fetch(cursor->conn, &row, NULL)) == 1) {
-    if (PyList_Append(cursor->rows, row) < 0) {
-      Py_DECREF(row);
+    int append_result = PyList_Append(cursor->rows, row);
+    Py_DECREF(row);
+    if (append_result < 0) {
       goto discard_all;
     }
-    Py_DECREF(row);
   }
   if (status < 0) {
-    connection_handle_error(cursor->conn);
     goto cleanup;
   }
 
@@ -292,19 +291,17 @@ PyObject *cursor_fetchone(CursorObject *cursor, PyObject *args) {
     int has_more_second = 0;
     int fetch_status_first =
         connection_fetch(cursor->conn, &row, &has_more_first);
-    int fetch_status_second =
-        connection_fetch(cursor->conn, NULL, &has_more_second);
+    int fetch_status_second = 0;
+    if (fetch_status_first == 1) {
+      fetch_status_second =
+          connection_fetch(cursor->conn, NULL, &has_more_second);
+    }
     if (fetch_status_first == -1 || fetch_status_second == -1) {
-      if (row) {
-        Py_DECREF(row);
-      }
-      connection_handle_error(cursor->conn);
+      Py_XDECREF(row);
       cursor_reset(cursor);
       return NULL;
     } else if (fetch_status_first == 0) {
-      if (row) {
-        Py_DECREF(row);
-      }
+      Py_XDECREF(row);
       if (has_more_first) {
         cursor->status = CURSOR_STATUS_EXECUTING;
       } else {
@@ -389,8 +386,9 @@ PyObject *cursor_fetchmany(CursorObject *cursor, PyObject *args,
       if (row == Py_None) {
         break;
       }
-      if (PyList_Append(results, row) < 0) {
-        Py_DECREF(row);
+      int append_result = PyList_Append(results, row);
+      Py_DECREF(row);
+      if (append_result < 0) {
         Py_DECREF(results);
         connection_discard_all(cursor->conn);
         cursor_reset(cursor);
@@ -451,7 +449,6 @@ PyObject *cursor_fetchall(CursorObject *cursor, PyObject *args) {
       pull_status = connection_pull(cursor->conn, 0);
       if (pull_status != 0) {
         Py_DECREF(results);
-        connection_handle_error(cursor->conn);
         cursor_reset(cursor);
         return NULL;
       }
@@ -464,8 +461,9 @@ PyObject *cursor_fetchall(CursorObject *cursor, PyObject *args) {
         cursor->status = CURSOR_STATUS_READY;
         break;
       } else if (fetch_status == 1) {
-        if (PyList_Append(results, row) < 0) {
-          Py_DECREF(row);
+        int append_result = PyList_Append(results, row);
+        Py_DECREF(row);
+        if (append_result < 0) {
           Py_DECREF(results);
           connection_discard_all(cursor->conn);
           cursor_reset(cursor);
@@ -473,7 +471,6 @@ PyObject *cursor_fetchall(CursorObject *cursor, PyObject *args) {
         }
       } else {
         Py_DECREF(results);
-        connection_handle_error(cursor->conn);
         cursor_reset(cursor);
         return NULL;
       }
@@ -543,7 +540,7 @@ static PyMethodDef cursor_methods[] = {
      cursor_setinputsizes_doc},
     {"setoutputsizes", (PyCFunction)cursor_setoutputsizes, METH_VARARGS,
      cursor_setoutputsizes_doc},
-    {NULL, NULL, 0, NULL}};
+    {NULL}};
 
 // clang-format off
 PyDoc_STRVAR(CursorType_rowcount_doc,
@@ -587,7 +584,7 @@ static PyMemberDef cursor_members[] = {
      CursorType_arraysize_doc},
     {"description", T_OBJECT, offsetof(CursorObject, description), READONLY,
      CursorType_description_doc},
-    {NULL, 0, 0, 0, NULL}};
+    {NULL}};
 
 // clang-format off
 PyDoc_STRVAR(cursor_doc,

@@ -1,4 +1,12 @@
 recursive-include src *.c *.h
-recursive-include docs/source *.rst
+recursive-include docs *
+prune docs/build
 recursive-include tests *.py
-include LICENSE MANIFEST.in README.md setup.py
+include LICENSE MANIFEST.in README.md setup.py CHANGELOG.rst
+
+
+recursive-include mgclient/src *.c *.h CMakeLists.txt
+recursive-include mgclient/include *.h *.hpp
+recursive-include mgclient/cmake *.cmake
+recursive-include mgclient/tests *.cpp *.hpp CMakeLists.txt
+include mgclient/README.md mgclient/LICENSE mgclient/CMakeLists.txt

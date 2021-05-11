@@ -376,11 +376,13 @@ It's value can be one of the following macros:\n\
 
 static PyMemberDef connection_members[] = {
     {"status", T_INT, offsetof(ConnectionObject, status), READONLY,
-     ConnectionType_status_doc}};
+     ConnectionType_status_doc},
+    {NULL}};
 
 static PyGetSetDef connection_getset[] = {
     {"autocommit", (getter)connection_autocommit_get,
-     (setter)connection_autocommit_set, ConnectionType_autocommit_doc, NULL}};
+     (setter)connection_autocommit_set, ConnectionType_autocommit_doc, NULL},
+    {NULL}};
 
 // clang-format off
 PyDoc_STRVAR(ConnectionType_doc,

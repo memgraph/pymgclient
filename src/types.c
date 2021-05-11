@@ -164,7 +164,8 @@ static PyMemberDef node_members[] = {
     {"labels", T_OBJECT_EX, offsetof(NodeObject, labels), READONLY,
      NodeType_labels_doc},
     {"properties", T_OBJECT_EX, offsetof(NodeObject, properties), READONLY,
-     NodeType_properties_doc}};
+     NodeType_properties_doc},
+    {NULL}};
 
 PyDoc_STRVAR(NodeType_doc,
              "A node in the graph with optional properties and labels.");
@@ -344,7 +345,8 @@ static PyMemberDef relationship_members[] = {
     {"type", T_OBJECT_EX, offsetof(RelationshipObject, type), READONLY,
      RelationshipType_type_doc},
     {"properties", T_OBJECT_EX, offsetof(RelationshipObject, properties),
-     READONLY, RelationshipType_properties_doc}};
+     READONLY, RelationshipType_properties_doc},
+    {NULL}};
 
 PyDoc_STRVAR(
     RelationshipType_doc,
@@ -544,7 +546,8 @@ static PyMemberDef path_members[] = {
     {"nodes", T_OBJECT_EX, offsetof(PathObject, nodes), READONLY,
      PathType_nodes_doc},
     {"relationships", T_OBJECT_EX, offsetof(PathObject, relationships),
-     READONLY, PathType_relationships_doc}};
+     READONLY, PathType_relationships_doc},
+    {NULL}};
 
 // clang-format off
 PyDoc_STRVAR(PathType_doc,

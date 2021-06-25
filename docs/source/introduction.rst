@@ -92,6 +92,7 @@ build it from you will need:
 
   * CMake 3.8 or newer
   * OpenSSL 1.0.2 or newer
+  * OpenSSL 1.0.2 or newer header files
 
 Building on Linux
 *****************

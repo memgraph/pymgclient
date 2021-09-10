@@ -1,3 +1,4 @@
 [submodule "mgclient"]
 	path = mgclient
 	url = https://github.com/memgraph/mgclient.git
+	branch = T0712-MG-Add-support-for-temporal-types-in-the-communication-layer-of-mgclient

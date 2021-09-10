@@ -275,7 +275,7 @@ PyObject *mg_date_to_py_date(const mg_date *date) {
       make_py_delta(mg_date_days(date), 0, 0);
   SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("__add__");
   PyObject *result_date =
-      PyObject_CallMethodOneArg(unix_epoch, method_name, date_as_delta);
+      PyObject_CallMethodObjArgs(unix_epoch, method_name, date_as_delta, NULL);
   if (!result_date) {
     PyErr_Print();
   }
@@ -299,7 +299,7 @@ PyObject *mg_local_time_to_py_time(const mg_local_time *lt) {
       PyUnicode_FromString("utcfromtimestamp");
   IF_PTR_IS_NULL_PRINT_ERROR_AND_RETURN(method_name, NULL)
   SCOPED_CLEANUP PyObject *result =
-      PyObject_CallMethodOneArg(unix_epoch, method_name, div_result);
+      PyObject_CallMethodObjArgs(unix_epoch, method_name, div_result, NULL);
   IF_PTR_IS_NULL_PRINT_ERROR_AND_RETURN(result, NULL);
   SCOPED_CLEANUP PyObject *h = PyObject_GetAttrString(result, "hour");
   IF_PTR_IS_NULL_PRINT_ERROR_AND_RETURN(h, NULL)
@@ -325,7 +325,7 @@ PyObject *mg_local_date_time_to_py_datetime(const mg_local_date_time *ldt) {
       PyUnicode_FromString("utcfromtimestamp");
   IF_PTR_IS_NULL_PRINT_ERROR_AND_RETURN(method_name, NULL)
   SCOPED_CLEANUP PyObject *result =
-      PyObject_CallMethodOneArg(unix_epoch, method_name, seconds);
+      PyObject_CallMethodObjArgs(unix_epoch, method_name, seconds, NULL);
   IF_PTR_IS_NULL_PRINT_ERROR_AND_RETURN(result, NULL)
   SCOPED_CLEANUP PyObject *y = PyObject_GetAttrString(result, "year");
   SCOPED_CLEANUP PyObject *mo = PyObject_GetAttrString(result, "month");
@@ -334,9 +334,9 @@ PyObject *mg_local_date_time_to_py_datetime(const mg_local_date_time *ldt) {
   SCOPED_CLEANUP PyObject *m = PyObject_GetAttrString(result, "minute");
   SCOPED_CLEANUP PyObject *s = PyObject_GetAttrString(result, "second");
   int64_t nanos = mg_local_date_time_nanoseconds(ldt);
-  return make_py_datetime(
-      PyLong_AsLong(y), PyLong_AsLong(mo), PyLong_AsLong(d), PyLong_AsLong(h),
-      PyLong_AsLong(m), PyLong_AsLong(s), (nanos / 1000));
+  return make_py_datetime(PyLong_AsLong(y), PyLong_AsLong(mo), PyLong_AsLong(d),
+                          PyLong_AsLong(h), PyLong_AsLong(m), PyLong_AsLong(s),
+                          (nanos / 1000));
 }
 
 PyObject *mg_duration_to_py_delta(const mg_duration *dur) {
@@ -501,7 +501,7 @@ int days_since_unix_epoch(int y, int m, int d, int64_t *result) {
   SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("__sub__");
   IF_PTR_IS_NULL_PRINT_ERROR_AND_RETURN(method_name, 0)
   SCOPED_CLEANUP PyObject *delta =
-      PyObject_CallMethodOneArg(date, method_name, unix_epoch);
+      PyObject_CallMethodObjArgs(date, method_name, unix_epoch, NULL);
   IF_PTR_IS_NULL_PRINT_ERROR_AND_RETURN(delta, 0)
   SCOPED_CLEANUP PyObject *days = PyObject_GetAttrString(delta, "days");
   IF_PTR_IS_NULL_PRINT_ERROR_AND_RETURN(days, 0)

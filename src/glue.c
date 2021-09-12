@@ -340,8 +340,7 @@ PyObject *mg_local_date_time_to_py_datetime(const mg_local_date_time *ldt) {
 }
 
 PyObject *mg_duration_to_py_delta(const mg_duration *dur) {
-  int64_t months_as_days = (double)mg_duration_months(dur) * 30.436875;
-  int64_t days = mg_duration_days(dur) + months_as_days;
+  int64_t days = mg_duration_days(dur);
   int64_t seconds = mg_duration_seconds(dur);
   int64_t nanoseconds = mg_duration_nanoseconds(dur);
   return make_py_delta(days, seconds, (nanoseconds / 1000));

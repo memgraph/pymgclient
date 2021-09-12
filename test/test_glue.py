@@ -19,7 +19,7 @@ import sys
 from common import start_memgraph, Memgraph
 import mgclient
 import pytest
-
+import datetime
 
 @pytest.fixture(scope="function")
 def memgraph_connection():
@@ -227,3 +227,33 @@ def test_tuple(memgraph_connection):
         #  * one temporary reference because sys.getrefcount increases the ref
         #    count
         assert sys.getrefcount(value_in_tuple) == 3
+
+# Enable this when TT is merged
+# Tests pass locally
+# def test_time(memgraph_connection):
+#     conn = memgraph_connection
+#     cursor = conn.cursor()
+#     cursor.execute("RETURN $value", {'value': datetime.time(1, 2, 3, 40)}) 
+#     result = cursor.fetchall()
+#     assert result == [(datetime.time(1, 2, 3, 40),)]  
+# 
+# def test_date(memgraph_connection):
+#     conn = memgraph_connection
+#     cursor = conn.cursor()
+#     cursor.execute("RETURN $value", {'value': datetime.date(1994, 7, 12)})
+#     result = cursor.fetchall()
+#     assert result == [(datetime.date(1994, 7, 12),)]
+# 
+# def test_datetime(memgraph_connection):
+#     conn = memgraph_connection
+#     cursor = conn.cursor()
+#     cursor.execute("RETURN $value", {'value': datetime.datetime(2004, 7, 11, 12, 13, 14, 15)}) 
+#     result = cursor.fetchall()
+#     assert result == [(datetime.datetime(2004, 7, 11, 12, 13, 14, 15),)]
+
+# def test_duration(memgraph_connection):
+#     conn = memgraph_connection
+#     cursor = conn.cursor()
+#     cursor.execute("RETURN $value", {'value': datetime.timedelta(64, 7, 11, 1)})
+#     result = cursor.fetchall()
+#     assert result == [(datetime.timedelta(64, 7, 1011),)]

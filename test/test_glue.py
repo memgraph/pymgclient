@@ -243,7 +243,6 @@ def test_tuple(memgraph_connection):
         #    count
         assert sys.getrefcount(value_in_tuple) == 3
 
-@pytest.mark.xfail(reason="temporal types not enabled")
 def test_time(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()
@@ -251,7 +250,6 @@ def test_time(memgraph_connection):
     result = cursor.fetchall()
     assert result == [(datetime.time(1, 2, 3, 40),)]
 
-@pytest.mark.xfail(reason="temporal types not enabled")
 def test_date(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()
@@ -259,7 +257,6 @@ def test_date(memgraph_connection):
     result = cursor.fetchall()
     assert result == [(datetime.date(1994, 7, 12),)]
 
-@pytest.mark.xfail(reason="temporal types not enabled")
 def test_datetime(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()
@@ -269,7 +266,6 @@ def test_datetime(memgraph_connection):
     result = cursor.fetchall()
     assert result == [(datetime.datetime(2004, 7, 11, 12, 13, 14, 15),)]
 
-@pytest.mark.xfail(reason="temporal types not enabled")
 def test_duration(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()

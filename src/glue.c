@@ -290,7 +290,7 @@ PyObject *mg_local_time_to_py_time(const mg_local_time *lt) {
       PyUnicode_FromString("utcfromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
   SCOPED_CLEANUP PyObject *result =
-      PyObject_CallMethodObjArgs(unix_epoch, method_name, seconds, NULL);
+      PyObject_CallMethodObjArgs((PyObject*)PyDateTimeAPI->DateTimeType, method_name, seconds, NULL);
   IF_PTR_IS_NULL_RETURN(result, NULL);
   SCOPED_CLEANUP PyObject *h = PyObject_GetAttrString(result, "hour");
   IF_PTR_IS_NULL_RETURN(h, NULL);

@@ -25,6 +25,7 @@
 #include "column.h"
 #include "connection.h"
 #include "cursor.h"
+#include "glue.h"
 #include "types.h"
 
 PyObject *Warning;
@@ -71,7 +72,6 @@ PyDoc_STRVAR(
     "Exception raised in a case a method or database API was used which is not "
     "supported by the database.");
 
-
 int add_module_exceptions(PyObject *module) {
   struct {
     const char *name;
@@ -79,22 +79,22 @@ int add_module_exceptions(PyObject *module) {
     PyObject **base;
     const char *docstring;
   } module_exceptions[] = {
-    {"mgclient.Warning", &Warning, &PyExc_Exception, Warning_doc},
-    {"mgclient.Error", &Error, &PyExc_Exception, Error_doc},
-    {"mgclient.InterfaceError", &InterfaceError, &Error, InterfaceError_doc},
-    {"mgclient.DatabaseError", &DatabaseError, &Error, DatabaseError_doc},
-    {"mgclient.DataError", &DataError, &DatabaseError, DataError_doc},
-    {"mgclient.OperationalError", &OperationalError, &DatabaseError,
-     OperationalError_doc},
-    {"mgclient.IntegrityError", &IntegrityError, &DatabaseError,
-     IntegrityError_doc},
-    {"mgclient.InternalError", &InternalError, &DatabaseError,
-     InternalError_doc},
-    {"mgclient.ProgrammingError", &ProgrammingError, &DatabaseError,
-     ProgrammingError_doc},
-    {"mgclient.NotSupportedError", &NotSupportedError, &DatabaseError,
-     NotSupportedError_doc},
-    {NULL, NULL, NULL, NULL}};
+      {"mgclient.Warning", &Warning, &PyExc_Exception, Warning_doc},
+      {"mgclient.Error", &Error, &PyExc_Exception, Error_doc},
+      {"mgclient.InterfaceError", &InterfaceError, &Error, InterfaceError_doc},
+      {"mgclient.DatabaseError", &DatabaseError, &Error, DatabaseError_doc},
+      {"mgclient.DataError", &DataError, &DatabaseError, DataError_doc},
+      {"mgclient.OperationalError", &OperationalError, &DatabaseError,
+       OperationalError_doc},
+      {"mgclient.IntegrityError", &IntegrityError, &DatabaseError,
+       IntegrityError_doc},
+      {"mgclient.InternalError", &InternalError, &DatabaseError,
+       InternalError_doc},
+      {"mgclient.ProgrammingError", &ProgrammingError, &DatabaseError,
+       ProgrammingError_doc},
+      {"mgclient.NotSupportedError", &NotSupportedError, &DatabaseError,
+       NotSupportedError_doc},
+      {NULL, NULL, NULL, NULL}};
 
   for (size_t i = 0; module_exceptions[i].name; ++i) {
     *module_exceptions[i].exc = NULL;
@@ -304,5 +304,7 @@ PyMODINIT_FUNC PyInit_mgclient(void) {
   if (mg_init() != MG_SUCCESS) {
     return NULL;
   }
+
+  py_datetime_import_init();
   return m;
 }

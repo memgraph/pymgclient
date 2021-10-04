@@ -282,10 +282,7 @@ PyObject *mg_local_time_to_py_time(const mg_local_time *lt) {
   long nanos = mg_local_time_nanoseconds(lt);
   long one_sec_to_nanos = 1000000000;
   SCOPED_CLEANUP PyObject *seconds = PyLong_FromLong(nanos / one_sec_to_nanos);
-  SCOPED_CLEANUP PyObject *unix_epoch =
-      make_py_datetime(1970, 1, 1, 0, 0, 0, 0);
   long leftover_nanos = nanos % one_sec_to_nanos;
-  IF_PTR_IS_NULL_RETURN(unix_epoch, NULL);
   SCOPED_CLEANUP PyObject *method_name =
       PyUnicode_FromString("utcfromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
@@ -305,16 +302,13 @@ PyObject *mg_local_time_to_py_time(const mg_local_time *lt) {
 }
 
 PyObject *mg_local_date_time_to_py_datetime(const mg_local_date_time *ldt) {
-  SCOPED_CLEANUP PyObject *unix_epoch =
-      PyDateTime_FromDateAndTime(1970, 1, 1, 0, 0, 0, 0);
-  IF_PTR_IS_NULL_RETURN(unix_epoch, NULL);
   SCOPED_CLEANUP PyObject *seconds =
       PyLong_FromLong(mg_local_date_time_seconds(ldt));
   IF_PTR_IS_NULL_RETURN(seconds, NULL);
   SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
   SCOPED_CLEANUP PyObject *result =
-      PyObject_CallMethodObjArgs(unix_epoch, method_name, seconds, NULL);
+      PyObject_CallMethodObjArgs((PyObject*)PyDateTimeAPI->DateTimeType, method_name, seconds, NULL);
   IF_PTR_IS_NULL_RETURN(result, NULL);
   SCOPED_CLEANUP PyObject *y = PyObject_GetAttrString(result, "year");
   SCOPED_CLEANUP PyObject *mo = PyObject_GetAttrString(result, "month");

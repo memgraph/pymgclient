@@ -119,11 +119,11 @@ jobs:
       - name: Run tests
         run: |
           MEMGRAPH_PORT=10000
-          if [ ${{ matrix.mgversion }} == "2.0.0" ]; then
+          if( ${{ matrix.mgversion }} -eq "2.0.0" ) {
             python3 -m pytest -v
-          else
+          }else {
             python3 -m pytest -v -m "not temporal"
-          fi
+          }
         env:
           MEMGRAPH_HOST: 'localhost'
           MEMGRAPH_STARTED_WITH_SSL:

@@ -41,7 +41,7 @@ def generate_key_and_cert(key_file, cert_file):
     cert.gmtime_adj_notAfter(86400)
     cert.set_issuer(cert.get_subject())
     cert.set_pubkey(k)
-    cert.sign(k, 'sha512')
+    cert.sign(k, "sha512")
 
     cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     cert_file.flush()
@@ -52,13 +52,10 @@ def generate_key_and_cert(key_file, cert_file):
 @pytest.fixture(scope="function")
 def secure_memgraph_server():
     # we need public/private key pair to run Memgraph with SSL
-    with tempfile.NamedTemporaryFile() as key_file, \
-            tempfile.NamedTemporaryFile() as cert_file:
+    with tempfile.NamedTemporaryFile() as key_file, tempfile.NamedTemporaryFile() as cert_file:
         generate_key_and_cert(key_file.file, cert_file.file)
 
-        memgraph = start_memgraph(
-            key_file=key_file.name,
-            cert_file=cert_file.name)
+        memgraph = start_memgraph(key_file=key_file.name, cert_file=cert_file.name)
         assert memgraph.use_ssl
         assert memgraph.sslmode() == mgclient.MG_SSLMODE_REQUIRE
         yield memgraph.host, memgraph.port, memgraph.is_long_running()
@@ -81,7 +78,8 @@ def test_connect_args_validation():
             host="127.0.0.1",
             port=7687,
             sslmode=mgclient.MG_SSLMODE_REQUIRE,
-            trust_callback="not callable")
+            trust_callback="not callable",
+        )
 
 
 @requires_ssl_disabled
@@ -98,8 +96,7 @@ def test_connection_secure_fail(memgraph_server):
     # server doesn't use SSL
     host, port, sslmode, _ = memgraph_server
     with pytest.raises(mgclient.OperationalError):
-        mgclient.connect(host=host, port=port,
-                         sslmode=mgclient.MG_SSLMODE_REQUIRE)
+        mgclient.connect(host=host, port=port, sslmode=mgclient.MG_SSLMODE_REQUIRE)
 
 
 @requires_ssl_enabled
@@ -107,19 +104,17 @@ def test_connection_secure_success(secure_memgraph_server):
     host, port, is_long_running = secure_memgraph_server
 
     with pytest.raises(mgclient.OperationalError):
-        conn = mgclient.connect(
-            host=host,
-            port=port)
+        conn = mgclient.connect(host=host, port=port)
 
     def good_trust_callback(hostname, ip_address, key_type, fingerprint):
         if not is_long_running:
-            assert hostname == 'localhost'
+            assert hostname == "localhost"
             assert ip_address == "127.0.0.1"
         return True
 
     def bad_trust_callback(hostname, ip_address, key_type, fingerprint):
         if not is_long_running:
-            assert hostname == 'localhost'
+            assert hostname == "localhost"
             assert ip_address == "127.0.0.1"
         return False
 
@@ -128,13 +123,15 @@ def test_connection_secure_success(secure_memgraph_server):
             host=host,
             port=port,
             sslmode=mgclient.MG_SSLMODE_REQUIRE,
-            trust_callback=bad_trust_callback)
+            trust_callback=bad_trust_callback,
+        )
 
     conn = mgclient.connect(
         host=host,
         port=port,
         sslmode=mgclient.MG_SSLMODE_REQUIRE,
-        trust_callback=good_trust_callback)
+        trust_callback=good_trust_callback,
+    )
 
     assert conn.status == mgclient.CONN_STATUS_READY
 
@@ -238,12 +235,12 @@ def test_commit(memgraph_server):
 
     cursor2 = conn2.cursor()
     cursor2.execute("MATCH (n) RETURN count(n)")
-    assert cursor2.fetchall() == [(original_count, )]
+    assert cursor2.fetchall() == [(original_count,)]
 
     conn1.commit()
 
     cursor2.execute("MATCH (n) RETURN count(n)")
-    assert cursor2.fetchall() == [(original_count + 1, )]
+    assert cursor2.fetchall() == [(original_count + 1,)]
 
 
 def test_rollback(memgraph_server):
@@ -261,11 +258,11 @@ def test_rollback(memgraph_server):
     cursor.fetchall()
 
     cursor.execute("MATCH (n) RETURN count(n)")
-    assert cursor.fetchall() == [(original_count + 1, )]
+    assert cursor.fetchall() == [(original_count + 1,)]
 
     conn.rollback()
     cursor.execute("MATCH (n) RETURN count(n)")
-    assert cursor.fetchall() == [(original_count, )]
+    assert cursor.fetchall() == [(original_count,)]
 
 
 def test_close_doesnt_commit(memgraph_server):
@@ -286,7 +283,7 @@ def test_close_doesnt_commit(memgraph_server):
     cursor = conn.cursor()
     cursor.execute("MATCH (n) RETURN count(n)")
 
-    assert cursor.fetchall() == [(original_count, )]
+    assert cursor.fetchall() == [(original_count,)]
 
 
 def test_commit_rollback_lazy(memgraph_server):
@@ -301,7 +298,7 @@ def test_commit_rollback_lazy(memgraph_server):
     conn.commit()
     assert conn.status == mgclient.CONN_STATUS_EXECUTING
 
-    assert cursor.fetchall() == [(1, )]
+    assert cursor.fetchall() == [(1,)]
     assert conn.status == mgclient.CONN_STATUS_READY
 
 
@@ -312,12 +309,12 @@ def test_autocommit_failure(memgraph_server):
 
     assert conn.status == mgclient.CONN_STATUS_READY
     cursor = conn.cursor()
-    cursor.execute('RETURN 5')
+    cursor.execute("RETURN 5")
     assert conn.status == mgclient.CONN_STATUS_IN_TRANSACTION
 
     with pytest.raises(mgclient.DatabaseError):
-        cursor.execute('SHOW INDEX INFO')
+        cursor.execute("SHOW INDEX INFO")
 
     assert conn.status == mgclient.CONN_STATUS_READY
-    cursor.execute('RETURN 5')
+    cursor.execute("RETURN 5")
     assert conn.status == mgclient.CONN_STATUS_IN_TRANSACTION

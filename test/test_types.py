@@ -22,10 +22,10 @@ def test_node():
     node2 = mgclient.Node(1, set(["Label1"]), {})
     assert str(node2) == "(:Label1)"
 
-    node3 = mgclient.Node(1, set(["Label2"]), {'prop': 1})
+    node3 = mgclient.Node(1, set(["Label2"]), {"prop": 1})
     assert str(node3) == "(:Label2 {'prop': 1})"
 
-    node4 = mgclient.Node(1, set(), {'prop': 1})
+    node4 = mgclient.Node(1, set(), {"prop": 1})
     assert str(node4) == "({'prop': 1})"
 
 
@@ -33,7 +33,7 @@ def test_relationship():
     rel1 = mgclient.Relationship(0, 1, 2, "Type", {})
     assert str(rel1) == "[:Type]"
 
-    rel2 = mgclient.Relationship(0, 1, 2, "Type", {'prop': 1})
+    rel2 = mgclient.Relationship(0, 1, 2, "Type", {"prop": 1})
     assert str(rel2) == "[:Type {'prop': 1}]"
 
 

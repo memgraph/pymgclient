@@ -29,4 +29,5 @@ mg_map *py_dict_to_mg_map(PyObject *dict);
 
 mg_value *py_object_to_mg_value(PyObject *object);
 
+void py_datetime_import_init();
 #endif

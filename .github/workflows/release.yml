@@ -16,7 +16,7 @@ jobs:
      matrix:
         platform: [ubuntu-18.04]
         mgversion:
-          - 1.4.0
+          - 2.0.0
     runs-on: ${{ matrix.platform }}
     steps:
     - name: Install system dependencies (Ubuntu 18.04)
@@ -25,7 +25,7 @@ jobs:
         python3 -m pip install --upgrade
         sudo pip3 install networkx pytest pyopenssl sphinx
         mkdir ~/memgraph
-        curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-18.04/memgraph_${{matrix.mgversion}}-community-1_amd64.deb > ~/memgraph/memgraph-community.deb
+        curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-18.04/memgraph_${{matrix.mgversion}}-1_amd64.deb > ~/memgraph/memgraph-community.deb
         sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
         sudo dpkg -i ~/memgraph/memgraph-community.deb
 
@@ -96,7 +96,7 @@ jobs:
         shell: wsl-bash {0} # root shell
         run: |
           mkdir ~/memgraph
-          curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-18.04/memgraph_${{matrix.mgversion}}-community-1_amd64.deb --output ~/memgraph/memgraph-community.deb
+          curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-18.04/memgraph_${{matrix.mgversion}}-1_amd64.deb --output ~/memgraph/memgraph-community.deb
           dpkg -i ~/memgraph/memgraph-community.deb
           openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-recover-on-startup=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &

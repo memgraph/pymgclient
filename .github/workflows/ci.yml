@@ -71,7 +71,6 @@ jobs:
           - 3.6
           - 3.9
         mgversion:
-          - 1.4.0
           - 2.0.0
     steps:
       - uses: actions/checkout@v2
@@ -121,11 +120,7 @@ jobs:
         run: python -m pip install -f dist --no-index pymgclient
       - name: Run tests
         run: |
-          if( ${{ matrix.mgversion }} -match "^2" ) {
-            python3 -m pytest -v
-          }else {
-            python3 -m pytest -v -m "not temporal"
-          }
+          python3 -m pytest -v
         env:
           MEMGRAPH_HOST: "localhost"
           MEMGRAPH_STARTED_WITH_SSL:

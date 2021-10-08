@@ -239,7 +239,7 @@ PyObject *make_py_date(int y, int m, int d) {
   return date;
 }
 
-PyObject *make_py_time(int h, int min, int sec, int mi) {
+PyObject *make_py_time(int64_t h, int64_t min, int64_t sec, int64_t mi) {
   PyObject *time = PyTime_FromTime(h, min, sec, mi);
   if (!time) {
     PyErr_Print();
@@ -279,17 +279,16 @@ PyObject *mg_date_to_py_date(const mg_date *date) {
 }
 
 PyObject *mg_local_time_to_py_time(const mg_local_time *lt) {
-  long nanos = mg_local_time_nanoseconds(lt);
-  long one_sec_to_nanos = 1000000000;
-  SCOPED_CLEANUP PyObject *seconds = PyLong_FromLong(nanos / one_sec_to_nanos);
-  long leftover_nanos = nanos % one_sec_to_nanos;
+  const int64_t nanos = mg_local_time_nanoseconds(lt);
+  const int64_t one_sec_to_nanos = 1000000000;
+  SCOPED_CLEANUP PyObject *seconds = PyLong_FromLongLong(nanos / one_sec_to_nanos);
+  const int64_t leftover_nanos = nanos % one_sec_to_nanos;
 #ifdef _WIN32
-  SCOPED_CLEANUP PyObject *tz_utc = PyDateTime_TimeZone_UTC();
   SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
   SCOPED_CLEANUP PyObject *result =
       PyObject_CallMethodObjArgs((PyObject *)PyDateTimeAPI->DateTimeType,
-                                 method_name, seconds, tz_utc, NULL);
+                                 method_name, seconds, PyDateTime_TimeZone_UTC, NULL);
 #else
   SCOPED_CLEANUP PyObject *method_name =
       PyUnicode_FromString("utcfromtimestamp");
@@ -506,20 +505,20 @@ int64_t microseconds_to_nanos(int64_t microseconds) {
 }
 
 int64_t seconds_to_nanos(int64_t seconds) {
-  return microseconds_to_nanos(seconds * 1000000);
+  return seconds * 1000000 * 1000;
 }
 
 int64_t minutes_to_nanos(int64_t minutes) {
-  return seconds_to_nanos(minutes * 60);
+  return seconds_to_nanos(minutes * (int64_t)60);
 }
 
 int64_t hours_to_nanos(int64_t hours) { return minutes_to_nanos(hours * 60); }
 
 int64_t nanoseconds_since_epoch(PyObject *obj) {
-  int h = PyDateTime_TIME_GET_HOUR(obj);
-  int m = PyDateTime_TIME_GET_MINUTE(obj);
-  int s = PyDateTime_TIME_GET_SECOND(obj);
-  int mi = PyDateTime_TIME_GET_MICROSECOND(obj);
+  int64_t h = PyDateTime_TIME_GET_HOUR(obj);
+  int64_t m = PyDateTime_TIME_GET_MINUTE(obj);
+  int64_t s = PyDateTime_TIME_GET_SECOND(obj);
+  int64_t mi = PyDateTime_TIME_GET_MICROSECOND(obj);
   return hours_to_nanos(h) + minutes_to_nanos(m) + seconds_to_nanos(s) +
          microseconds_to_nanos(mi);
 }

@@ -283,11 +283,21 @@ PyObject *mg_local_time_to_py_time(const mg_local_time *lt) {
   long one_sec_to_nanos = 1000000000;
   SCOPED_CLEANUP PyObject *seconds = PyLong_FromLong(nanos / one_sec_to_nanos);
   long leftover_nanos = nanos % one_sec_to_nanos;
+#ifdef _WIN32
+  SCOPED_CLEANUP PyObject *tz_utc = PyDateTime_TimeZone_UTC();
+  SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
+  IF_PTR_IS_NULL_RETURN(method_name, NULL);
+  SCOPED_CLEANUP PyObject *result =
+      PyObject_CallMethodObjArgs((PyObject *)PyDateTimeAPI->DateTimeType,
+                                 method_name, seconds, tz_utc, NULL);
+#else
   SCOPED_CLEANUP PyObject *method_name =
       PyUnicode_FromString("utcfromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
-  SCOPED_CLEANUP PyObject *result =
-      PyObject_CallMethodObjArgs((PyObject*)PyDateTimeAPI->DateTimeType, method_name, seconds, NULL);
+  SCOPED_CLEANUP PyObject *result = PyObject_CallMethodObjArgs(
+      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds, NULL);
+  IF_PTR_IS_NULL_RETURN(result, NULL);
+#endif
   IF_PTR_IS_NULL_RETURN(result, NULL);
   SCOPED_CLEANUP PyObject *h = PyObject_GetAttrString(result, "hour");
   IF_PTR_IS_NULL_RETURN(h, NULL);
@@ -307,8 +317,8 @@ PyObject *mg_local_date_time_to_py_datetime(const mg_local_date_time *ldt) {
   IF_PTR_IS_NULL_RETURN(seconds, NULL);
   SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
-  SCOPED_CLEANUP PyObject *result =
-      PyObject_CallMethodObjArgs((PyObject*)PyDateTimeAPI->DateTimeType, method_name, seconds, NULL);
+  SCOPED_CLEANUP PyObject *result = PyObject_CallMethodObjArgs(
+      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds, NULL);
   IF_PTR_IS_NULL_RETURN(result, NULL);
   SCOPED_CLEANUP PyObject *y = PyObject_GetAttrString(result, "year");
   SCOPED_CLEANUP PyObject *mo = PyObject_GetAttrString(result, "month");

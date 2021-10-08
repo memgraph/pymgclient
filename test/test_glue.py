@@ -238,28 +238,28 @@ def test_time(memgraph_connection):
     assert result == [(datetime.time(1, 2, 3, 40),)]
 
 
-@pytest.mark.temporal
-def test_date(memgraph_connection):
-    conn = memgraph_connection
-    cursor = conn.cursor()
-    cursor.execute("RETURN $value", {"value": datetime.date(1994, 7, 12)})
-    result = cursor.fetchall()
-    assert result == [(datetime.date(1994, 7, 12),)]
+# @pytest.mark.temporal
+# def test_date(memgraph_connection):
+#     conn = memgraph_connection
+#     cursor = conn.cursor()
+#     cursor.execute("RETURN $value", {"value": datetime.date(1994, 7, 12)})
+#     result = cursor.fetchall()
+#     assert result == [(datetime.date(1994, 7, 12),)]
 
 
-@pytest.mark.temporal
-def test_datetime(memgraph_connection):
-    conn = memgraph_connection
-    cursor = conn.cursor()
-    cursor.execute("RETURN $value", {"value": datetime.datetime(2004, 7, 11, 12, 13, 14, 15)})
-    result = cursor.fetchall()
-    assert result == [(datetime.datetime(2004, 7, 11, 12, 13, 14, 15),)]
+# @pytest.mark.temporal
+# def test_datetime(memgraph_connection):
+#     conn = memgraph_connection
+#     cursor = conn.cursor()
+#     cursor.execute("RETURN $value", {"value": datetime.datetime(2004, 7, 11, 12, 13, 14, 15)})
+#     result = cursor.fetchall()
+#     assert result == [(datetime.datetime(2004, 7, 11, 12, 13, 14, 15),)]
 
 
-@pytest.mark.temporal
-def test_duration(memgraph_connection):
-    conn = memgraph_connection
-    cursor = conn.cursor()
-    cursor.execute("RETURN $value", {"value": datetime.timedelta(64, 7, 11, 1)})
-    result = cursor.fetchall()
-    assert result == [(datetime.timedelta(64, 7, 1011),)]
+# @pytest.mark.temporal
+# def test_duration(memgraph_connection):
+#     conn = memgraph_connection
+#     cursor = conn.cursor()
+#     cursor.execute("RETURN $value", {"value": datetime.timedelta(64, 7, 11, 1)})
+#     result = cursor.fetchall()
+#     assert result == [(datetime.timedelta(64, 7, 1011),)]

@@ -3,6 +3,25 @@ Changelog
 =========
 
 ######
+1.1.0
+######
+
+
+****************
+Breaking Changes
+****************
+
+******************************
+Major Feature and Improvements
+******************************
+
+  * Add support for temporal types.
+
+*********
+Bug Fixes
+*********
+
+######
 1.0.0
 ######
 

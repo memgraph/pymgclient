@@ -281,22 +281,14 @@ PyObject *mg_date_to_py_date(const mg_date *date) {
 PyObject *mg_local_time_to_py_time(const mg_local_time *lt) {
   const int64_t nanos = mg_local_time_nanoseconds(lt);
   const int64_t one_sec_to_nanos = 1000000000;
-  SCOPED_CLEANUP PyObject *seconds = PyLong_FromLongLong(nanos / one_sec_to_nanos);
+  SCOPED_CLEANUP PyObject *seconds =
+      PyLong_FromLongLong(nanos / one_sec_to_nanos);
   const int64_t leftover_nanos = nanos % one_sec_to_nanos;
-#ifdef _WIN32
-  SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
-  IF_PTR_IS_NULL_RETURN(method_name, NULL);
-  SCOPED_CLEANUP PyObject *result =
-      PyObject_CallMethodObjArgs((PyObject *)PyDateTimeAPI->DateTimeType,
-                                 method_name, seconds, PyDateTime_TimeZone_UTC, NULL);
-#else
   SCOPED_CLEANUP PyObject *method_name =
       PyUnicode_FromString("utcfromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
   SCOPED_CLEANUP PyObject *result = PyObject_CallMethodObjArgs(
       (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds, NULL);
-  IF_PTR_IS_NULL_RETURN(result, NULL);
-#endif
   IF_PTR_IS_NULL_RETURN(result, NULL);
   SCOPED_CLEANUP PyObject *h = PyObject_GetAttrString(result, "hour");
   IF_PTR_IS_NULL_RETURN(h, NULL);
@@ -504,9 +496,7 @@ int64_t microseconds_to_nanos(int64_t microseconds) {
   return microseconds * 1000;
 }
 
-int64_t seconds_to_nanos(int64_t seconds) {
-  return seconds * 1000000 * 1000;
-}
+int64_t seconds_to_nanos(int64_t seconds) { return seconds * 1000000 * 1000; }
 
 int64_t minutes_to_nanos(int64_t minutes) {
   return seconds_to_nanos(minutes * (int64_t)60);

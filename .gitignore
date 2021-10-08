@@ -8,6 +8,7 @@ pymgclient.egg-info/
 *.swo
 
 # python temporary files
+.venv
 *.pyc
 *.pyo
 __pycache__/

@@ -68,7 +68,7 @@ jobs:
         arch:
           - { mingw: "64", msys: x86_64, python: "x64" }
         python_version:
-          - 3.6
+          - 3.7
           - 3.9
         mgversion:
           - 2.0.0

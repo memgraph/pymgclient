@@ -284,11 +284,19 @@ PyObject *mg_local_time_to_py_time(const mg_local_time *lt) {
   SCOPED_CLEANUP PyObject *seconds =
       PyLong_FromLongLong(nanos / one_sec_to_nanos);
   const int64_t leftover_nanos = nanos % one_sec_to_nanos;
+#ifdef _WIN32
+  SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
+  IF_PTR_IS_NULL_RETURN(method_name, NULL);
+  SCOPED_CLEANUP PyObject *result = PyObject_CallMethodObjArgs(
+      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds,
+      PyDateTime_TimeZone_UTC, NULL);
+#else
   SCOPED_CLEANUP PyObject *method_name =
       PyUnicode_FromString("utcfromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
   SCOPED_CLEANUP PyObject *result = PyObject_CallMethodObjArgs(
       (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds, NULL);
+#endif
   IF_PTR_IS_NULL_RETURN(result, NULL);
   SCOPED_CLEANUP PyObject *h = PyObject_GetAttrString(result, "hour");
   IF_PTR_IS_NULL_RETURN(h, NULL);

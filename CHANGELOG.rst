@@ -11,6 +11,8 @@ Changelog
 Breaking Changes
 ****************
 
+  * `pymgclient` is supported only for >3.7 python versions on Windows.
+
 ******************************
 Major Feature and Improvements
 ******************************

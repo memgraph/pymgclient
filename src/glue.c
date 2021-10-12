@@ -284,6 +284,10 @@ PyObject *mg_local_time_to_py_time(const mg_local_time *lt) {
   SCOPED_CLEANUP PyObject *seconds =
       PyLong_FromLongLong(nanos / one_sec_to_nanos);
   const int64_t leftover_nanos = nanos % one_sec_to_nanos;
+  // The reason for different implementation of getting utc time from timestamp
+  // is because we need to explicitly define utc timezone on Windows unlike on
+  // linux, but that API is only allowed in py3.7, therefore the support for
+  // Windows is only for python version >= 3.7.
 #ifdef _WIN32
   SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);

@@ -511,7 +511,7 @@ int64_t microseconds_to_nanos(int64_t microseconds) {
 int64_t seconds_to_nanos(int64_t seconds) { return seconds * 1000000 * 1000; }
 
 int64_t minutes_to_nanos(int64_t minutes) {
-  return seconds_to_nanos(minutes * (int64_t)60);
+  return seconds_to_nanos(minutes * 60);
 }
 
 int64_t hours_to_nanos(int64_t hours) { return minutes_to_nanos(hours * 60); }

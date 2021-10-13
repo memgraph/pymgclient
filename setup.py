@@ -12,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import os
 import pathlib
 import platform
 import shutil
-
-from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
+import sys
 from distutils import log
 from distutils.core import DistutilsExecError, DistutilsPlatformError
 
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
 
 IS_WINDOWS = sys.platform == 'win32'
 IS_APPLE = sys.platform == 'darwin'

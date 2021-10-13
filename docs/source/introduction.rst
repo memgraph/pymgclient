@@ -23,7 +23,7 @@ pymgclient has prebuilt binary packages for
 * macOS 10.15+ x86_64 (not arm64) with `Python
   <https://www.python.org/downloads/>`_ 3.7+
 
-* Windows 10 x86_64 with `Python <https://www.python.org/downloads/>`_ 3.6+
+* Windows 10 x86_64 with `Python <https://www.python.org/downloads/>`_ 3.7+
 
 To intall pymgclient binaries on these platforms see `Install binaries`_
 section or check `Install from source`_ for other platforms.

@@ -74,9 +74,9 @@ cursor's :meth:`.execute`. For example::
              {'sid': server_id})
 
 
-###############################################
+#############################################
 Adaptation of Memgraph values to Python types
-###############################################
+#############################################
 
 The following table shows the mapping between Python and Memgraph types:
 

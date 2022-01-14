@@ -75,25 +75,29 @@ cursor's :meth:`.execute`. For example::
 
 
 ###############################################
-Adaptation of openCypher values to Python types
+Adaptation of Memgraph values to Python types
 ###############################################
 
-The following table shows the mapping between Python and openCypher types:
+The following table shows the mapping between Python and Memgraph types:
 
-============   ===============================
-openCypher     Python
-============   ===============================
-Null           :const:`None`
-Boolean        :class:`bool`
-Integer        :class:`int`
-Float          :class:`float`
-String         :const:`str`
-List           :class:`list`
-Map            :class:`dict`
-Node           :class:`mgclient.Node`
-Relationship   :class:`mgclient.Relationship`
-Path           :class:`mgclient.Path`
-============   ===============================
+=============   ===============================
+Memgraph        Python
+=============   ===============================
+Null            :const:`None`
+Boolean         :class:`bool`
+Integer         :class:`int`
+Float           :class:`float`
+String          :const:`str`
+Date            :class:`datetime.date`
+LocalTime       :class:`datetime.time`
+LocalDateTime   :class:`datetime.datetime`
+Duration        :class:`datetime.timedelta`
+List            :class:`list`
+Map             :class:`dict`
+Node            :class:`mgclient.Node`
+Relationship    :class:`mgclient.Relationship`
+Path            :class:`mgclient.Path`
+=============   ===============================
 
 Note that in Bolt protocol, all string data is represented as UTF-8 encoded
 binary data.

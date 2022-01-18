@@ -101,16 +101,16 @@ cursor’s <a class="reference internal" href="cursor.html#mgclient.Cursor.execu
 </pre></div>
 </div>
 </section>
-<section id="adaptation-of-opencypher-values-to-python-types">
-<h2>Adaptation of openCypher values to Python types<a class="headerlink" href="#adaptation-of-opencypher-values-to-python-types" title="Permalink to this headline">¶</a></h2>
-<p>The following table shows the mapping between Python and openCypher types:</p>
+<section id="adaptation-of-memgraph-values-to-python-types">
+<h2>Adaptation of Memgraph values to Python types<a class="headerlink" href="#adaptation-of-memgraph-values-to-python-types" title="Permalink to this headline">¶</a></h2>
+<p>The following table shows the mapping between Python and Memgraph types:</p>
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 28%" />
-<col style="width: 72%" />
+<col style="width: 30%" />
+<col style="width: 70%" />
 </colgroup>
 <thead>
-<tr class="row-odd"><th class="head"><p>openCypher</p></th>
+<tr class="row-odd"><th class="head"><p>Memgraph</p></th>
 <th class="head"><p>Python</p></th>
 </tr>
 </thead>
@@ -129,6 +129,18 @@ cursor’s <a class="reference internal" href="cursor.html#mgclient.Cursor.execu
 </tr>
 <tr class="row-even"><td><p>String</p></td>
 <td><p><code class="xref py py-const docutils literal notranslate"><span class="pre">str</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Date</p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.date</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>LocalTime</p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.time</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>LocalDateTime</p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Duration</p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>List</p></td>
 <td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p></td>
@@ -193,7 +205,7 @@ transaction. To set the connection in <em>autocommit</em> mode, set
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Basic module usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#passing-parameters-to-opencypher-queries">Passing parameters to openCypher queries</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#adaptation-of-opencypher-values-to-python-types">Adaptation of openCypher values to Python types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adaptation-of-memgraph-values-to-python-types">Adaptation of Memgraph values to Python types</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#transactions-control">Transactions control</a></li>
 </ul>
 </li>
@@ -237,7 +249,7 @@ transaction. To set the connection in <em>autocommit</em> mode, set
       &copy;2021, Memgraph Ltd..
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.2.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

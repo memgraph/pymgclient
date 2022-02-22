@@ -158,9 +158,7 @@ class BuildMgclientExt(build_ext):
         return [f'-DOPENSSL_ROOT_DIR={openssl_root_dir}']
 
     def get_cflags(self):
-        cflags = os.getenv('CFLAGS')
-        all_warnings_as_error_flag ='-Werror=all'
-        return all_warnings_as_error_flag if cflags is None else f'{cflags} {all_warnings_as_error_flag}'
+        return "{0} -Werror=all".format(os.getenv('CFLAGS', '')).strip()
 
     def build_mgclient_for(self, extension: Extension):
         '''

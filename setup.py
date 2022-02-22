@@ -157,6 +157,11 @@ class BuildMgclientExt(build_ext):
             f'Found OpenSSL in {openssl_root_dir}', level=log.INFO)
         return [f'-DOPENSSL_ROOT_DIR={openssl_root_dir}']
 
+    def get_cflags(self):
+        cflags = os.getenv('CFLAGS')
+        all_warnings_as_error_flag ='-Werror=all'
+        return all_warnings_as_error_flag if cflags is None else f'{cflags} {all_warnings_as_error_flag}'
+
     def build_mgclient_for(self, extension: Extension):
         '''
         Builds mgclient library and configures the extension to be able to use
@@ -204,7 +209,8 @@ class BuildMgclientExt(build_ext):
             f'-DCMAKE_BUILD_TYPE={build_type}',
             f'-DCMAKE_INSTALL_PREFIX={mgclient_install_path}',
             '-DBUILD_TESTING=OFF',
-            '-DCMAKE_POSITION_INDEPENDENT_CODE=ON'
+            '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
+            f'-DCMAKE_C_FLAGS="{self.get_cflags()}"'
         ]
         cmake_config_command.extend(self.get_extra_cmake_config_args())
         generator = self.get_cmake_generator()

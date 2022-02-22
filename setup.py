@@ -288,7 +288,8 @@ setup(name='pymgclient',
       ext_modules=[
           Extension(EXTENSION_NAME,
                     sources=sources,
-                    depends=headers)
+                    depends=headers,
+                    extra_compile_args=["-Werror=all", "-std=c99"])
       ],
       project_urls={
           'Source': 'https://github.com/memgraph/pymgclient',

@@ -124,9 +124,9 @@ class BuildMgclientExt(build_ext):
             extra_libs.extend(['crypto', 'ws2_32'])
         return extra_libs
 
-    def get_extra_cmake_config_args(self):
+    def get_openssl_root_dir(self):
         if not IS_APPLE:
-            return []
+            return None
 
         openssl_root_dir_env_var = 'OPENSSL_ROOT_DIR'
         openssl_root_dir = os.getenv(openssl_root_dir_env_var)
@@ -135,27 +135,38 @@ class BuildMgclientExt(build_ext):
             self.announce(
                 f'Using the value of {openssl_root_dir_env_var} for OpenSSL,'
                 f'which is {openssl_root_dir}', level=log.INFO)
-            return [f'-DOPENSSL_ROOT_DIR={openssl_root_dir}']
+            return openssl_root_dir
 
-        default_openssl_root_dir = '/usr/local/Cellar/openssl@1.1'
+        def get_latest_openssl_subdirs(possible_root_dirs):
+            def get_latest_openssl_subdir(possible_root_dir):
+                if not os.path.isdir(possible_root_dir):
+                    # Maybe CMake can find OpenSSL properly without this
+                    return None
 
-        if not os.path.isdir(default_openssl_root_dir):
-            # Maybe CMake can find OpenSSL properly without this
-            return []
+                self.announce(f'Checking {possible_root_dir} for possible OpenSSL installation', level=log.INFO)
+                openssl_versions = sorted(
+                    pathlib.Path(possible_root_dir).iterdir(),
+                    key=os.path.getmtime,
+                    reverse=True)
 
-        self.announce('d', level=log.INFO)
-        openssl_versions = sorted(
-            pathlib.Path(default_openssl_root_dir).iterdir(),
-            key=os.path.getmtime,
-            reverse=True)
+                if not openssl_versions:
+                    return None
 
-        if not openssl_versions:
-            return []
+                return str(openssl_versions[0])
 
-        openssl_root_dir = str(openssl_versions[0])
-        self.announce(
-            f'Found OpenSSL in {openssl_root_dir}', level=log.INFO)
-        return [f'-DOPENSSL_ROOT_DIR={openssl_root_dir}']
+            return [get_latest_openssl_subdir(p) for p in possible_root_dirs]
+
+        possible_openssl_root_dirs = ['/opt/homebrew/Cellar/openssl@1.1', '/usr/local/Cellar/openssl@1.1']
+
+        try:
+            openssl_root_dir = [p for p in get_latest_openssl_subdirs(possible_openssl_root_dirs) if p is not None][0]
+            self.announce(
+                f'Found OpenSSL in {openssl_root_dir}', level=log.INFO)
+            return openssl_root_dir
+        except ValueError:
+            self.announce("OpenSSL not found", level=log.ERROR)
+            return None
+
 
     def build_mgclient_for(self, extension: Extension):
         '''
@@ -196,6 +207,7 @@ class BuildMgclientExt(build_ext):
         build_type = 'Debug' if self.debug else 'Release'
         install_libdir = 'lib'
         install_includedir = 'include'
+        openssl_root_dir = self.get_openssl_root_dir()
         cmake_config_command = [
             cmake_binary,
             mgclient_source_path,
@@ -206,7 +218,9 @@ class BuildMgclientExt(build_ext):
             '-DBUILD_TESTING=OFF',
             '-DCMAKE_POSITION_INDEPENDENT_CODE=ON'
         ]
-        cmake_config_command.extend(self.get_extra_cmake_config_args())
+
+        if openssl_root_dir is not None:
+            cmake_config_command.append(f'-DOPENSSL_ROOT_DIR={openssl_root_dir}')
         generator = self.get_cmake_generator()
 
         if generator is not None:
@@ -249,6 +263,8 @@ class BuildMgclientExt(build_ext):
         extension.libraries.extend(self.get_extra_libraries())
         extension.depends.extend(mgclient_sources)
         extension.define_macros.append(('MGCLIENT_STATIC_DEFINE', ''))
+        if openssl_root_dir is not None:
+            extension.library_dirs.append(os.path.join(openssl_root_dir, 'lib'))
 
 
 setup(name='pymgclient',

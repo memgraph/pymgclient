@@ -138,6 +138,9 @@ jobs:
         python_version:
           - 3.7
           - 3.9
+        exclude:
+        - python-version: 3.7
+          platform: macos-latest
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2

@@ -131,7 +131,7 @@ jobs:
           name: pymgclient-win${{ matrix.arch.mingw }}-${{ matrix.python_version }}
           path: dist/
 
-  build_macos_10_15:
+  build_macos:
     strategy:
       matrix:
         platform: [macos-latest, macos-10.15]

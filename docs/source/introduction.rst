@@ -40,7 +40,7 @@ The only runtime requirement of pymgclient is OpenSSL.
 * On macOS OpenSSL can be installed easily via `brew`_.
   Once brew is installed, run::
 
-  $ brew install openssl
+  $ brew install openssl@1.1
 
 * On Windows OpenSSL can be installed easily with an `installer
   <https://slproweb.com/products/Win32OpenSSL.html>`_. The Win64 version is
@@ -91,8 +91,7 @@ build it from you will need:
 * Preqrequisites of `mgclient`_:
 
   * CMake 3.8 or newer
-  * OpenSSL 1.0.2 or newer
-  * OpenSSL 1.0.2 or newer header files
+  * OpenSSL 1.0.2 or newer (but not OpenSSL 3.0) and its header files
 
 Building on Linux
 *****************

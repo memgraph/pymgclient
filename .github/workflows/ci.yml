@@ -149,6 +149,9 @@ jobs:
       - name: Install python and OpenSSL
         run: |
           brew install python@${{ matrix.python_version }} openssl@1.1
+      - name: Extend PATH for python 3.7
+        if: ${{ matrix.python_version == 3.7 }}
+        run: echo "/usr/local/opt/python@3.7/bin" >> $GITHUB_PATH
       - name: Install pytest and pyopenssl
         run: python${{ matrix.python_version }} -m pip install pyopenssl pytest
       - name: Build pymgclient

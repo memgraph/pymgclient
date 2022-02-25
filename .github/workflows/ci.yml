@@ -87,16 +87,16 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
           architecture: ${{ matrix.arch.python }}
-      - run: python -m pip install -U pip wheel setuptools pytest pyopenssl
       - uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW${{ matrix.arch.mingw }}
           update: true
+          release: false
           install: git mingw-w64-${{ matrix.arch.msys }}-toolchain mingw-w64-${{ matrix.arch.msys }}-cmake mingw-w64-${{ matrix.arch.msys }}-openssl
       - name: Add mingw${{ matrix.arch.mingw }} to PATH
         run: |
           # First make sure python would resolve to the windows native python, not mingw one
-          echo "C:/msys64/mingw${{ matrix.arch.mingw }}/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+          echo "C:\msys64\mingw${{ matrix.arch.mingw }}\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
           echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
       - uses: Vampire/setup-wsl@v1
         with:
@@ -115,15 +115,13 @@ jobs:
           openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-recover-on-startup=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
           sleep 1 # Wait for Memgraph a bit.
-      - name: Remove chocolatey gcc
-        run: |
-          # The python build command should be executed in the general windows shell where the choco-installed mingw conflicts with
-          # the mingw installed by setup-msys action, because they are both in the PATH.
-          choco uninstall mingw -y
+      - run: python -m pip install -U pip wheel setuptools pytest pyopenssl
       - name: Build pymgclient
         run: python setup.py bdist_wheel
       - name: Install pymgclient
-        run: python -m pip install -f dist --no-index pymgclient
+        run: python -m pip install --verbose -f dist --no-index pymgclient
+        env:
+          VERBOSE: 1
       - name: Run tests
         run: |
           python3 -m pytest -v
@@ -137,14 +135,13 @@ jobs:
           path: dist/
 
   build_macos:
-    runs-on: macos-latest
     strategy:
       matrix:
+        platform: [macos-latest, macos-10.15]
         python_version:
           - 3.7
           - 3.9
-    env:
-      PYTHON_EXECUTABLE: /usr/local/opt/python@${{ matrix.python_version }}/bin/python3
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -152,14 +149,17 @@ jobs:
       - name: Install python and OpenSSL
         run: |
           brew install python@${{ matrix.python_version }} openssl@1.1
+      - name: Extend PATH for python 3.7
+        if: ${{ matrix.python_version == 3.7 }}
+        run: echo "/usr/local/opt/python@3.7/bin" >> $GITHUB_PATH
       - name: Install pytest and pyopenssl
-        run: ${{ env.PYTHON_EXECUTABLE }} -m pip install pyopenssl pytest
+        run: python${{ matrix.python_version }} -m pip install pyopenssl pytest
       - name: Build pymgclient
-        run: ${{ env.PYTHON_EXECUTABLE }} setup.py bdist_wheel
+        run: python${{ matrix.python_version }} setup.py bdist_wheel
       - name: Install pymgclient
-        run: ${{ env.PYTHON_EXECUTABLE }} -m pip install -f dist --no-index pymgclient
+        run: python${{ matrix.python_version }} -m pip install -f dist --no-index pymgclient
       - name: Import mgclient to validate installation
-        run: ${{ env.PYTHON_EXECUTABLE }} -c "import mgclient"
+        run: python${{ matrix.python_version }} -c "import mgclient"
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:

@@ -19,7 +19,7 @@ import inspect
 # -- Project information -----------------------------------------------------
 
 project = 'pymgclient'
-copyright = '2021, Memgraph Ltd.'
+copyright = '2022, Memgraph Ltd.'
 author = 'Memgraph Ltd.'
 
 # The full version, including alpha/beta/rc tags

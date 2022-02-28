@@ -124,7 +124,7 @@ To install the C/C++ compiler, run::
 
 The rest of the build prerequisites can be installed easily via `brew`_::
 
-  $ brew install python3 openssl cmake
+  $ brew install python3 openssl@1.1 cmake
 
 After the prerequisites are installed pymgclient can be installed via pip::
 

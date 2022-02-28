@@ -84,8 +84,8 @@ Build prerequisites
 pymgclient is a C wrapper around the `mgclient`_ Memgraph client library. To
 build it from you will need:
 
-* Python 3.7 or newer
-* Python 3.7 or newer header files
+* Python 3.6 or newer
+* Python 3.6 or newer header files
 * A C compiler supporting C11 standard
 * A C++ compiler (it is not used directly, but necessary for CMake to work)
 * Preqrequisites of `mgclient`_:

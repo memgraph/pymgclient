@@ -151,7 +151,7 @@ class BuildMgclientExt(build_ext):
             openssl_root_dir = [p for p in get_latest_openssl_subdirs(possible_openssl_root_dirs) if p is not None][0]
             self.announce(f"Found OpenSSL in {openssl_root_dir}", level=log.INFO)
             return openssl_root_dir
-        except ValueError:
+        except IndexError:
             self.announce("OpenSSL not found", level=log.ERROR)
             return None
 

@@ -126,6 +126,11 @@ The rest of the build prerequisites can be installed easily via `brew`_::
 
   $ brew install python3 openssl@1.1 cmake
 
+It is important to mention that on M1/ARM machines pymgclient cannot be built
+with the default installed Python version, thus Python needs to be installed via
+brew. If you are interested in the technical details, you can find more details
+in the technical notes below.
+
 After the prerequisites are installed pymgclient can be installed via pip::
 
   $ pip3 install --user pymgclient --no-binary :all:
@@ -135,6 +140,18 @@ package before installing it. Alternatively pymgclient can be installed by
 using :file:`setup.py`::
 
   $ python3 setup.py install
+
+Techninal note for arm64 machines
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The default installed Python is in the so called `Universal Binary 2
+<https://en.wikipedia.org/wiki/Universal_binary#Universal_2>`_ format. That
+means all of the packages that are built with this Python version have to be
+built also as a universal binary. Though pymgclient builds on both x86_64 and
+arm64 architectures, the brew installed OpenSSL version only contains the arm64
+binaries. As a consequence, during building the x86_64 part of the universal
+binary of pymgclient, the linker fails, because it cannot find the OpenSSL
+binaries in x86_64 binary format.
 
 Building on Windows
 *******************

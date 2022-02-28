@@ -141,7 +141,7 @@ using :file:`setup.py`::
 
   $ python3 setup.py install
 
-Techninal note for arm64 machines
+Technical note for arm64 machines
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The default installed Python is in the so called `Universal Binary 2

@@ -77,7 +77,7 @@ class BuildMgclientExt(build_ext):
                 self.compiler = "mingw32"
             elif self.compiler != "mingw32":
                 raise DistutilsPlatformError(
-                    f"The specified compiler {self.compiler} is not supported " "on windows, only mingw32 is supported."
+                    f"The specified compiler {self.compiler} is not supported on windows, only mingw32 is supported."
                 )
 
         super().run()
@@ -208,7 +208,7 @@ class BuildMgclientExt(build_ext):
         try:
             self.spawn(cmake_config_command)
         except DistutilsExecError as dee:
-            self.announce("Error happened during configuring mgclient! Is " "OpenSSL installed correctly?")
+            self.announce("Error happened during configuring mgclient! Is OpenSSL installed correctly?")
             raise dee
 
         self.announce("Building mgclient binaries", level=log.INFO)

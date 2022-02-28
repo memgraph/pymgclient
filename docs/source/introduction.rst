@@ -40,7 +40,7 @@ The only runtime requirement of pymgclient is OpenSSL.
 * On macOS OpenSSL can be installed easily via `brew`_.
   Once brew is installed, run::
 
-  $ brew install openssl
+  $ brew install openssl@1.1
 
 * On Windows OpenSSL can be installed easily with an `installer
   <https://slproweb.com/products/Win32OpenSSL.html>`_. The Win64 version is
@@ -91,8 +91,7 @@ build it from you will need:
 * Preqrequisites of `mgclient`_:
 
   * CMake 3.8 or newer
-  * OpenSSL 1.0.2 or newer
-  * OpenSSL 1.0.2 or newer header files
+  * OpenSSL 1.0.2 or newer (but not OpenSSL 3.0) and its header files
 
 Building on Linux
 *****************
@@ -125,7 +124,12 @@ To install the C/C++ compiler, run::
 
 The rest of the build prerequisites can be installed easily via `brew`_::
 
-  $ brew install python3 openssl cmake
+  $ brew install python3 openssl@1.1 cmake
+
+It is important to mention that on M1/ARM machines pymgclient cannot be built
+with the default installed Python version, thus Python needs to be installed via
+brew. If you are interested in the technical details, you can find more details
+in the technical notes below.
 
 After the prerequisites are installed pymgclient can be installed via pip::
 
@@ -133,9 +137,21 @@ After the prerequisites are installed pymgclient can be installed via pip::
 
 This will download the source package of pymgclient and build the binary
 package before installing it. Alternatively pymgclient can be installed by
-using :file:`setup.py`:
+using :file:`setup.py`::
 
   $ python3 setup.py install
+
+Technical note for arm64 machines
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The default installed Python is in the so called `Universal Binary 2
+<https://en.wikipedia.org/wiki/Universal_binary#Universal_2>`_ format. That
+means all of the packages that are built with this Python version have to be
+built also as a universal binary. Though pymgclient builds on both x86_64 and
+arm64 architectures, the brew installed OpenSSL version only contains the arm64
+binaries. As a consequence, during building the x86_64 part of the universal
+binary of pymgclient, the linker fails, because it cannot find the OpenSSL
+binaries in x86_64 binary format.
 
 Building on Windows
 *******************

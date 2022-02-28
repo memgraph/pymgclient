@@ -152,6 +152,9 @@ class BuildMgclientExt(build_ext):
             self.announce("OpenSSL not found", level=log.ERROR)
             return None
 
+    def get_cflags(self):
+        return "{0} -Werror=all".format(os.getenv("CFLAGS", "")).strip()
+
     def build_mgclient_for(self, extension: Extension):
         """
         Builds mgclient library and configures the extension to be able to use
@@ -193,6 +196,7 @@ class BuildMgclientExt(build_ext):
             f"-DCMAKE_INSTALL_PREFIX={mgclient_install_path}",
             "-DBUILD_TESTING=OFF",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+            f'-DCMAKE_C_FLAGS="{self.get_cflags()}"',
         ]
 
         if openssl_root_dir is not None:
@@ -261,7 +265,9 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Operating System :: POSIX :: Linux",
     ],
-    ext_modules=[Extension(EXTENSION_NAME, sources=sources, depends=headers)],
+    ext_modules=[
+        Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_compile_args=["-Werror=all", "-std=c99"])
+    ],
     project_urls={
         "Source": "https://github.com/memgraph/pymgclient",
         "Documentation": "https://memgraph.github.io/pymgclient",

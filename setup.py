@@ -13,12 +13,12 @@
 # limitations under the License.
 
 import os
-import pathlib
 import platform
 import shutil
 import sys
 from distutils import log
 from distutils.core import DistutilsExecError, DistutilsPlatformError
+from pathlib import Path
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
@@ -43,12 +43,9 @@ with open("README.md", "r") as fh:
 #    client library.
 EXTENSION_NAME = "mgclient"
 
-sources = ["column.c", "connection-int.c", "connection.c", "cursor.c", "glue.c", "mgclientmodule.c", "types.c"]
-sources = [os.path.join("src", fn) for fn in sources]
+sources = [str(path) for path in Path("src").glob("*.c")]
 
-headers = ["column.h", "connection.h", "cursor.h", "exceptions.h", "glue.h", "types.h"]
-headers = [os.path.join("src", fn) for fn in headers]
-
+headers = [str(path) for path in Path("src").glob("*.h")]
 
 def list_all_files_in_dir(path):
     result = []
@@ -136,7 +133,7 @@ class BuildMgclientExt(build_ext):
                     return None
 
                 self.announce(f"Checking {possible_root_dir} for possible OpenSSL installation", level=log.INFO)
-                openssl_versions = sorted(pathlib.Path(possible_root_dir).iterdir(), key=os.path.getmtime, reverse=True)
+                openssl_versions = sorted(Path(possible_root_dir).iterdir(), key=os.path.getmtime, reverse=True)
 
                 if not openssl_versions:
                     return None
@@ -167,7 +164,7 @@ class BuildMgclientExt(build_ext):
 
         self.announce("Preparing the build environment for mgclient", level=log.INFO)
 
-        extension_build_dir = pathlib.Path(self.build_temp).absolute()
+        extension_build_dir = Path(self.build_temp).absolute()
         mgclient_build_path = os.path.join(extension_build_dir, "mgclient_build")
         mgclient_install_path = os.path.join(extension_build_dir, "mgclient_install")
 
@@ -175,7 +172,7 @@ class BuildMgclientExt(build_ext):
         self.announce(f"Using {mgclient_install_path} as install directory for mgclient", level=log.INFO)
 
         os.makedirs(mgclient_build_path, exist_ok=True)
-        mgclient_source_path = os.path.join(pathlib.Path(__file__).absolute().parent, "mgclient")
+        mgclient_source_path = os.path.join(Path(__file__).absolute().parent, "mgclient")
 
         # CMake <3.13 versions don't support explicit build directory
         prev_working_dir = os.getcwd()

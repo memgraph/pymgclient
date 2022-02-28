@@ -3,6 +3,17 @@ Changelog
 =========
 
 ######
+1.1.1
+######
+
+
+******************************
+Major Feature and Improvements
+******************************
+
+  * Add suport for arm64 macOS machines.
+
+######
 1.1.0
 ######
 

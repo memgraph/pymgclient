@@ -63,9 +63,10 @@ jobs:
         arch:
           - { mingw: "64", msys: x86_64, python: "x64"}
         python_version:
-          - 3.7
-          - 3.8
-          - 3.9
+          - '3.7'
+          - '3.8'
+          - '3.9'
+          - '3.10'
         mgversion:
           - 2.0.0
     steps:
@@ -125,9 +126,10 @@ jobs:
     strategy:
       matrix:
         python_version:
-          - 3.7
-          - 3.8
-          - 3.9
+          - '3.7'
+          - '3.8'
+          - '3.9'
+          - '3.10'
     env:
       PYTHON_EXECUTABLE: /usr/local/opt/python@${{ matrix.python_version }}/bin/python3
     steps:
@@ -137,6 +139,10 @@ jobs:
       - name: Install python and OpenSSL
         run: |
           brew install python@${{ matrix.python_version }} openssl@1.1
+      - name: Make used python version default
+        run: |
+          brew link --force --overwrite python@${{ matrix.python_version }}
+          python3 --version
       - name: Install pytest and pyopenssl
         run: ${{ env.PYTHON_EXECUTABLE }} -m pip install pyopenssl pytest
       - name: Build pymgclient

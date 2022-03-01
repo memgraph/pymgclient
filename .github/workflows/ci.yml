@@ -74,8 +74,8 @@ jobs:
         arch:
           - { mingw: "64", msys: x86_64, python: "x64" }
         python_version:
-          - 3.7
-          - 3.9
+          - '3.7'
+          - '3.10'
         mgversion:
           - 2.1.1
     steps:
@@ -139,8 +139,8 @@ jobs:
       matrix:
         platform: [macos-latest, macos-10.15]
         python_version:
-          - 3.7
-          - 3.9
+          - '3.7'
+          - '3.10'
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
@@ -149,17 +149,18 @@ jobs:
       - name: Install python and OpenSSL
         run: |
           brew install python@${{ matrix.python_version }} openssl@1.1
-      - name: Extend PATH for python 3.7
-        if: ${{ matrix.python_version == 3.7 }}
-        run: echo "/usr/local/opt/python@3.7/bin" >> $GITHUB_PATH
+      - name: Make used python version default
+        run: |
+          brew link --force --overwrite python@${{ matrix.python_version }}
+          python3 --version
       - name: Install pytest and pyopenssl
-        run: python${{ matrix.python_version }} -m pip install pyopenssl pytest
+        run: python3 -m pip install pyopenssl pytest
       - name: Build pymgclient
-        run: python${{ matrix.python_version }} setup.py bdist_wheel
+        run: python3 setup.py bdist_wheel
       - name: Install pymgclient
-        run: python${{ matrix.python_version }} -m pip install -f dist --no-index pymgclient
+        run: python3 -m pip install -f dist --no-index pymgclient
       - name: Import mgclient to validate installation
-        run: python${{ matrix.python_version }} -c "import mgclient"
+        run: python3 -c "import mgclient"
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:

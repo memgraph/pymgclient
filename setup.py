@@ -124,13 +124,18 @@ class BuildMgclientExt(build_ext):
             return "MinGW Makefiles"
         return None
 
-    def get_extra_libraries(self):
-        if self.static_openssl:
-            return []
+    def get_library_names(self):
         extra_libs = ["ssl"]
         if IS_WINDOWS:
             extra_libs.extend(["crypto", "ws2_32"])
         return extra_libs
+
+    def get_extra_libraries(self):
+        return [] if self.static_openssl else self.get_library_names()
+
+    def get_extra_link_args(self):
+        # https://stackoverflow.com/a/45335363/6639989
+        return [] if not self.static_openssl else [f"-l:lib{name}.a" for name in self.get_library_names()]
 
     def get_openssl_root_dir(self):
         if not IS_APPLE:
@@ -250,11 +255,12 @@ class BuildMgclientExt(build_ext):
 
         extension.include_dirs.append(os.path.join(mgclient_install_path, install_includedir))
         extension.extra_objects.append(os.path.join(mgclient_install_path, install_libdir, "libmgclient.a"))
+        extension.libraries.extend(self.get_extra_libraries())
+        extension.extra_link_args.extend(self.get_extra_link_args())
         extension.depends.extend(mgclient_sources)
         extension.define_macros.append(("MGCLIENT_STATIC_DEFINE", ""))
 
         if not self.static_openssl:
-            extension.libraries.extend(self.get_extra_libraries())
             if openssl_root_dir is not None:
                 extension.library_dirs.append(os.path.join(openssl_root_dir, "lib"))
 

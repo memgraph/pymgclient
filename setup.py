@@ -16,6 +16,7 @@ import os
 import platform
 import shutil
 import sys
+import configparser
 from distutils import log
 from distutils.core import DistutilsExecError, DistutilsPlatformError
 from pathlib import Path
@@ -47,6 +48,12 @@ sources = [str(path) for path in Path("src").glob("*.c")]
 
 headers = [str(path) for path in Path("src").glob("*.h")]
 
+parser = configparser.ConfigParser()
+parser.read("setup.cfg")
+
+static_openssl = parser.getboolean("build_ext", "static_openssl", fallback=False)
+
+
 def list_all_files_in_dir(path):
     result = []
     for root, _dirs, files in os.walk(path):
@@ -60,10 +67,21 @@ class BuildMgclientExt(build_ext):
     Builds using cmake instead of the python setuptools implicit build
     """
 
+    user_options = build_ext.user_options[:]
+    user_options.append(("static-openssl=", None, "Compile with statically linked OpenSSL."))
+
+    boolean_options = build_ext.boolean_options[:]
+    boolean_options.append(("static-openssl"))
+
+    def initialize_options(self):
+        build_ext.initialize_options(self)
+        self.static_openssl = static_openssl
+
     def run(self):
         """
         Perform build_cmake before doing the 'normal' stuff
         """
+        self.announce(f"Value of static_openssl is {static_openssl}", level=log.INFO)
 
         for extension in self.extensions:
             if extension.name == EXTENSION_NAME:
@@ -107,6 +125,8 @@ class BuildMgclientExt(build_ext):
         return None
 
     def get_extra_libraries(self):
+        if self.static_openssl:
+            return []
         extra_libs = ["ssl"]
         if IS_WINDOWS:
             extra_libs.extend(["crypto", "ws2_32"])
@@ -197,6 +217,7 @@ class BuildMgclientExt(build_ext):
             "-DBUILD_TESTING=OFF",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             f'-DCMAKE_C_FLAGS="{self.get_cflags()}"',
+            f"-DOPENSSL_USE_STATIC_LIBS={'ON' if self.static_openssl else 'OFF'}",
         ]
 
         if openssl_root_dir is not None:
@@ -229,11 +250,13 @@ class BuildMgclientExt(build_ext):
 
         extension.include_dirs.append(os.path.join(mgclient_install_path, install_includedir))
         extension.extra_objects.append(os.path.join(mgclient_install_path, install_libdir, "libmgclient.a"))
-        extension.libraries.extend(self.get_extra_libraries())
         extension.depends.extend(mgclient_sources)
         extension.define_macros.append(("MGCLIENT_STATIC_DEFINE", ""))
-        if openssl_root_dir is not None:
-            extension.library_dirs.append(os.path.join(openssl_root_dir, "lib"))
+
+        if not self.static_openssl:
+            extension.libraries.extend(self.get_extra_libraries())
+            if openssl_root_dir is not None:
+                extension.library_dirs.append(os.path.join(openssl_root_dir, "lib"))
 
 
 setup(

@@ -125,9 +125,9 @@ class BuildMgclientExt(build_ext):
         return None
 
     def get_library_names(self):
-        extra_libs = ["ssl"]
+        extra_libs = ["ssl", "crypto"]
         if IS_WINDOWS:
-            extra_libs.extend(["crypto", "ws2_32"])
+            extra_libs.append("ws2_32")
         return extra_libs
 
     def get_extra_libraries(self):
@@ -260,9 +260,8 @@ class BuildMgclientExt(build_ext):
         extension.depends.extend(mgclient_sources)
         extension.define_macros.append(("MGCLIENT_STATIC_DEFINE", ""))
 
-        if not self.static_openssl:
-            if openssl_root_dir is not None:
-                extension.library_dirs.append(os.path.join(openssl_root_dir, "lib"))
+        if openssl_root_dir is not None:
+            extension.library_dirs.append(os.path.join(openssl_root_dir, "lib"))
 
 
 setup(

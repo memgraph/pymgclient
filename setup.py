@@ -265,7 +265,6 @@ setup(
     author="Marin Tomic",
     author_email="marin.tomic@memgraph.com",
     license="Apache2",
-    platforms=["linux"],
     python_requires=">=3.6",
     description="Memgraph database adapter for Python language",
     long_description=long_description,

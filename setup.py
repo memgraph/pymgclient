@@ -259,7 +259,7 @@ class BuildMgclientExt(build_ext):
 
 setup(
     name="pymgclient",
-    version="1.1.0",
+    version="1.2.0",
     maintainer="Benjamin Antal",
     maintainer_email="benjamin.antal@memgraph.com",
     author="Marin Tomic",

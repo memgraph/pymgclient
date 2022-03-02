@@ -82,7 +82,7 @@ class BuildMgclientExt(build_ext):
         """
         Perform build_cmake before doing the 'normal' stuff
         """
-        self.announce(f"Value of static_openssl is {static_openssl}", level=log.INFO)
+        self.announce(f"Using static OpenSSL: {bool(self.static_openssl)}", level=log.INFO)
 
         for extension in self.extensions:
             if extension.name == EXTENSION_NAME:

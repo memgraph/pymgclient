@@ -18,6 +18,7 @@ jobs:
           - 1.6.1
           - 2.0.0
           - 2.1.1
+          - 2.2.0
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Cache Memgraph community installer
@@ -74,10 +75,10 @@ jobs:
         arch:
           - { mingw: "64", msys: x86_64, python: "x64" }
         python_version:
-          - 3.7
-          - 3.9
-        mgversion:
-          - 2.1.1
+          - '3.7'
+          - '3.10'
+    env:
+      MG_VERSION: 2.2.0
     steps:
       - uses: actions/checkout@v2
         with:
@@ -105,12 +106,12 @@ jobs:
         shell: wsl-bash {0} # root shell
         run: |
           mkdir ~/memgraph
-          MEMGRAPH_PKG="memgraph_${{ matrix.mgversion }}-community"
-          if [[ "${{ matrix.mgversion }}" != 1* ]]; then
-            MEMGRAPH_PKG="memgraph_${{ matrix.mgversion }}"
+          MEMGRAPH_PKG="memgraph_${{ env.MG_VERSION }}-community"
+          if [[ "${{ env.MG_VERSION }}" != 1* ]]; then
+            MEMGRAPH_PKG="memgraph_${{ env.MG_VERSION }}"
           fi
           echo $MEMGRAPH_PKG
-          curl -L "https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/ubuntu-18.04/${MEMGRAPH_PKG}-1_amd64.deb" --output ~/memgraph/memgraph-community.deb
+          curl -L "https://download.memgraph.com/memgraph/v${{ env.MG_VERSION }}/ubuntu-18.04/${MEMGRAPH_PKG}-1_amd64.deb" --output ~/memgraph/memgraph-community.deb
           dpkg -i ~/memgraph/memgraph-community.deb
           openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-recover-on-startup=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
@@ -139,8 +140,8 @@ jobs:
       matrix:
         platform: [macos-latest, macos-10.15]
         python_version:
-          - 3.7
-          - 3.9
+          - '3.7'
+          - '3.10'
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
@@ -149,17 +150,18 @@ jobs:
       - name: Install python and OpenSSL
         run: |
           brew install python@${{ matrix.python_version }} openssl@1.1
-      - name: Extend PATH for python 3.7
-        if: ${{ matrix.python_version == 3.7 }}
-        run: echo "/usr/local/opt/python@3.7/bin" >> $GITHUB_PATH
+      - name: Make used python version default
+        run: |
+          brew link --force --overwrite python@${{ matrix.python_version }}
+          python3 --version
       - name: Install pytest and pyopenssl
-        run: python${{ matrix.python_version }} -m pip install pyopenssl pytest
+        run: python3 -m pip install pyopenssl pytest
       - name: Build pymgclient
-        run: python${{ matrix.python_version }} setup.py bdist_wheel
+        run: python3 setup.py bdist_wheel
       - name: Install pymgclient
-        run: python${{ matrix.python_version }} -m pip install -f dist --no-index pymgclient
+        run: python3 -m pip install -f dist --no-index pymgclient
       - name: Import mgclient to validate installation
-        run: python${{ matrix.python_version }} -c "import mgclient"
+        run: python3 -c "import mgclient"
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:

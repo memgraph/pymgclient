@@ -134,31 +134,13 @@ class BuildMgclientExt(build_ext):
             )
             return openssl_root_dir
 
-        def get_latest_openssl_subdirs(possible_root_dirs):
-            def get_latest_openssl_subdir(possible_root_dir):
-                if not os.path.isdir(possible_root_dir):
-                    # Maybe CMake can find OpenSSL properly without this
-                    return None
+        possible_openssl_root_dirs = ["/opt/homebrew/opt/openssl@1.1", "/usr/local/opt/openssl@1.1"]
 
-                self.announce(f"Checking {possible_root_dir} for possible OpenSSL installation", level=log.INFO)
-                openssl_versions = sorted(Path(possible_root_dir).iterdir(), key=os.path.getmtime, reverse=True)
+        for dir in possible_openssl_root_dirs:
+            if os.path.isdir(dir):
+                return dir
 
-                if not openssl_versions:
-                    return None
-
-                return str(openssl_versions[0])
-
-            return [get_latest_openssl_subdir(p) for p in possible_root_dirs]
-
-        possible_openssl_root_dirs = ["/opt/homebrew/Cellar/openssl@1.1", "/usr/local/Cellar/openssl@1.1"]
-
-        try:
-            openssl_root_dir = [p for p in get_latest_openssl_subdirs(possible_openssl_root_dirs) if p is not None][0]
-            self.announce(f"Found OpenSSL in {openssl_root_dir}", level=log.INFO)
-            return openssl_root_dir
-        except IndexError:
-            self.announce("OpenSSL not found", level=log.ERROR)
-            return None
+        return None
 
     def finalize_cmake_config_command_darwin(self, cmake_config_command: List[str]):
         openssl_root_dir = self.get_openssl_root_dir()

@@ -83,6 +83,7 @@ jobs:
         with:
           msystem: MINGW${{ matrix.arch.mingw }}
           update: true
+          release: false
           install: git mingw-w64-${{ matrix.arch.msys }}-toolchain mingw-w64-${{ matrix.arch.msys }}-cmake mingw-w64-${{ matrix.arch.msys }}-openssl
       - name: Add mingw${{ matrix.arch.mingw }} to PATH
         run: |

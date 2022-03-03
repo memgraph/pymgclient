@@ -3,6 +3,19 @@ Changelog
 =========
 
 ######
+1.2.0
+######
+
+
+******************************
+Major Feature and Improvements
+******************************
+
+  * Add suport for arm64 macOS machines.
+  * Link OpenSSL statically by default.
+  * Add support for Python 3.10.
+
+######
 1.1.0
 ######
 

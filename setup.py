@@ -54,6 +54,8 @@ parser.read("setup.cfg")
 
 static_openssl = parser.getboolean("build_ext", "static_openssl", fallback=False)
 
+version = os.getenv("PYMGCLIENT_OVERRIDE_VERSION", "1.2.0")
+
 
 def list_all_files_in_dir(path):
     result = []
@@ -259,13 +261,12 @@ class BuildMgclientExt(build_ext):
 
 setup(
     name="pymgclient",
-    version="1.1.0",
+    version=version,
     maintainer="Benjamin Antal",
     maintainer_email="benjamin.antal@memgraph.com",
     author="Marin Tomic",
     author_email="marin.tomic@memgraph.com",
     license="Apache2",
-    platforms=["linux"],
     python_requires=">=3.6",
     description="Memgraph database adapter for Python language",
     long_description=long_description,
@@ -286,6 +287,8 @@ setup(
         "Topic :: Software Development",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: Microsoft :: Windows",
     ],
     ext_modules=[
         Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_compile_args=["-Werror=all", "-std=c99"])

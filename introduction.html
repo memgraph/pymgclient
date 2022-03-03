@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Introduction &#8212; pymgclient 1.1.0 documentation</title>
+    <title>Introduction &#8212; pymgclient 1.2.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -47,31 +47,14 @@ the Python programming language.</p>
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>pymgclient has prebuilt binary packages for</p>
 <ul class="simple">
-<li><p>macOS 10.15+ x86_64 (not arm64) with <a class="reference external" href="https://www.python.org/downloads/">Python</a> 3.7+</p></li>
+<li><p>macOS Catalina (version 10.15) and newer on x86_64 with <a class="reference external" href="https://www.python.org/downloads/">Python</a> 3.7+</p></li>
+<li><p>macOS Monterey (version 12) and newer on arm64 with <a class="reference external" href="https://www.python.org/downloads/">Python</a> 3.7+</p></li>
 <li><p>Windows 10 x86_64 with <a class="reference external" href="https://www.python.org/downloads/">Python</a> 3.7+</p></li>
 </ul>
 <p>To intall pymgclient binaries on these platforms see <a class="reference internal" href="#install-binaries">Install binaries</a>
 section or check <a class="reference internal" href="#install-from-source">Install from source</a> for other platforms.</p>
 <section id="install-binaries">
 <h3>Install binaries<a class="headerlink" href="#install-binaries" title="Permalink to this headline">¶</a></h3>
-<section id="runtime-requirements">
-<h4>Runtime requirements<a class="headerlink" href="#runtime-requirements" title="Permalink to this headline">¶</a></h4>
-<p>The only runtime requirement of pymgclient is OpenSSL.</p>
-<ul>
-<li><p>On macOS OpenSSL can be installed easily via <a class="reference external" href="https://brew.sh">brew</a>.
-Once brew is installed, run:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ brew install openssl
-</pre></div>
-</div>
-</li>
-<li><p>On Windows OpenSSL can be installed easily with an <a class="reference external" href="https://slproweb.com/products/Win32OpenSSL.html">installer</a>. The Win64 version is
-required, but the “Light” version is enough. Both EXE and MSI variants
-should work.</p></li>
-</ul>
-<p>After OpenSSL is installed, pymgclient can be installed.</p>
-</section>
-<section id="install-pymgclient">
-<h4>Install pymgclient<a class="headerlink" href="#install-pymgclient" title="Permalink to this headline">¶</a></h4>
 <p>On macOS run:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip3 install --user pymgclient
 </pre></div>
@@ -84,7 +67,6 @@ should work.</p></li>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install --user pymgclient
 </pre></div>
 </div>
-</section>
 </section>
 <section id="install-from-source">
 <h3>Install from source<a class="headerlink" href="#install-from-source" title="Permalink to this headline">¶</a></h3>
@@ -111,8 +93,7 @@ build it from you will need:</p>
 <li><p>Preqrequisites of <a class="reference external" href="https://github.com/memgraph/mgclient">mgclient</a>:</p>
 <ul>
 <li><p>CMake 3.8 or newer</p></li>
-<li><p>OpenSSL 1.0.2 or newer</p></li>
-<li><p>OpenSSL 1.0.2 or newer header files</p></li>
+<li><p>OpenSSL 1.0.2 or newer (but not OpenSSL 3.0) and its header files</p></li>
 </ul>
 </li>
 </ul>
@@ -149,9 +130,13 @@ using <code class="file docutils literal notranslate"><span class="pre">setup.py
 </pre></div>
 </div>
 <p>The rest of the build prerequisites can be installed easily via <a class="reference external" href="https://brew.sh">brew</a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ brew install python3 openssl cmake
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ brew install python3 openssl@1.1 cmake
 </pre></div>
 </div>
+<p>It is important to mention that on M1/ARM machines pymgclient cannot be built
+with the default installed Python version, thus Python needs to be installed via
+brew. If you are interested in the technical details, you can find more details
+in the technical notes below.</p>
 <p>After the prerequisites are installed pymgclient can be installed via pip:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip3 install --user pymgclient --no-binary :all:
 </pre></div>
@@ -159,9 +144,19 @@ using <code class="file docutils literal notranslate"><span class="pre">setup.py
 <p>This will download the source package of pymgclient and build the binary
 package before installing it. Alternatively pymgclient can be installed by
 using <code class="file docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
-<blockquote>
-<div><p>$ python3 setup.py install</p>
-</div></blockquote>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python3 setup.py install
+</pre></div>
+</div>
+<section id="technical-note-for-arm64-machines">
+<h6>Technical note for arm64 machines<a class="headerlink" href="#technical-note-for-arm64-machines" title="Permalink to this headline">¶</a></h6>
+<p>The default installed Python is in the so called <a class="reference external" href="https://en.wikipedia.org/wiki/Universal_binary#Universal_2">Universal Binary 2</a> format. That
+means all of the packages that are built with this Python version have to be
+built also as a universal binary. Though pymgclient builds on both x86_64 and
+arm64 architectures, the brew installed OpenSSL version only contains the arm64
+binaries. As a consequence, during building the x86_64 part of the universal
+binary of pymgclient, the linker fails, because it cannot find the OpenSSL
+binaries in x86_64 binary format.</p>
+</section>
 </section>
 <section id="building-on-windows">
 <h5>Building on Windows<a class="headerlink" href="#building-on-windows" title="Permalink to this headline">¶</a></h5>
@@ -295,7 +290,7 @@ a Memgraph running in “production” environment.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2021, Memgraph Ltd..
+      &copy;2022, Memgraph Ltd..
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>

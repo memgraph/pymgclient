@@ -16,9 +16,11 @@ import os
 import platform
 import shutil
 import sys
+import configparser
 from distutils import log
 from distutils.core import DistutilsExecError, DistutilsPlatformError
 from pathlib import Path
+from typing import List
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
@@ -47,6 +49,12 @@ sources = [str(path) for path in Path("src").glob("*.c")]
 
 headers = [str(path) for path in Path("src").glob("*.h")]
 
+parser = configparser.ConfigParser()
+parser.read("setup.cfg")
+
+static_openssl = parser.getboolean("build_ext", "static_openssl", fallback=False)
+
+
 def list_all_files_in_dir(path):
     result = []
     for root, _dirs, files in os.walk(path):
@@ -60,10 +68,21 @@ class BuildMgclientExt(build_ext):
     Builds using cmake instead of the python setuptools implicit build
     """
 
+    user_options = build_ext.user_options[:]
+    user_options.append(("static-openssl=", None, "Compile with statically linked OpenSSL."))
+
+    boolean_options = build_ext.boolean_options[:]
+    boolean_options.append(("static-openssl"))
+
+    def initialize_options(self):
+        build_ext.initialize_options(self)
+        self.static_openssl = static_openssl
+
     def run(self):
         """
         Perform build_cmake before doing the 'normal' stuff
         """
+        self.announce(f"Using static OpenSSL: {bool(self.static_openssl)}", level=log.INFO)
 
         for extension in self.extensions:
             if extension.name == EXTENSION_NAME:
@@ -101,17 +120,6 @@ class BuildMgclientExt(build_ext):
             )
             return custom_cmake
 
-    def get_cmake_generator(self):
-        if IS_WINDOWS:
-            return "MinGW Makefiles"
-        return None
-
-    def get_extra_libraries(self):
-        extra_libs = ["ssl"]
-        if IS_WINDOWS:
-            extra_libs.extend(["crypto", "ws2_32"])
-        return extra_libs
-
     def get_openssl_root_dir(self):
         if not IS_APPLE:
             return None
@@ -126,31 +134,46 @@ class BuildMgclientExt(build_ext):
             )
             return openssl_root_dir
 
-        def get_latest_openssl_subdirs(possible_root_dirs):
-            def get_latest_openssl_subdir(possible_root_dir):
-                if not os.path.isdir(possible_root_dir):
-                    # Maybe CMake can find OpenSSL properly without this
-                    return None
+        possible_openssl_root_dirs = ["/opt/homebrew/opt/openssl@1.1", "/usr/local/opt/openssl@1.1"]
 
-                self.announce(f"Checking {possible_root_dir} for possible OpenSSL installation", level=log.INFO)
-                openssl_versions = sorted(Path(possible_root_dir).iterdir(), key=os.path.getmtime, reverse=True)
+        for dir in possible_openssl_root_dirs:
+            if os.path.isdir(dir):
+                return dir
 
-                if not openssl_versions:
-                    return None
+        return None
 
-                return str(openssl_versions[0])
+    def finalize_cmake_config_command_darwin(self, cmake_config_command: List[str]):
+        openssl_root_dir = self.get_openssl_root_dir()
+        if openssl_root_dir is not None:
+            cmake_config_command.append(f"-DOPENSSL_ROOT_DIR={openssl_root_dir}")
+        # otherwise trust CMake to find OpenSSL
 
-            return [get_latest_openssl_subdir(p) for p in possible_root_dirs]
+    def finalize_cmake_config_command_win32(self, cmake_config_command: List[str]):
+        cmake_config_command.append("-GMinGW Makefiles")
 
-        possible_openssl_root_dirs = ["/opt/homebrew/Cellar/openssl@1.1", "/usr/local/Cellar/openssl@1.1"]
+    def get_extra_link_args(self, libs: List[str]):
+        # https://stackoverflow.com/a/45335363/6639989
+        return [f"-l:lib{name}.a" for name in libs]
 
-        try:
-            openssl_root_dir = [p for p in get_latest_openssl_subdirs(possible_openssl_root_dirs) if p is not None][0]
-            self.announce(f"Found OpenSSL in {openssl_root_dir}", level=log.INFO)
-            return openssl_root_dir
-        except IndexError:
-            self.announce("OpenSSL not found", level=log.ERROR)
-            return None
+    def finalize_darwin(self, extension: Extension):
+        libs = ["ssl", "crypto"]
+        openssl_root_dir = self.get_openssl_root_dir()
+        if self.static_openssl:
+            extension.extra_link_args.extend([f"{openssl_root_dir}/lib/lib{lib}.a" for lib in libs])
+        else:
+            extension.libraries.extend(libs)
+
+    def finalize_linux_like(self, extension: Extension, libs: List[str]):
+        if self.static_openssl:
+            extension.extra_link_args.extend(self.get_extra_link_args(libs))
+        else:
+            extension.libraries.extend(libs)
+
+    def finalize_win32(self, extension: Extension):
+        self.finalize_linux_like(extension, ["ssl", "crypto", "ws2_32"])
+
+    def finalize_linux(self, extension: Extension):
+        self.finalize_linux_like(extension, ["ssl", "crypto"])
 
     def get_cflags(self):
         return "{0} -Werror=all".format(os.getenv("CFLAGS", "")).strip()
@@ -186,7 +209,6 @@ class BuildMgclientExt(build_ext):
         build_type = "Debug" if self.debug else "Release"
         install_libdir = "lib"
         install_includedir = "include"
-        openssl_root_dir = self.get_openssl_root_dir()
         cmake_config_command = [
             cmake_binary,
             mgclient_source_path,
@@ -197,14 +219,12 @@ class BuildMgclientExt(build_ext):
             "-DBUILD_TESTING=OFF",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             f'-DCMAKE_C_FLAGS="{self.get_cflags()}"',
+            f"-DOPENSSL_USE_STATIC_LIBS={'ON' if self.static_openssl else 'OFF'}",
         ]
 
-        if openssl_root_dir is not None:
-            cmake_config_command.append(f"-DOPENSSL_ROOT_DIR={openssl_root_dir}")
-        generator = self.get_cmake_generator()
-
-        if generator is not None:
-            cmake_config_command.append(f"-G{generator}")
+        finalize_cmake_config_command = getattr(self, "finalize_cmake_config_command_" + sys.platform, None)
+        if finalize_cmake_config_command is not None:
+            finalize_cmake_config_command(cmake_config_command)
 
         try:
             self.spawn(cmake_config_command)
@@ -229,11 +249,12 @@ class BuildMgclientExt(build_ext):
 
         extension.include_dirs.append(os.path.join(mgclient_install_path, install_includedir))
         extension.extra_objects.append(os.path.join(mgclient_install_path, install_libdir, "libmgclient.a"))
-        extension.libraries.extend(self.get_extra_libraries())
         extension.depends.extend(mgclient_sources)
         extension.define_macros.append(("MGCLIENT_STATIC_DEFINE", ""))
-        if openssl_root_dir is not None:
-            extension.library_dirs.append(os.path.join(openssl_root_dir, "lib"))
+
+        finalize = getattr(self, "finalize_" + sys.platform, None)
+        if finalize is not None:
+            finalize(extension)
 
 
 setup(

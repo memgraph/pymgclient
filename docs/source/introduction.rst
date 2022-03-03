@@ -34,28 +34,6 @@ section or check `Install from source`_ for other platforms.
 Install binaries
 ################
 
-********************
-Runtime requirements
-********************
-
-The only runtime requirement of pymgclient is OpenSSL.
-
-* On macOS OpenSSL can be installed easily via `brew`_.
-  Once brew is installed, run::
-
-  $ brew install openssl@1.1
-
-* On Windows OpenSSL can be installed easily with an `installer
-  <https://slproweb.com/products/Win32OpenSSL.html>`_. The Win64 version is
-  required, but the "Light" version is enough. Both EXE and MSI variants
-  should work.
-
-After OpenSSL is installed, pymgclient can be installed.
-
-******************
-Install pymgclient
-******************
-
 On macOS run::
 
   $ pip3 install --user pymgclient

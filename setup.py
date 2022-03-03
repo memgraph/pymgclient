@@ -54,6 +54,8 @@ parser.read("setup.cfg")
 
 static_openssl = parser.getboolean("build_ext", "static_openssl", fallback=False)
 
+version = os.getenv("PYMGCLIENT_OVERRIDE_VERSION", "1.2.0")
+
 
 def list_all_files_in_dir(path):
     result = []
@@ -259,7 +261,7 @@ class BuildMgclientExt(build_ext):
 
 setup(
     name="pymgclient",
-    version="1.2.0",
+    version=version,
     maintainer="Benjamin Antal",
     maintainer_email="benjamin.antal@memgraph.com",
     author="Marin Tomic",

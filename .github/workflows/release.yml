@@ -10,6 +10,9 @@ on:
         default: 'false'
         required: false
 
+env:
+  PYMGCLIENT_OVERRIDE_VERSION: "${{ github.event.inputs.version }}"
+
 jobs:
   build_and_test_ubuntu:
     strategy:

@@ -19,7 +19,7 @@ jobs:
      matrix:
         platform: [ubuntu-18.04]
         mgversion:
-          - 2.0.0
+          - 2.2.0
     runs-on: ${{ matrix.platform }}
     steps:
     - name: Install system dependencies (Ubuntu 18.04)
@@ -71,7 +71,7 @@ jobs:
           - '3.9'
           - '3.10'
         mgversion:
-          - 2.0.0
+          - 2.2.0
     steps:
       - uses: actions/checkout@v2
         with:

@@ -23,7 +23,7 @@ pymgclient has prebuilt binary packages for
   <https://www.python.org/downloads/>`_ 3.7+
 
 * macOS Monterey (version 12) and newer on arm64 with `Python
-  <https://www.python.org/downloads/>`_ 3.7+
+  <https://www.python.org/downloads/>`_ 3.8+
 
 * Windows 10 x86_64 with `Python <https://www.python.org/downloads/>`_ 3.7+
 

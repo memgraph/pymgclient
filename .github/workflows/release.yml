@@ -7,7 +7,7 @@ on:
         required: true
         type: string
       publish_doc:
-        description: 'If set to true, then the documentation will be published'
+        description: 'If set to true, then the documentation will be published.'
         default: 'false'
         required: false
 

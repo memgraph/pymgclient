@@ -10,6 +10,10 @@ on:
         description: 'If set to true, then the documentation will be published.'
         default: 'false'
         required: false
+      openssl_version:
+        description: 'The expected version of OpenSSL.'
+        required: true
+        type: string
 
 env:
   PYMGCLIENT_OVERRIDE_VERSION: "${{ github.event.inputs.version }}"
@@ -93,6 +97,14 @@ jobs:
           # First make sure python would resolve to the windows native python, not mingw one
           echo "C:\msys64\mingw${{ matrix.arch.mingw }}\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
           echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+      - name: Print OpenSSL version
+        shell: msys2 {0}
+        run: |
+          openssl version -a
+      - name: Check version
+        shell: msys2 {0}
+        run: |
+          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_version }}" ]
       - uses: Vampire/setup-wsl@v1
         with:
             distribution: Ubuntu-18.04
@@ -139,7 +151,15 @@ jobs:
           submodules: true
       - name: Install python and OpenSSL
         run: |
+          brew update
           brew install python@${{ matrix.python_version }} openssl@1.1
+          brew upgrade openssl@1.1
+      - name: Print OpenSSL version
+        run: |
+          openssl version -a
+      - name: Check version
+        run: |
+          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_version }}" ]
       - name: Make used python version default
         run: |
           brew link --force --overwrite python@${{ matrix.python_version }}

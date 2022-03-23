@@ -132,8 +132,6 @@ jobs:
           - '3.8'
           - '3.9'
           - '3.10'
-    env:
-      PYTHON_EXECUTABLE: /usr/local/opt/python@${{ matrix.python_version }}/bin/python3
     steps:
       - uses: actions/checkout@v2
         with:
@@ -146,13 +144,13 @@ jobs:
           brew link --force --overwrite python@${{ matrix.python_version }}
           python3 --version
       - name: Install pytest and pyopenssl
-        run: ${{ env.PYTHON_EXECUTABLE }} -m pip install pyopenssl pytest
+        run: python3 -m pip install pyopenssl pytest
       - name: Build pymgclient
-        run: ${{ env.PYTHON_EXECUTABLE }} setup.py bdist_wheel
+        run: python3 setup.py bdist_wheel
       - name: Install pymgclient
-        run: ${{ env.PYTHON_EXECUTABLE }} -m pip install -f dist --no-index pymgclient
+        run: python3 -m pip install -f dist --no-index pymgclient
       - name: Import mgclient to validate installation
-        run: ${{ env.PYTHON_EXECUTABLE }} -c "import mgclient"
+        run: python3 -c "import mgclient"
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:

@@ -49,7 +49,12 @@ jobs:
       - name: Build source distribution
         run: python3 setup.py sdist
       - name: Install pymgclient
-        run: python3 -m pip install ./dist/pymgclient-*
+        run: |
+          if [[ "${{ matrix.mgversion }}" == "1.3.0" ]]; then
+            python3 -m pip install  --global-option=build_ext --global-option="--static-openssl=false" ./dist/pymgclient-*
+          else
+            python3 -m pip install ./dist/pymgclient-*
+          fi
       - name: Run tests
         run: |
           MEMGRAPH_PORT=10000

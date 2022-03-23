@@ -5,6 +5,7 @@ on:
     inputs:
       version:
         required: true
+        type: string
       publish_doc:
         description: 'If set to true, then the documentation will be published'
         default: 'false'

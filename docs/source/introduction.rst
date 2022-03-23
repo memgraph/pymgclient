@@ -33,6 +33,13 @@ or check `Install from source`_ for other platforms.
 Install binaries
 ################
 
+.. warning::
+    All of the binary packages are statically linked against OpenSSL, that means the
+    version of OpenSSL they are using is fixed. If security is important for you,
+    you should check how to build pymgclient with dynamically linked OpenSSL, so
+    pymgclient can use the latest version of OpenSSL that is installed on your
+    machine.
+
 On macOS run::
 
   $ pip3 install --user pymgclient
@@ -89,6 +96,14 @@ After the prerequisites are installed pymgclient can be installed via pip::
 
   $ pip3 install --user pymgclient
 
+If you want to dynamically link OpenSSL for better security, you can use the
+following command::
+
+  $ pip3 install --user \
+                 --global-option=build_ext \
+                 --global-option="--static-openssl=false" \
+                 pymgclient
+
 This will download the source package of pymgclient and build the binary package
 before installing it. Alternatively pymgclient can be installed by using
 :file:`setup.py`::
@@ -116,8 +131,16 @@ After the prerequisites are installed pymgclient can be installed via pip::
   $ pip3 install --user pymgclient --no-binary :all:
 
 This will download the source package of pymgclient and build the binary package
-before installing it. Alternatively pymgclient can be installed by using
-:file:`setup.py`::
+before installing it. If you want to dynamically link OpenSSL for better
+security, you can use the following command::
+
+  $ pip3 install --user \
+                 --global-option=build_ext \
+                 --global-option="--static-openssl=false" \
+                 pymgclient \
+                 --no-binary :all:
+
+Alternatively pymgclient can be installed by using :file:`setup.py`::
 
   $ python3 setup.py install
 
@@ -160,6 +183,15 @@ When the environment is done, start the Windows command prompt and install
 pymgclient can be installed via pip::
 
   $ pip install --user pymgclient --no-binary :all:
+
+If you want to dynamically link OpenSSL for better security, you can use the
+following command::
+
+  $ pip install --user \
+                --global-option=build_ext \
+                --global-option="--static-openssl=false" \
+                pymgclient \
+                --no-binary :all:
 
 Alternatively pymgclient can be installed by using :file:`setup.py`::
 

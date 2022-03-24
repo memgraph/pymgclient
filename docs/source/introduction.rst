@@ -48,7 +48,7 @@ On Windows run::
 
   $ py -3 -m pip install --user pymgclient
 
-Alternatively on Windows, if the launcher is not installed, just run::
+Alternatively, on Windows, if the launcher is not installed, just run::
 
   $ pip install --user pymgclient
 
@@ -105,7 +105,7 @@ following command::
                  pymgclient
 
 This will download the source package of pymgclient and build the binary package
-before installing it. Alternatively pymgclient can be installed by using
+before installing it. Alternatively, pymgclient can be installed by using
 :file:`setup.py`::
 
   $ python3 setup.py install
@@ -140,7 +140,7 @@ security, you can use the following command::
                  pymgclient \
                  --no-binary :all:
 
-Alternatively pymgclient can be installed by using :file:`setup.py`::
+Alternatively, pymgclient can be installed by using :file:`setup.py`::
 
   $ python3 setup.py install
 
@@ -193,7 +193,7 @@ following command::
                 pymgclient \
                 --no-binary :all:
 
-Alternatively pymgclient can be installed by using :file:`setup.py`::
+Alternatively, pymgclient can be installed by using :file:`setup.py`::
 
   $ python setup.py install
 
@@ -225,7 +225,7 @@ When an already running Memgraph is used, then some of the tests might get
 skipped if Memgraph hasn't been started with a suitable configuration. The
 :envvar:`MEMGRAPH_STARTED_WITH_SSL` environment variable can be used to indicate
 whether Memgraph is started using SSL or not. If the environment variable is
-defined (regardless its value), then the tests connect via secure Bolt
+defined (regardless of its value), then the tests connect via secure Bolt
 connection, otherwise they connect with regular Bolt connection.
 
 The **tests insert data into Memgraph**, so they shouldn't be used with a

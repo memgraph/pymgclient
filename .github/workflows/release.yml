@@ -139,15 +139,14 @@ jobs:
   build_macos:
     strategy:
       matrix:
-        platform: [macOS-10.15, macOS-11.6]
+        platform: [macOS-10.15]
         python_version:
           - '3.7'
           - '3.8'
           - '3.9'
           - '3.10'
-        exclude:
-          - platform: macOS-11.6
-            python_version: '3.7'
+        include:
+          - {platform: [macos-11.6, ARM64], python_version: '3.10'}
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2

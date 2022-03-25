@@ -177,10 +177,10 @@ jobs:
         run: python3 -c "import mgclient"
       - name: Save artifact name on not ARM64 machines
         if: ${{ !startsWith(matrix.platform, 'macos') }}
-        run: echo "OS_TYPE=${{ matrix.platform }}' >> $GITHUB_ENV
+        run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV
       - name: Save artifact name on ARM64 machine
         if: ${{ startsWith(matrix.platform, 'macos') }}
-        run: echo "OS_TYPE=${{ matrix.platform[0] }}-${{ matrix.platform[1] }}' >> $GITHUB_ENV
+        run: echo "OS_TYPE=${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" >> $GITHUB_ENV
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:

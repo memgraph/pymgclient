@@ -137,7 +137,7 @@ jobs:
   build_macos:
     strategy:
       matrix:
-        platform: [macos-latest, macos-10.15]
+        platform: [macOS-latest, macOS-11.6, macOS-10.15]
         python_version:
           - '3.7'
           - '3.10'
@@ -164,5 +164,5 @@ jobs:
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:
-          name: pymgclient-macos-${{ matrix.python_version }}
+          name: pymgclient-${{ matrix.platform }}-${{ matrix.python_version }}
           path: dist/

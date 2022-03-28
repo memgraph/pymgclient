@@ -5,10 +5,15 @@ on:
     inputs:
       version:
         required: true
+        type: string
       publish_doc:
-        description: 'If set to true, then the documentation will be published'
+        description: 'If set to true, then the documentation will be published.'
         default: 'false'
         required: false
+      openssl_version:
+        description: 'The expected version of OpenSSL.'
+        required: true
+        type: string
 
 env:
   PYMGCLIENT_OVERRIDE_VERSION: "${{ github.event.inputs.version }}"
@@ -92,6 +97,14 @@ jobs:
           # First make sure python would resolve to the windows native python, not mingw one
           echo "C:\msys64\mingw${{ matrix.arch.mingw }}\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
           echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+      - name: Print OpenSSL version
+        shell: msys2 {0}
+        run: |
+          openssl version -a
+      - name: Check version
+        shell: msys2 {0}
+        run: |
+          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_version }}" ]
       - uses: Vampire/setup-wsl@v1
         with:
             distribution: Ubuntu-18.04
@@ -124,37 +137,52 @@ jobs:
           path: dist/
 
   build_macos:
-    runs-on: macos-10.15
     strategy:
       matrix:
+        platform: [macos-10.15]
         python_version:
           - '3.7'
           - '3.8'
           - '3.9'
           - '3.10'
-    env:
-      PYTHON_EXECUTABLE: /usr/local/opt/python@${{ matrix.python_version }}/bin/python3
+        include:
+          - {platform: [macos-11.6, arm64], python_version: '3.10'}
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
       - name: Install python and OpenSSL
         run: |
+          brew update
           brew install python@${{ matrix.python_version }} openssl@1.1
+          brew upgrade openssl@1.1
+      - name: Print OpenSSL version
+        run: |
+          openssl version -a
+      - name: Check version
+        run: |
+          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_version }}" ]
       - name: Make used python version default
         run: |
           brew link --force --overwrite python@${{ matrix.python_version }}
           python3 --version
       - name: Install pytest and pyopenssl
-        run: ${{ env.PYTHON_EXECUTABLE }} -m pip install pyopenssl pytest
+        run: python3 -m pip install pyopenssl pytest
       - name: Build pymgclient
-        run: ${{ env.PYTHON_EXECUTABLE }} setup.py bdist_wheel
+        run: python3 setup.py bdist_wheel
       - name: Install pymgclient
-        run: ${{ env.PYTHON_EXECUTABLE }} -m pip install -f dist --no-index pymgclient
+        run: python3 -m pip install -f dist --no-index pymgclient
       - name: Import mgclient to validate installation
-        run: ${{ env.PYTHON_EXECUTABLE }} -c "import mgclient"
+        run: python3 -c "import mgclient"
+      - name: Save artifact name on not ARM64 machines
+        if: ${{ startsWith(matrix.platform, 'macos') }}
+        run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV
+      - name: Save artifact name on ARM64 machine
+        if: ${{ !startsWith(matrix.platform, 'macos') }}
+        run: echo "OS_TYPE=${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" >> $GITHUB_ENV
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:
-          name: pymgclient-${{ github.event.inputs.version }}-macos-${{ matrix.python_version }}
+          name: pymgclient-${{ github.event.inputs.version }}-${{ env.OS_TYPE }}-${{ matrix.python_version }}
           path: dist/

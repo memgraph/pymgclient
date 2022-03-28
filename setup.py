@@ -163,7 +163,7 @@ class BuildMgclientExt(build_ext):
         if self.static_openssl:
             extension.extra_link_args.extend([f"{openssl_root_dir}/lib/lib{lib}.a" for lib in libs])
         else:
-            extension.libraries.extend(libs)
+            extension.extra_link_args.extend([f"{openssl_root_dir}/lib/lib{lib}.dylib" for lib in libs])
 
     def finalize_linux_like(self, extension: Extension, libs: List[str]):
         if self.static_openssl:

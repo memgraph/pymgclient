@@ -3,6 +3,17 @@ Changelog
 =========
 
 ######
+1.2.1
+######
+
+
+******************************
+Major Feature and Improvements
+******************************
+
+  * Use OpenSSL 1.1.1n for binary packages
+
+######
 1.2.0
 ######
 

@@ -21,8 +21,6 @@ jobs:
           - 2.1.1
           - 2.2.0
           - 2.3.0
-        include:
-          - {platform: ubuntu-22.04, python_version: '3.10', mgversion: 2.3.0}
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -40,7 +38,7 @@ jobs:
           if [[ "${{ matrix.mgversion }}" != 1* ]]; then
             COMMUNITY_SUFFIX=""
           fi
-          curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/ubuntu-18.04/memgraph_${{ matrix.mgversion }}${COMMUNITY_SUFFIX}-1_amd64.deb > ~/memgraph/memgraph.deb
+          curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/${{ matrix.platform }}/memgraph_${{ matrix.mgversion }}${COMMUNITY_SUFFIX}-1_amd64.deb > ~/memgraph/memgraph.deb
       - name: Install system dependencies
         run: |
           sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
@@ -75,6 +73,23 @@ jobs:
         with:
           name: pymgclient
           path: dist/
+
+  build_ubuntu_2204:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install system dependencies
+        run: |
+          sudo apt install -y libpython3.10 python3-pip python3-setuptools
+          sudo pip3 install networkx pytest pyopenssl sphinx
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build source distribution
+        run: python3 setup.py sdist
+      - name: Install pymgclient
+        run: python3 -m pip install ./dist/pymgclient-*
+      - name: Import mgclient to validate installation
+        run: python3 -c "import mgclient"
 
   build_windows_and_test:
     runs-on: windows-latest

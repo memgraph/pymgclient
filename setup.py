@@ -136,7 +136,7 @@ class BuildMgclientExt(build_ext):
             )
             return openssl_root_dir
 
-        possible_openssl_root_dirs = ["/opt/homebrew/opt/openssl@1.1", "/usr/local/opt/openssl@1.1"]
+        possible_openssl_root_dirs = ["/opt/homebrew/opt/openssl@3", "/opt/homebrew/opt/openssl@1.1", "/usr/local/opt/openssl@1.1"]
 
         for dir in possible_openssl_root_dirs:
             if os.path.isdir(dir):

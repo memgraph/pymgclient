@@ -21,7 +21,6 @@ jobs:
           - 2.1.1
           - 2.2.0
           - 2.3.0
-
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Cache Memgraph community installer
@@ -171,10 +170,9 @@ jobs:
       - name: Install python and OpenSSL
         run: |
           brew install python@${{ matrix.python_version }} openssl@1.1
-      - name: Install OpenSSL 3 on ARM machines with Python 3.8
-        if: ${{ contains(matrix.platform, 'ARM64') && matrix.python_version == '3.8' }}
-        run: |
-          brew install openssl@3
+      - name: Manage OpenSSL 3 on ARM machines
+        if: ${{ contains(matrix.platform, 'ARM64') }}
+        run: brew install openssl@3
       - name: Make used python version default
         run: |
           brew link --force --overwrite python@${{ matrix.python_version }}

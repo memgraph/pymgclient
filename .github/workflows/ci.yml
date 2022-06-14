@@ -41,7 +41,7 @@ jobs:
             COMMUNITY_SUFFIX=""
           fi
           curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/ubuntu-18.04/memgraph_${{ matrix.mgversion }}${COMMUNITY_SUFFIX}-1_amd64.deb > ~/memgraph/memgraph.deb
-      - name: Install system dependencies (Ubuntu 18.04)
+      - name: Install system dependencies
         run: |
           sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
           sudo pip3 install networkx pytest pyopenssl sphinx

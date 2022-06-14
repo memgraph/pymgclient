@@ -26,27 +26,30 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Cache Memgraph community installer
-        id: cache-memgraph-community
+      - name: Cache Memgraph Docker image
+        id: cache-memgraph-docker
         uses: actions/cache@v1
         with:
           path: ~/memgraph
-          key: cache-memgraph-v${{ matrix.mgversion }}-community-installer-v2
-      - name: Download Memgraph
-        if: steps.cache-memgraph-community.outputs.cache-hit != 'true'
+          key: cache-memgraph-v${{ matrix.mgversion }}-docker-image
+      - name: Download Memgraph Docker image
+        if: steps.cache-memgraph-docker.outputs.cache-hit != 'true'
         run: |
           mkdir ~/memgraph
           COMMUNITY_SUFFIX="-community"
           if [[ "${{ matrix.mgversion }}" != 1* ]]; then
             COMMUNITY_SUFFIX=""
           fi
-          curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/ubuntu-18.04/memgraph_${{ matrix.mgversion }}${COMMUNITY_SUFFIX}-1_amd64.deb > ~/memgraph/memgraph.deb
+          curl -L https://memgraph.com/download/memgraph/v${{ matrix.mgversion }}/docker/memgraph-${{ matrix.mgversion }}${COMMUNITY_SUFFIX}-docker.tar.gz > ~/memgraph/memgraph-docker.tar.gz
+      - name: Load and run Memgraph Docker image
+        run: |
+          docker load -i ~/memgraph/memgraph-docker.tar.gz
+          docker run -d -p 7687:7687 memgraph --telemetry-enabled=false
       - name: Install system dependencies
         run: |
           sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
           sudo pip3 install networkx pytest pyopenssl sphinx
           sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
-          sudo dpkg -i ~/memgraph/memgraph.deb
       - uses: actions/checkout@v2
         with:
           submodules: true

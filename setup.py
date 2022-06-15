@@ -145,8 +145,8 @@ class BuildMgclientExt(build_ext):
         possible_openssl_root_dirs = [
             "/opt/homebrew/opt/openssl@3",
             "/opt/homebrew/opt/openssl@1.1",
-            "/usr/local/opt/openssl@1.1",
             "/usr/local/opt/openssl@3",
+            "/usr/local/opt/openssl@1.1",
         ]
 
         for dir in possible_openssl_root_dirs:

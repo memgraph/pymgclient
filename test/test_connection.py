@@ -25,7 +25,7 @@ def memgraph_server():
     memgraph = start_memgraph()
     yield memgraph.host, memgraph.port, memgraph.sslmode(), memgraph.is_long_running()
 
-    memgraph.kill()
+    memgraph.terminate()
 
 
 def generate_key_and_cert(key_file, cert_file):
@@ -60,7 +60,7 @@ def secure_memgraph_server():
         assert memgraph.sslmode() == mgclient.MG_SSLMODE_REQUIRE
         yield memgraph.host, memgraph.port, memgraph.is_long_running()
 
-    memgraph.kill()
+    memgraph.terminate()
 
 
 def test_connect_args_validation():

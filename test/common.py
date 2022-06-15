@@ -64,9 +64,10 @@ class Memgraph:
             mgclient.MG_SSLMODE_REQUIRE if self.use_ssl else mgclient.MG_SSLMODE_DISABLE
         )
 
-    def kill(self):
+    def terminate(self):
         if self.process:
-            self.process.kill()
+            self.process.terminate()
+            self.process.wait()
 
 
 def start_memgraph(cert_file="", key_file=""):

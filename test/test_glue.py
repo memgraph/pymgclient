@@ -31,7 +31,7 @@ def memgraph_connection():
     conn.autocommit = True
     yield conn
 
-    memgraph.kill()
+    memgraph.terminate()
     conn.close()
 
 

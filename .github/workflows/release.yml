@@ -172,7 +172,7 @@ jobs:
           openssl version -a
           [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_1_version }}" ]
       - name: Manage OpenSSL 3 on ARM machines
-        if: ${{ !contains(matrix.platform, 'ARM64') }}
+        if: ${{ contains(matrix.platform, 'ARM64') }}
         run: |
           brew install openssl@3
           brew upgrade openssl@3

@@ -24,7 +24,7 @@ def memgraph_server():
     memgraph = start_memgraph()
     yield memgraph.host, memgraph.port, memgraph.sslmode(), memgraph.is_long_running
 
-    memgraph.kill()
+    memgraph.terminate()
 
 
 def test_cursor_visibility(memgraph_server):

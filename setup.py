@@ -136,7 +136,18 @@ class BuildMgclientExt(build_ext):
             )
             return openssl_root_dir
 
-        possible_openssl_root_dirs = ["/opt/homebrew/opt/openssl@1.1", "/usr/local/opt/openssl@1.1"]
+        # The order is the following:
+        #  1. OpenSSL 3 on Apple Silicon
+        #  2. OpenSSL 1 on Apple Silicon
+        #  3. OpenSSL 3 on Intel
+        #  4. OpenSSL 1 on Intel
+        # Prefer Apple Silicon over Intel and prefer OpenSSL 3 over 1.
+        possible_openssl_root_dirs = [
+            "/opt/homebrew/opt/openssl@3",
+            "/opt/homebrew/opt/openssl@1.1",
+            "/usr/local/opt/openssl@3",
+            "/usr/local/opt/openssl@1.1",
+        ]
 
         for dir in possible_openssl_root_dirs:
             if os.path.isdir(dir):

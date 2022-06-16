@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-18.04]
+        python_version: ['3.7']
         mgversion:
           - 1.3.0
           - 1.4.0
@@ -35,11 +36,10 @@ jobs:
           if [[ "${{ matrix.mgversion }}" != 1* ]]; then
             COMMUNITY_SUFFIX=""
           fi
-          curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/ubuntu-18.04/memgraph_${{ matrix.mgversion }}${COMMUNITY_SUFFIX}-1_amd64.deb > ~/memgraph/memgraph.deb
-      - name: Install system dependencies (Ubuntu 18.04)
+          curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/${{ matrix.platform }}/memgraph_${{ matrix.mgversion }}${COMMUNITY_SUFFIX}-1_amd64.deb > ~/memgraph/memgraph.deb
+      - name: Install system dependencies
         run: |
-          sudo apt install -y libpython3.7 python3-pip python3-setuptools
-          python3 -m pip install --upgrade
+          sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
           sudo pip3 install networkx pytest pyopenssl sphinx
           sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
           sudo dpkg -i ~/memgraph/memgraph.deb
@@ -71,6 +71,23 @@ jobs:
         with:
           name: pymgclient
           path: dist/
+
+  build_ubuntu_2204:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install system dependencies
+        run: |
+          sudo apt install -y libpython3.10 python3-pip python3-setuptools
+          sudo pip3 install networkx pytest pyopenssl sphinx
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build source distribution
+        run: python3 setup.py sdist
+      - name: Install pymgclient
+        run: python3 -m pip install ./dist/pymgclient-*
+      - name: Import mgclient to validate installation
+        run: python3 -c "import mgclient"
 
   build_windows_and_test:
     runs-on: windows-latest
@@ -137,12 +154,13 @@ jobs:
   build_macos:
     strategy:
       matrix:
-        platform: [macos-latest, macos-10.15]
+        platform: [macos-12, macos-11, macos-10.15]
         python_version:
           - '3.7'
           - '3.10'
         include:
-          - {platform: [macos-11.6, arm64], python_version: '3.10'}
+          - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.8'}
+          - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.10'}
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
@@ -151,6 +169,9 @@ jobs:
       - name: Install python and OpenSSL
         run: |
           brew install python@${{ matrix.python_version }} openssl@1.1
+      - name: Manage OpenSSL 3 on ARM machines
+        if: ${{ contains(matrix.platform, 'ARM64') }}
+        run: brew install openssl@3
       - name: Make used python version default
         run: |
           brew link --force --overwrite python@${{ matrix.python_version }}
@@ -164,11 +185,12 @@ jobs:
       - name: Import mgclient to validate installation
         run: python3 -c "import mgclient"
       - name: Save artifact name on not ARM64 machines
-        if: ${{ startsWith(matrix.platform, 'macos') }}
+        if: ${{ !contains(matrix.platform, 'ARM64') }}
         run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV
       - name: Save artifact name on ARM64 machine
-        if: ${{ !startsWith(matrix.platform, 'macos') }}
-        run: echo "OS_TYPE=${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" >> $GITHUB_ENV
+        if: ${{ contains(matrix.platform, 'ARM64') }}
+        # Convert macOS-11.6-ARM64 to macos-11.6-arm64 to be consistent with full lowercase naming
+        run: echo "OS_TYPE=${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:

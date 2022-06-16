@@ -10,8 +10,12 @@ on:
         description: 'If set to true, then the documentation will be published.'
         default: 'false'
         required: false
-      openssl_version:
-        description: 'The expected version of OpenSSL.'
+      openssl_1_version:
+        description: 'The expected version of OpenSSL 1, e.g.: 1.1.1o.'
+        required: true
+        type: string
+      openssl_3_version:
+        description: 'The expected version of OpenSSL 3, e.g.: 3.0.3.'
         required: true
         type: string
 
@@ -104,7 +108,7 @@ jobs:
       - name: Check version
         shell: msys2 {0}
         run: |
-          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_version }}" ]
+          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_1_version }}" ]
       - uses: Vampire/setup-wsl@v1
         with:
             distribution: Ubuntu-18.04
@@ -147,6 +151,8 @@ jobs:
           - '3.10'
         include:
           - {platform: [macos-11.6, arm64], python_version: '3.10'}
+          - {platform: [macos-11.6, arm64], python_version: '3.9'}
+          - {platform: [macos-11.6, arm64], python_version: '3.8'}
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
@@ -155,14 +161,15 @@ jobs:
       - name: Install python and OpenSSL
         run: |
           brew update
-          brew install python@${{ matrix.python_version }} openssl@1.1
-          brew upgrade openssl@1.1
-      - name: Print OpenSSL version
+          brew install python@${{ matrix.python_version }} openssl@3
+          brew upgrade openssl@3
+      - name: Make OpenSSL 3 default
         run: |
+          brew link --force --overwrite openssl@3
           openssl version -a
-      - name: Check version
+      - name: Check OpenSSL version
         run: |
-          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_version }}" ]
+          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_3_version }}" ]
       - name: Make used python version default
         run: |
           brew link --force --overwrite python@${{ matrix.python_version }}

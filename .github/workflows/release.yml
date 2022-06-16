@@ -165,7 +165,7 @@ jobs:
       - name: Manage OpenSSL 1 on x86 machines
         if: ${{ !contains(matrix.platform, 'ARM64') }}
         run: |
-          brew uninstall openssl@3
+          brew uninstall -f openssl@3
           brew install openssl@1.1
           brew upgrade openssl@1.1
           brew link --force --overwrite openssl@1.1

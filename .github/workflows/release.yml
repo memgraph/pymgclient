@@ -69,7 +69,7 @@ jobs:
         publish_dir: ./docs/build/html
 
   build_windows_and_test:
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       matrix:
         arch:

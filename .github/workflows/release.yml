@@ -181,8 +181,9 @@ jobs:
           [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_3_version }}" ]
       - name: Make used python version default
         run: |
-          brew link --force --overwrite python@${{ matrix.python_version }}
+          brew unlink python@3 && brew link python@${{ matrix.python_version }}
           python3 --version
+          [ `python3 --version` == "${{ github.event.python_version }}" ]
       - name: Install pytest and pyopenssl
         run: python3 -m pip install pyopenssl pytest
       - name: Build pymgclient

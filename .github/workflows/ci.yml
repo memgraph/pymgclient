@@ -190,7 +190,7 @@ jobs:
       - name: Save artifact name on ARM64 machines
         if: ${{ contains(matrix.platform, 'ARM64') }}
         # Convert macOS-11.6-ARM64 to macos-11.6-arm64 to be consistent with full lowercase naming
-        run: echo "OS_TYPE=${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
+        run: echo OS_TYPE=`echo "${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr "[:upper:]" "[:lower:]"` >> $GITHUB_ENV
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:

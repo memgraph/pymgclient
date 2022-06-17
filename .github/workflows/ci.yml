@@ -176,7 +176,6 @@ jobs:
         run: |
           brew unlink python@3 && brew link python@${{ matrix.python_version }}
           python3 --version
-          [ `python3 -c 'import sys; print(str(sys.version_info[0])+"."+str(sys.version_info[1]))'` == "${{ github.event.python_version }}" ]
       - name: Install pytest and pyopenssl
         run: python3 -m pip install pyopenssl pytest
       - name: Build pymgclient

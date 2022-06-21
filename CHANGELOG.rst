@@ -3,6 +3,19 @@ Changelog
 =========
 
 ######
+1.3.0
+######
+
+
+******************************
+Major Feature and Improvements
+******************************
+
+  * mgclient has been updated to 1.4.0
+  * Support for OpenSSL 3
+  * Use OpenSSL 1.1.1o and 3.0.3 versions for binary packages
+
+######
 1.2.1
 ######
 

@@ -90,7 +90,7 @@ jobs:
         run: python3 -c "import mgclient"
 
   build_windows_and_test:
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       matrix:
         arch:
@@ -159,8 +159,8 @@ jobs:
           - '3.7'
           - '3.10'
         include:
-          - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.8'}
           - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.10'}
+          - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.8'}
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
@@ -174,7 +174,7 @@ jobs:
         run: brew install openssl@3
       - name: Make used python version default
         run: |
-          brew link --force --overwrite python@${{ matrix.python_version }}
+          brew unlink python@3 && brew link python@${{ matrix.python_version }}
           python3 --version
       - name: Install pytest and pyopenssl
         run: python3 -m pip install pyopenssl pytest
@@ -184,13 +184,13 @@ jobs:
         run: python3 -m pip install -f dist --no-index pymgclient
       - name: Import mgclient to validate installation
         run: python3 -c "import mgclient"
-      - name: Save artifact name on not ARM64 machines
+      - name: Save artifact name on x86 machines
         if: ${{ !contains(matrix.platform, 'ARM64') }}
         run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV
-      - name: Save artifact name on ARM64 machine
+      - name: Save artifact name on ARM64 machines
         if: ${{ contains(matrix.platform, 'ARM64') }}
         # Convert macOS-11.6-ARM64 to macos-11.6-arm64 to be consistent with full lowercase naming
-        run: echo "OS_TYPE=${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
+        run: echo OS_TYPE=`echo "${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr "[:upper:]" "[:lower:]"` >> $GITHUB_ENV
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:

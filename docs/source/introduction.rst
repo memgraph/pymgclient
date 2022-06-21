@@ -78,7 +78,7 @@ build it from you will need:
 * Preqrequisites of `mgclient`_:
 
   * CMake 3.8 or newer
-  * OpenSSL 1.0.2 or newer (but not OpenSSL 3.0) and its header files
+  * OpenSSL 1.0.2 or newer (including OpenSSL 3.0.0+) and its header files
 
 Building on Linux
 *****************
@@ -119,7 +119,7 @@ To install the C/C++ compiler, run::
 
 The rest of the build prerequisites can be installed easily via `brew`_::
 
-  $ brew install python3 openssl@1.1 cmake
+  $ brew install python3 openssl cmake
 
 It is important to mention that on M1/ARM machines pymgclient cannot be built
 with the default installed Python version, thus Python needs to be installed via

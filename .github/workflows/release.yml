@@ -10,8 +10,12 @@ on:
         description: 'If set to true, then the documentation will be published.'
         default: 'false'
         required: false
-      openssl_version:
-        description: 'The expected version of OpenSSL.'
+      openssl_1_version:
+        description: 'The expected version of OpenSSL 1, e.g.: 1.1.1o.'
+        required: true
+        type: string
+      openssl_3_version:
+        description: 'The expected version of OpenSSL 3, e.g.: 3.0.3.'
         required: true
         type: string
 
@@ -65,7 +69,7 @@ jobs:
         publish_dir: ./docs/build/html
 
   build_windows_and_test:
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       matrix:
         arch:
@@ -104,7 +108,7 @@ jobs:
       - name: Check version
         shell: msys2 {0}
         run: |
-          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_version }}" ]
+          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_1_version }}" ]
       - uses: Vampire/setup-wsl@v1
         with:
             distribution: Ubuntu-18.04
@@ -146,26 +150,38 @@ jobs:
           - '3.9'
           - '3.10'
         include:
-          - {platform: [macos-11.6, arm64], python_version: '3.10'}
+          - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.10'}
+          - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.9'}
+          - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.8'}
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
-      - name: Install python and OpenSSL
+      - name: Install python
         run: |
           brew update
-          brew install python@${{ matrix.python_version }} openssl@1.1
+          brew install python@${{ matrix.python_version }}
+      - name: Manage OpenSSL 1 on x86 machines
+        if: ${{ !contains(matrix.platform, 'ARM64') }}
+        run: |
+          brew uninstall -f openssl@3
+          brew install openssl@1.1
           brew upgrade openssl@1.1
-      - name: Print OpenSSL version
-        run: |
+          brew link --force --overwrite openssl@1.1
           openssl version -a
-      - name: Check version
+          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_1_version }}" ]
+      - name: Manage OpenSSL 3 on ARM machines
+        if: ${{ contains(matrix.platform, 'ARM64') }}
         run: |
-          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_version }}" ]
+          brew install openssl@3
+          brew upgrade openssl@3
+          brew link --force --overwrite openssl@3
+          openssl version -a
+          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_3_version }}" ]
       - name: Make used python version default
         run: |
-          brew link --force --overwrite python@${{ matrix.python_version }}
+          brew unlink python@3 && brew link python@${{ matrix.python_version }}
           python3 --version
       - name: Install pytest and pyopenssl
         run: python3 -m pip install pyopenssl pytest
@@ -175,12 +191,13 @@ jobs:
         run: python3 -m pip install -f dist --no-index pymgclient
       - name: Import mgclient to validate installation
         run: python3 -c "import mgclient"
-      - name: Save artifact name on not ARM64 machines
-        if: ${{ startsWith(matrix.platform, 'macos') }}
+      - name: Save artifact name on x86 machines
+        if: ${{ !contains(matrix.platform, 'ARM64') }}
         run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV
-      - name: Save artifact name on ARM64 machine
-        if: ${{ !startsWith(matrix.platform, 'macos') }}
-        run: echo "OS_TYPE=${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" >> $GITHUB_ENV
+      - name: Save artifact name on ARM64 machines
+        if: ${{ contains(matrix.platform, 'ARM64') }}
+        # Convert macOS-11.6-ARM64 to macos-11.6-arm64 to be consistent with full lowercase naming
+        run: echo OS_TYPE=`echo "${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr "[:upper:]" "[:lower:]"` >> $GITHUB_ENV
       - name: Save wheel package
         uses: actions/upload-artifact@v2
         with:

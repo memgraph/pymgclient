@@ -176,7 +176,7 @@ jobs:
           submodules: true
       - name: Install python and OpenSSL
         run: |
-          brew install python@${{ matrix.python_version }} openssl@1.1
+          brew install python@${{ matrix.python_version }} openssl@1.1 || brew postinstall python@3.7
       - name: Manage OpenSSL 3 on ARM machines
         if: ${{ contains(matrix.platform, 'ARM64') }}
         run: brew install openssl@3

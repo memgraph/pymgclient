@@ -3,6 +3,43 @@ Changelog
 =========
 
 ######
+1.3.0
+######
+
+
+******************************
+Major Feature and Improvements
+******************************
+
+  * mgclient has been updated to 1.4.0
+  * Support for OpenSSL 3
+  * Use OpenSSL 1.1.1o and 3.0.3 versions for binary packages
+
+######
+1.2.1
+######
+
+
+******************************
+Major Feature and Improvements
+******************************
+
+  * Use OpenSSL 1.1.1n for binary packages
+
+######
+1.2.0
+######
+
+
+******************************
+Major Feature and Improvements
+******************************
+
+  * Add suport for arm64 macOS machines.
+  * Link OpenSSL statically by default.
+  * Add support for Python 3.10.
+
+######
 1.1.0
 ######
 

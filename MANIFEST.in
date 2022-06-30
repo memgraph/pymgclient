@@ -2,7 +2,7 @@ recursive-include src *.c *.h
 recursive-include docs *
 prune docs/build
 recursive-include tests *.py
-include LICENSE MANIFEST.in README.md setup.py CHANGELOG.rst
+include LICENSE MANIFEST.in README.md setup.cfg setup.py CHANGELOG.rst
 
 
 recursive-include mgclient/src *.c *.h CMakeLists.txt

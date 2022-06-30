@@ -36,7 +36,11 @@ jobs:
           if [[ "${{ matrix.mgversion }}" != 1* ]]; then
             COMMUNITY_SUFFIX=""
           fi
-          curl -L "https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/ubuntu-18.04/memgraph_${{ matrix.mgversion }}${COMMUNITY_SUFFIX}-1_amd64.deb" > ~/memgraph/memgraph-community.deb
+          curl -L "https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/ubuntu-18.04/memgraph_${{ matrix.mgversion }}${COMMUNITY_SUFFIX}-1_amd64.deb" -v -o ~/memgraph/memgraph.deb
+          if [[ $? -ne 0 ]]; then
+            echo 'Memgraph download failed!'
+            exit 1
+          fi
       - name: Install system dependencies (Ubuntu 18.04)
         run: |
           sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
@@ -127,7 +131,11 @@ jobs:
         shell: wsl-bash {0} # root shell
         run: |
           mkdir ~/memgraph
-          curl -L https://download.memgraph.com/memgraph/v${{ env.MG_VERSION }}/ubuntu-18.04/memgraph_${{ env.MG_VERSION }}-1_amd64.deb --output ~/memgraph/memgraph.deb
+          curl -L -v "https://download.memgraph.com/memgraph/v${{ env.MG_VERSION }}/ubuntu-18.04/memgraph_${{ env.MG_VERSION }}-1_amd64.deb" --output ~/memgraph/memgraph.deb
+          if [[ $? -ne 0 ]]; then
+            echo 'Failed to download memgraph binary!'
+            exit 1
+          fi
           dpkg -i ~/memgraph/memgraph.deb
           openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-recover-on-startup=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &

@@ -18,7 +18,7 @@ import shutil
 import sys
 import configparser
 from distutils import log
-from distutils.core import DistutilsExecError, DistutilsPlatformError
+from distutils.errors import DistutilsExecError, DistutilsPlatformError
 from pathlib import Path
 from typing import List
 

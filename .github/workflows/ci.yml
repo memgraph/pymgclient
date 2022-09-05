@@ -154,7 +154,7 @@ jobs:
   build_macos:
     strategy:
       matrix:
-        platform: [macos-12, macos-11]
+        platform: [macos-12, macos-11, macos-10.15]
         python_version:
           - '3.7'
           - '3.10'
@@ -174,7 +174,7 @@ jobs:
         run: brew install openssl@3
       - name: Make used python version default
         run: |
-          brew unlink python@3 && brew link python@${{ matrix.python_version }}
+          brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
           python3 --version
       - name: Install pytest and pyopenssl
         run: python3 -m pip install pyopenssl pytest

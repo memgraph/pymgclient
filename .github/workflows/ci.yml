@@ -173,20 +173,17 @@ jobs:
       - name: Install OpenSSL
         run: |
           brew install openssl@1.1
-          python3 --version
       - name: Manage OpenSSL 3 on ARM machines
         if: ${{ contains(matrix.platform, 'ARM64') }}
         run: brew install openssl@3
-      - name: Make used python version default
+      - name: Check python version
         run: |
-          echo 'alias python3="python${{ matrix.python_version }}"' >> ~/.zshrc
-          source ~/.zshrc
           python3 --version
       - name: Install pytest and pyopenssl
         run: python3 -m pip install pyopenssl pytest
       - name: Build pymgclient
         run: |
-          pip3 install wheel
+          python3 -m pip install wheel
           python3 setup.py bdist_wheel
       - name: Install pymgclient
         run: python3 -m pip install -f dist --no-index pymgclient

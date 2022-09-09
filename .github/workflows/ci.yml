@@ -174,7 +174,8 @@ jobs:
         run: brew install openssl@3
       - name: Make used python version default
         run: |
-          brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
+          echo 'alias python3="python${{ matrix.python_version }}"' >> ~/.zshrc
+          source ~/.zshrc
           python3 --version
       - name: Install pytest and pyopenssl
         run: python3 -m pip install pyopenssl pytest

@@ -26,18 +26,19 @@ jobs:
   build_and_test_ubuntu:
     strategy:
      matrix:
-        platform: [ubuntu-18.04]
+        platform: [ubuntu-20.04]
+        python_version: ['3.8']
         mgversion:
           - 2.2.0
     runs-on: ${{ matrix.platform }}
     steps:
-    - name: Install system dependencies (Ubuntu 18.04)
+    - name: Install system dependencies (Ubuntu 20.04)
       run: |
-        sudo apt install -y libpython3.7 python3-pip python3-setuptools
+        sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
         python3 -m pip install --upgrade
         sudo pip3 install networkx pytest pyopenssl sphinx
         mkdir ~/memgraph
-        curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-18.04/memgraph_${{matrix.mgversion}}-1_amd64.deb > ~/memgraph/memgraph.deb
+        curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-20.04/memgraph_${{matrix.mgversion}}-1_amd64.deb > ~/memgraph/memgraph.deb
         sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
         sudo dpkg -i ~/memgraph/memgraph.deb
 
@@ -111,12 +112,12 @@ jobs:
           [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_1_version }}" ]
       - uses: Vampire/setup-wsl@v1
         with:
-            distribution: Ubuntu-18.04
+            distribution: Ubuntu-20.04
       - name: Download, install and run Memgraph under WSL
         shell: wsl-bash {0} # root shell
         run: |
           mkdir ~/memgraph
-          curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-18.04/memgraph_${{matrix.mgversion}}-1_amd64.deb --output ~/memgraph/memgraph.deb
+          curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-20.04/memgraph_${{matrix.mgversion}}-1_amd64.deb --output ~/memgraph/memgraph.deb
           dpkg -i ~/memgraph/memgraph.deb
           openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-recover-on-startup=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &

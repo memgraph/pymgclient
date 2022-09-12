@@ -18,7 +18,7 @@ import shutil
 import sys
 import configparser
 from distutils import log
-from distutils.core import DistutilsExecError, DistutilsPlatformError
+from distutils.errors import DistutilsExecError, DistutilsPlatformError
 from pathlib import Path
 from typing import List
 
@@ -54,7 +54,7 @@ parser.read("setup.cfg")
 
 static_openssl = parser.getboolean("build_ext", "static_openssl", fallback=False)
 
-version = os.getenv("PYMGCLIENT_OVERRIDE_VERSION", "1.3.0")
+version = os.getenv("PYMGCLIENT_OVERRIDE_VERSION", "1.3.1")
 
 
 def list_all_files_in_dir(path):

@@ -11,8 +11,8 @@ jobs:
   build_and_test_ubuntu:
     strategy:
       matrix:
-        platform: [ubuntu-18.04]
-        python_version: ['3.7']
+        platform: [ubuntu-20.04]
+        python_version: ['3.8']
         mgversion:
           - 1.3.0
           - 1.4.0
@@ -27,7 +27,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/memgraph
-          key: cache-memgraph-v${{ matrix.mgversion }}-community-installer-v2
+          key: cache-memgraph-v${{ matrix.mgversion }}-community-installer-v3
       - name: Download Memgraph
         if: steps.cache-memgraph-community.outputs.cache-hit != 'true'
         run: |
@@ -120,14 +120,18 @@ jobs:
           # First make sure python would resolve to the windows native python, not mingw one
           echo "C:\msys64\mingw${{ matrix.arch.mingw }}\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
           echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+      - name: Print OpenSSL version
+        shell: msys2 {0}
+        run: |
+          openssl version -a
       - uses: Vampire/setup-wsl@v1
         with:
-          distribution: Ubuntu-18.04
+          distribution: Ubuntu-20.04
       - name: Download, install and run Memgraph under WSL
         shell: wsl-bash {0} # root shell
         run: |
           mkdir ~/memgraph
-          curl -L https://download.memgraph.com/memgraph/v${{ env.MG_VERSION }}/ubuntu-18.04/memgraph_${{ env.MG_VERSION }}-1_amd64.deb --output ~/memgraph/memgraph.deb
+          curl -L https://download.memgraph.com/memgraph/v${{ env.MG_VERSION }}/ubuntu-20.04/memgraph_${{ env.MG_VERSION }}-1_amd64.deb --output ~/memgraph/memgraph.deb
           dpkg -i ~/memgraph/memgraph.deb
           openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-recover-on-startup=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
@@ -153,6 +157,7 @@ jobs:
 
   build_macos:
     strategy:
+      fail-fast: false
       matrix:
         platform: [macos-12, macos-11, macos-10.15]
         python_version:
@@ -169,21 +174,26 @@ jobs:
       - name: Install python and OpenSSL
         run: |
           brew install python@${{ matrix.python_version }} openssl@1.1
+          brew link --force --overwrite openssl@1.1
+          openssl version -a
       - name: Manage OpenSSL 3 on ARM machines
         if: ${{ contains(matrix.platform, 'ARM64') }}
-        run: brew install openssl@3
+        run: |
+          brew install openssl@3
+          brew link --force --overwrite openssl@3
+          openssl version -a
       - name: Make used python version default
         run: |
-          brew unlink python@3 && brew link python@${{ matrix.python_version }}
-          python3 --version
+          brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
+          python${{ matrix.python_version }} --version
       - name: Install pytest and pyopenssl
-        run: python3 -m pip install pyopenssl pytest
+        run: python${{ matrix.python_version }} -m pip install pyopenssl pytest
       - name: Build pymgclient
-        run: python3 setup.py bdist_wheel
+        run: python${{ matrix.python_version }} setup.py bdist_wheel
       - name: Install pymgclient
-        run: python3 -m pip install -f dist --no-index pymgclient
+        run: python${{ matrix.python_version }} -m pip install -f dist --no-index pymgclient
       - name: Import mgclient to validate installation
-        run: python3 -c "import mgclient"
+        run: python${{ matrix.python_version }} -c "import mgclient"
       - name: Save artifact name on x86 machines
         if: ${{ !contains(matrix.platform, 'ARM64') }}
         run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV

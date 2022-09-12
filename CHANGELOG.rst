@@ -3,6 +3,23 @@ Changelog
 =========
 
 ######
+1.3.1
+######
+
+
+******************************
+Major Feature and Improvements
+******************************
+
+  * Use OpenSSL 1.1.1q and 3.0.5 versions for binary packages
+
+*********
+Bug Fixes
+*********
+
+  * Fixed import path of errors from `distutils`
+
+######
 1.3.0
 ######
 

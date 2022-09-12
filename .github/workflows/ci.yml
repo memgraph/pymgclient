@@ -179,9 +179,7 @@ jobs:
         run: |
           echo $PATH
           brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
-          echo 'alias python3="python${{ matrix.python_version }}"' >> ~/.zshrc
-          source ~/.zshrc
-          python3 --version
+          python${{ matrix.python_version }} --version
           echo $PATH
       - name: Install pytest and pyopenssl
         run: python3 -m pip install pyopenssl pytest

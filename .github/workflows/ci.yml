@@ -177,10 +177,9 @@ jobs:
         run: brew install openssl@3
       - name: Make used python version default
         run: |
-          echo $PATH
           brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
           python${{ matrix.python_version }} --version
-          echo $PATH
+          python${{ matrix.python_version }} -c "import sys; print(sys.executable)"
       - name: Install pytest and pyopenssl
         run: python${{ matrix.python_version }} -m pip install pyopenssl pytest
       - name: Build pymgclient

@@ -3,6 +3,17 @@ Changelog
 =========
 
 ######
+1.3.1
+######
+
+
+*********
+Bug Fixes
+*********
+
+  * Fixed import path of errors from `distutils`
+
+######
 1.3.0
 ######
 

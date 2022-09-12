@@ -153,10 +153,11 @@ jobs:
 
   build_macos:
     strategy:
+      fail-fast: false
       matrix:
         platform: [macos-12, macos-11, macos-10.15]
         python_version:
-          - '3.9'
+          - '3.7'
           - '3.10'
         include:
           - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.10'}

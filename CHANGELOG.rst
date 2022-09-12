@@ -7,6 +7,12 @@ Changelog
 ######
 
 
+******************************
+Major Feature and Improvements
+******************************
+
+  * Use OpenSSL 1.1.1q and 3.0.5 versions for binary packages
+
 *********
 Bug Fixes
 *********

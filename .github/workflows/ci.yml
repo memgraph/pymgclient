@@ -120,6 +120,10 @@ jobs:
           # First make sure python would resolve to the windows native python, not mingw one
           echo "C:\msys64\mingw${{ matrix.arch.mingw }}\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
           echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+      - name: Print OpenSSL version
+        shell: msys2 {0}
+        run: |
+          openssl version -a
       - uses: Vampire/setup-wsl@v1
         with:
           distribution: Ubuntu-18.04
@@ -170,9 +174,14 @@ jobs:
       - name: Install python and OpenSSL
         run: |
           brew install python@${{ matrix.python_version }} openssl@1.1
+          brew link --force --overwrite openssl@1.1
+          openssl version -a
       - name: Manage OpenSSL 3 on ARM machines
         if: ${{ contains(matrix.platform, 'ARM64') }}
-        run: brew install openssl@3
+        run: |
+          brew install openssl@3
+          brew link --force --overwrite openssl@3
+          openssl version -a
       - name: Make used python version default
         run: |
           brew unlink python@3 && brew link --force python@${{ matrix.python_version }}

@@ -171,6 +171,8 @@ jobs:
           submodules: true
       - name: Install python and OpenSSL
         run: |
+          python3 -c "import sys; print(sys.executable)"
+          which python3
           brew install python@${{ matrix.python_version }} openssl@1.1
       - name: Manage OpenSSL 3 on ARM machines
         if: ${{ contains(matrix.platform, 'ARM64') }}
@@ -180,6 +182,7 @@ jobs:
           brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
           python${{ matrix.python_version }} --version
           python${{ matrix.python_version }} -c "import sys; print(sys.executable)"
+          which python${{ matrix.python_version }}
       - name: Install pytest and pyopenssl
         run: python${{ matrix.python_version }} -m pip install pyopenssl pytest
       - name: Build pymgclient

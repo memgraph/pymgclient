@@ -35,8 +35,7 @@ jobs:
     - name: Install system dependencies (Ubuntu 20.04)
       run: |
         sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
-        python3 -m pip install --upgrade
-        sudo pip3 install networkx pytest pyopenssl sphinx
+        sudo pip3 install --upgrade networkx pytest pyopenssl sphinx
         mkdir ~/memgraph
         curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-20.04/memgraph_${{matrix.mgversion}}-1_amd64.deb > ~/memgraph/memgraph.deb
         sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.

@@ -40,7 +40,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
-          sudo pip3 install networkx pytest pyopenssl sphinx
+          sudo pip3 install --upgrade networkx pytest pyopenssl sphinx
           sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
           sudo dpkg -i ~/memgraph/memgraph.deb
       - uses: actions/checkout@v2

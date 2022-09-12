@@ -182,13 +182,13 @@ jobs:
           python${{ matrix.python_version }} --version
           echo $PATH
       - name: Install pytest and pyopenssl
-        run: python3 -m pip install pyopenssl pytest
+        run: python${{ matrix.python_version }} -m pip install pyopenssl pytest
       - name: Build pymgclient
-        run: python3 setup.py bdist_wheel
+        run: python${{ matrix.python_version }} setup.py bdist_wheel
       - name: Install pymgclient
-        run: python3 -m pip install -f dist --no-index pymgclient
+        run: python${{ matrix.python_version }} -m pip install -f dist --no-index pymgclient
       - name: Import mgclient to validate installation
-        run: python3 -c "import mgclient"
+        run: python${{ matrix.python_version }} -c "import mgclient"
       - name: Save artifact name on x86 machines
         if: ${{ !contains(matrix.platform, 'ARM64') }}
         run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV

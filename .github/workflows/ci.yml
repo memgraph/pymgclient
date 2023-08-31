@@ -30,14 +30,13 @@ jobs:
         run: |
           mkdir ~/memgraph
           MEMGRAPH_PACKAGE_NAME="memgraph_${{ matrix.mgversion }}-1_amd64.deb"
-          echo "MEMGRAPH_PACKAGE_NAME=${MEMGRAPH_PACKAGE_NAME}" >> $GITHUB_ENV
-          curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/${{ matrix.platform }}/${MEMGRAPH_PACKAGE_NAME} > ~/memgraph/${MEMGRAPH_PACKAGE_NAME}
+          curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/${{ matrix.platform }}/${MEMGRAPH_PACKAGE_NAME} > ~/memgraph/memgraph.deb
       - name: Install system dependencies
         run: |
           sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
           sudo pip3 install --upgrade networkx pytest pyopenssl sphinx
           sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
-          sudo dpkg -i ~/memgraph/${MEMGRAPH_PACKAGE_NAME}
+          sudo dpkg -i ~/memgraph/memgraph.deb
       - uses: actions/checkout@v2
         with:
           submodules: true

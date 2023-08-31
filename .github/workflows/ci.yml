@@ -11,13 +11,13 @@ jobs:
   build_and_test_ubuntu:
     strategy:
       matrix:
-        mgversion:
-          - 2.0.1
-          - 2.5.2
-          - 2.10.1
         include:
-          - {platform: [ubuntu-20.04], python_version: '3.8'}
-          - {platform: [ubuntu-22.04], python_version: '3.10'}
+          - {platform: 'ubuntu-20.04', python_version: '3.8', mgversion: '2.0.1'}
+          - {platform: 'ubuntu-20.04', python_version: '3.8', mgversion: '2.5.2'}
+          - {platform: 'ubuntu-20.04', python_version: '3.8', mgversion: '2.10.1'}
+          - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: '2.0.1'}
+          - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: '2.5.2'}
+          - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: '2.10.1'}
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Cache Memgraph community installer
@@ -25,7 +25,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/memgraph
-          key: cache-memgraph-v${{ matrix.mgversion }}-community-installer-v3
+          key: cache-memgraph-v${{ matrix.mgversion }}-{{ matrix.platform }}-community-installer-v3
       - name: Download Memgraph
         if: steps.cache-memgraph-community.outputs.cache-hit != 'true'
         run: |

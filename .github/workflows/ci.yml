@@ -30,7 +30,8 @@ jobs:
         if: steps.cache-memgraph-community.outputs.cache-hit != 'true'
         run: |
           mkdir ~/memgraph
-          export MEMGRAPH_PACKAGE_NAME="memgraph_${{ matrix.mgversion }}-1_amd64.deb"
+          MEMGRAPH_PACKAGE_NAME="memgraph_${{ matrix.mgversion }}-1_amd64.deb"
+          echo "MEMGRAPH_PACKAGE_NAME=${MEMGRAPH_PACKAGE_NAME}" >> $GITHUB_ENV
           curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/${{ matrix.platform }}/${MEMGRAPH_PACKAGE_NAME} > ~/memgraph/${MEMGRAPH_PACKAGE_NAME}
       - name: Install system dependencies
         run: |

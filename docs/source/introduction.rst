@@ -19,7 +19,7 @@ Installation
 
 pymgclient has prebuilt binary packages for
 
-* macOS Catalina (version 10.15) and newer on x86_64 with `Python
+* macOS BigSur (version 11) and newer on x86_64 with `Python
   <https://www.python.org/downloads/>`_ 3.7+
 
 * macOS Monterey (version 12) and newer on arm64 with `Python

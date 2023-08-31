@@ -1,5 +1,4 @@
 name: Release
-
 on:
   workflow_dispatch:
     inputs:
@@ -18,7 +17,6 @@ on:
         description: 'The expected version of OpenSSL 3, e.g.: 3.0.3.'
         required: true
         type: string
-
 env:
   PYMGCLIENT_OVERRIDE_VERSION: "${{ github.event.inputs.version }}"
 

@@ -159,7 +159,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-12, macos-11]
+        platform: [macos-13, macos-12, macos-11]
         python_version:
           - '3.7'
           - '3.10'

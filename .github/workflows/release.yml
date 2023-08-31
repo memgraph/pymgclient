@@ -75,8 +75,9 @@ jobs:
           - '3.8'
           - '3.9'
           - '3.10'
+        # TODO(gitbuda): Fix "The file cannot be accessed by the system... rocksdb_durability"
         mgversion:
-          - 2.10.1
+          - 2.8.0
     steps:
       - uses: actions/checkout@v2
         with:

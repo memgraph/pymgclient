@@ -24,7 +24,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/memgraph
-          key: cache-memgraph-v${{ matrix.mgversion }}-{{ matrix.platform }}-community-installer-v3
+          key: cache-memgraph-v${{ matrix.mgversion }}-${{ matrix.platform }}-community-installer-v3
       - name: Download Memgraph
         if: steps.cache-memgraph-community.outputs.cache-hit != 'true'
         run: |

@@ -29,8 +29,8 @@ jobs:
       - name: Download Memgraph
         if: steps.cache-memgraph-community.outputs.cache-hit != 'true'
         run: |
-          mkdir ~/memgraph
-          curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/${{ matrix.platform }}/memgraph_${{ matrix.mgversion }}-1_amd64.deb --output-dir ~/memgraph
+          mkdir ~/memgraph && cd ~/memgraph
+          curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/${{ matrix.platform }}/memgraph_${{ matrix.mgversion }}-1_amd64.deb
       - name: Install system dependencies
         run: |
           sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools

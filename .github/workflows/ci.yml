@@ -30,17 +30,13 @@ jobs:
         if: steps.cache-memgraph-community.outputs.cache-hit != 'true'
         run: |
           mkdir ~/memgraph
-          COMMUNITY_SUFFIX="-community"
-          if [[ "${{ matrix.mgversion }}" != 1* ]]; then
-            COMMUNITY_SUFFIX=""
-          fi
-          curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/${{ matrix.platform }}/memgraph_${{ matrix.mgversion }}${COMMUNITY_SUFFIX}-1_amd64.deb > ~/memgraph/memgraph.deb
+          curl -L https://download.memgraph.com/memgraph/v${{ matrix.mgversion }}/${{ matrix.platform }}/memgraph_${{ matrix.mgversion }}-1_amd64.deb --output-dir ~/memgraph
       - name: Install system dependencies
         run: |
           sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
           sudo pip3 install --upgrade networkx pytest pyopenssl sphinx
           sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
-          sudo dpkg -i ~/memgraph/memgraph.deb
+          sudo dpkg -i ~/memgraph/memgraph_${{ matrix.mgversion }}-1_amd64.deb
       - uses: actions/checkout@v2
         with:
           submodules: true

@@ -15,7 +15,6 @@ jobs:
           - {platform: 'ubuntu-20.04', python_version: '3.8', mgversion: '2.0.1'}
           - {platform: 'ubuntu-20.04', python_version: '3.8', mgversion: '2.5.2'}
           - {platform: 'ubuntu-20.04', python_version: '3.8', mgversion: '2.10.1'}
-          - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: '2.0.1'}
           - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: '2.5.2'}
           - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: '2.10.1'}
     runs-on: ${{ matrix.platform }}

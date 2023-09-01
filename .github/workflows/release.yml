@@ -1,5 +1,4 @@
 name: Release
-
 on:
   workflow_dispatch:
     inputs:
@@ -18,7 +17,6 @@ on:
         description: 'The expected version of OpenSSL 3, e.g.: 3.0.3.'
         required: true
         type: string
-
 env:
   PYMGCLIENT_OVERRIDE_VERSION: "${{ github.event.inputs.version }}"
 
@@ -26,10 +24,9 @@ jobs:
   build_and_test_ubuntu:
     strategy:
      matrix:
-        platform: [ubuntu-20.04]
-        python_version: ['3.8']
-        mgversion:
-          - 2.2.0
+       include:
+        - {platform: 'ubuntu-20.04', python_version: '3.8', mgversion: '2.10.1'}
+        - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: '2.10.1'}
     runs-on: ${{ matrix.platform }}
     steps:
     - name: Install system dependencies (Ubuntu 20.04)
@@ -40,7 +37,6 @@ jobs:
         curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-20.04/memgraph_${{matrix.mgversion}}-1_amd64.deb > ~/memgraph/memgraph.deb
         sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
         sudo dpkg -i ~/memgraph/memgraph.deb
-
     - uses: actions/checkout@v2
       with:
         submodules: true
@@ -79,8 +75,9 @@ jobs:
           - '3.8'
           - '3.9'
           - '3.10'
+        # TODO(gitbuda): Fix "The file cannot be accessed by the system... rocksdb_durability"
         mgversion:
-          - 2.2.0
+          - 2.8.0
     steps:
       - uses: actions/checkout@v2
         with:

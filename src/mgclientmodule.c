@@ -197,7 +197,7 @@ static PyObject *mgclient_connect(PyObject *self, PyObject *args,
 PyDoc_STRVAR(mgclient_connect_doc,
 "connect(host=None, address=None, port=None, username=None, password=None,\n\
          client_name=None, sslmode=mgclient.MG_SSLMODE_DISABLE,\n\
-         sslcert=None, sslkey=None, trust_callback=None, lazy=False)\n\
+         sslcert=None, sslkey=None, trust_callback=None, lazy=False, database=None)\n\
 --\n\
 \n\
 Makes a new connection to the database server and returns a\n\
@@ -271,7 +271,11 @@ Currently recognized parameters are:\n\
 \n\
    * :obj:`lazy`\n\
 \n\
-        If this is set to ``True``, a lazy connection is made. Default is ``False``.");
+        If this is set to ``True``, a lazy connection is made. Default is ``False``.\n\
+\n\
+   * :obj:`database`\n\
+\n\
+        If set, all queries executed will target the defined database. Default is ``None``.");
 // clang-format on
 
 static PyMethodDef mgclient_methods[] = {

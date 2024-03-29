@@ -21,6 +21,7 @@
 
 static void connection_dealloc(ConnectionObject *conn) {
   mg_session_destroy(conn->session);
+  mg_map_destroy(conn->extras);
   Py_TYPE(conn)->tp_free(conn);
 }
 
@@ -37,11 +38,36 @@ static int execute_trust_callback(const char *hostname, const char *ip_address,
   return !status;
 }
 
+static mg_map *database_to_extras(const char *database) {
+  assert(databases);
+
+  mg_map *map = NULL;
+
+  map = mg_map_make_empty(1U);
+  if (!map) {
+    PyErr_SetString(PyExc_RuntimeError, "failed to create a mg_map");
+    goto cleanup;
+  }
+
+  mg_string* key = mg_string_make("db");
+  mg_value* value = mg_value_make_string(database);
+
+  if (mg_map_insert_unsafe2(map, key, value) != 0) {
+    mg_string_destroy(key);
+    abort();
+  }
+  return map;
+
+cleanup:
+  mg_map_destroy(map);
+  return NULL;
+}
+
 static int connection_init(ConnectionObject *conn, PyObject *args,
                            PyObject *kwargs) {
   static char *kwlist[] = {"host",     "address",        "port",    "username",
                            "password", "client_name",    "sslmode", "sslcert",
-                           "sslkey",   "trust_callback", "lazy",    NULL};
+                           "sslkey",   "trust_callback", "lazy", "database", NULL};
 
   const char *host = NULL;
   const char *address = NULL;
@@ -54,11 +80,12 @@ static int connection_init(ConnectionObject *conn, PyObject *args,
   const char *sslkey = NULL;
   PyObject *trust_callback = NULL;
   int lazy = 0;
-
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|$ssisssissOp", kwlist, &host,
+  const char *database = NULL;
+  
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|$ssisssissOps", kwlist, &host,
                                    &address, &port, &username, &password,
                                    &client_name, &sslmode_int, &sslcert,
-                                   &sslkey, &trust_callback, &lazy)) {
+                                   &sslkey, &trust_callback, &lazy, &database)) {
     return -1;
   }
 
@@ -124,11 +151,16 @@ static int connection_init(ConnectionObject *conn, PyObject *args,
   conn->status = CONN_STATUS_READY;
   conn->lazy = 0;
   conn->autocommit = 0;
+  conn->extras = NULL;
 
   if (lazy) {
     conn->lazy = 1;
     conn->autocommit = 1;
   }
+
+  if (database) {
+    conn->extras = database_to_extras(database);
+  } 
 
   return 0;
 }
@@ -180,6 +212,8 @@ static PyObject *connection_close(ConnectionObject *conn, PyObject *args) {
   // rollback any open transactions.
   mg_session_destroy(conn->session);
   conn->session = NULL;
+  mg_map_destroy(conn->extras);
+  conn->extras = NULL;
   conn->status = CONN_STATUS_CLOSED;
 
   Py_RETURN_NONE;

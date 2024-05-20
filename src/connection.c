@@ -39,15 +39,18 @@ static int execute_trust_callback(const char *hostname, const char *ip_address,
 
 static int connection_init(ConnectionObject *conn, PyObject *args,
                            PyObject *kwargs) {
-  static char *kwlist[] = {"host",     "address",        "port",    "username",
-                           "password", "client_name",    "sslmode", "sslcert",
-                           "sslkey",   "trust_callback", "lazy",    NULL};
+  static char *kwlist[] = {
+      "host",     "address",        "port",        "scheme",  "username",
+      "password", "credentials",    "client_name", "sslmode", "sslcert",
+      "sslkey",   "trust_callback", "lazy",        NULL};
 
   const char *host = NULL;
   const char *address = NULL;
   int port = -1;
+  const char *scheme = NULL;
   const char *username = NULL;
   const char *password = NULL;
+  const char *credentials = NULL;
   const char *client_name = NULL;
   int sslmode_int = MG_SSLMODE_DISABLE;
   const char *sslcert = NULL;
@@ -55,10 +58,10 @@ static int connection_init(ConnectionObject *conn, PyObject *args,
   PyObject *trust_callback = NULL;
   int lazy = 0;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|$ssisssissOp", kwlist, &host,
-                                   &address, &port, &username, &password,
-                                   &client_name, &sslmode_int, &sslcert,
-                                   &sslkey, &trust_callback, &lazy)) {
+  if (!PyArg_ParseTupleAndKeywords(
+          args, kwargs, "|$ssisssssissOp", kwlist, &host, &address, &port,
+          &scheme, &username, &password, &credentials, &client_name,
+          &sslmode_int, &sslcert, &sslkey, &trust_callback, &lazy)) {
     return -1;
   }
 
@@ -93,8 +96,10 @@ static int connection_init(ConnectionObject *conn, PyObject *args,
   mg_session_params_set_host(params, host);
   mg_session_params_set_port(params, (uint16_t)port);
   mg_session_params_set_address(params, address);
+  mg_session_params_set_scheme(params, scheme);
   mg_session_params_set_username(params, username);
   mg_session_params_set_password(params, password);
+  mg_session_params_set_credentials(params, credentials);
   if (client_name) {
     mg_session_params_set_user_agent(params, client_name);
   }

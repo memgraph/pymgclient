@@ -70,7 +70,7 @@ class Memgraph:
             self.process.wait()
 
 
-def start_memgraph(cert_file="", key_file=""):
+def start_memgraph(cert_file="", key_file="", auth_module_mappings=""):
     if MEMGRAPH_HOST:
         use_ssl = MEMGRAPH_STARTED_WITH_SSL is not None
         return Memgraph(MEMGRAPH_HOST, MEMGRAPH_PORT, use_ssl, None)
@@ -94,6 +94,8 @@ def start_memgraph(cert_file="", key_file=""):
         "--log-file",
         "",
     ]
+    if auth_module_mappings:
+        cmd.insert(-2, f"--auth-module-mappings={auth_module_mappings}")
     memgraph_process = subprocess.Popen(cmd)
     wait_for_server(MEMGRAPH_PORT)
     use_ssl = True if key_file.strip() else False

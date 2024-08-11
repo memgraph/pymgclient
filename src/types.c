@@ -572,5 +572,7 @@ PyTypeObject PathType = {
     .tp_new = PyType_GenericNew
 };
 
+// TODO(gitbuda): Add Point2&3D equivalent to e.g. node.
+
 #undef CHECK_ATTRIBUTE
 // clang-format on

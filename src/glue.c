@@ -379,6 +379,7 @@ PyObject *mg_value_to_py_object(const mg_value *value) {
       return mg_local_date_time_to_py_datetime(mg_value_local_date_time(value));
     case MG_VALUE_TYPE_DURATION:
       return mg_duration_to_py_delta(mg_value_duration(value));
+    // TODO(gitbuda): Add Point2&3D.
     default:
       PyErr_SetString(PyExc_RuntimeError,
                       "encountered a mg_value of unknown type");
@@ -648,6 +649,7 @@ mg_value *py_object_to_mg_value(PyObject *object) {
       return NULL;
     }
     ret = mg_value_make_duration(dur);
+  // TODO(gitbuda): Add Point2&3D.
   } else {
     PyErr_Format(PyExc_ValueError,
                  "value of type '%s' can't be used as query parameter",

@@ -47,3 +47,6 @@ def test_path():
 
     path = mgclient.Path([n1, n2, n3], [e1, e2])
     assert str(path) == "(:Label1)-[:Edge1]->(:Label2)<-[:Edge2]-(:Label3)"
+
+
+# TODO(gitbuda): Add Point2&3D test.

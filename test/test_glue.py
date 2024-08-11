@@ -263,3 +263,6 @@ def test_duration(memgraph_connection):
     cursor.execute("RETURN $value", {"value": datetime.timedelta(64, 7, 11, 1)})
     result = cursor.fetchall()
     assert result == [(datetime.timedelta(64, 7, 1011),)]
+
+
+# TODO(gitbuda): Add spatial tests equivalent to temporal.

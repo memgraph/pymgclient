@@ -12,3 +12,4 @@ pymgclient.egg-info/
 *.pyc
 *.pyo
 __pycache__/
+.pytest_cache/

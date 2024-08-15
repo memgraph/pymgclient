@@ -88,7 +88,7 @@ def start_memgraph(cert_file="", key_file=""):
         "--storage-properties-on-edges=true",
         "--storage-snapshot-interval-sec=0",
         "--storage-wal-enabled=false",
-        "--storage-recover-on-startup=false",
+        "--data-recovery-on-startup=false",
         "--storage-snapshot-on-exit=false",
         "--telemetry-enabled=false",
         "--log-file",

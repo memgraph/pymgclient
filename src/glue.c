@@ -342,6 +342,13 @@ PyObject *mg_duration_to_py_delta(const mg_duration *dur) {
   return make_py_delta(days, seconds, (nanoseconds / 1000));
 }
 
+PyObject *mg_point_2d_to_py_point2d(const mg_point_2d *point2d) {
+  PyObject *ret = PyObject_CallFunction(
+      (PyObject *)&Point2DType, "Hdd", mg_point_2d_srid(point2d),
+      mg_point_2d_x(point2d), mg_point_2d_y(point2d));
+  return ret;
+}
+
 PyObject *mg_value_to_py_object(const mg_value *value) {
   switch (mg_value_get_type(value)) {
     case MG_VALUE_TYPE_NULL:
@@ -379,7 +386,9 @@ PyObject *mg_value_to_py_object(const mg_value *value) {
       return mg_local_date_time_to_py_datetime(mg_value_local_date_time(value));
     case MG_VALUE_TYPE_DURATION:
       return mg_duration_to_py_delta(mg_value_duration(value));
-    // TODO(gitbuda): Add Point2&3D.
+    case MG_VALUE_TYPE_POINT_2D:
+      return mg_point_2d_to_py_point2d(mg_value_point_2d(value));
+    // TODO(gitbuda): Add Point3D.
     default:
       PyErr_SetString(PyExc_RuntimeError,
                       "encountered a mg_value of unknown type");

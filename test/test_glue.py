@@ -265,4 +265,14 @@ def test_duration(memgraph_connection):
     assert result == [(datetime.timedelta(64, 7, 1011),)]
 
 
+def test_point2d(memgraph_connection):
+    conn = memgraph_connection
+    cursor = conn.cursor()
+
+    cursor.execute("RETURN point({x:0, y:1}) AS point;")
+    result = cursor.fetchall()
+    # TODO(gitbuda): Pointer to the object is also take into account; Point2D == doesn't work
+    assert result == [(mgclient.Point2D(7203, 0, 1))]
+
+
 # TODO(gitbuda): Add spatial tests equivalent to temporal.

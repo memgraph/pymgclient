@@ -577,14 +577,17 @@ static void point2d_dealloc(Point2DObject *point2d) {
 }
 
 static PyObject *point2d_repr(Point2DObject *point2d) {
-  return PyUnicode_FromFormat("<%s(srid=%u, x_longitude=%d, y_latitude=%d) at %p>",
-                              Py_TYPE(point2d)->tp_name, point2d->x_longitude, point2d->y_latitude,
-                              point2d);
+  char buffer[256];
+  snprintf(buffer, sizeof(buffer), "<%s(srid=%u, x_longitude=%f, y_latitude=%f) at %p>", Py_TYPE(point2d)->tp_name, point2d->srid, point2d->x_longitude, point2d->y_latitude, point2d);
+  return PyUnicode_FromFormat("%s", buffer);
 }
 
 static PyObject *point2d_str(Point2DObject *point2d) {
-  return PyUnicode_FromFormat("Point2D({ srid=%u, x_longitude=%d, y_latitude=%d })",
-                              point2d->srid, point2d->x_longitude, point2d->y_latitude);
+  // NOTE: Somehow, PyUnicode_FromFormat doesn't suppord formatting double values.
+  // https://stackoverflow.com/questions/1701055/what-is-the-maximum-length-in-chars-needed-to-represent-any-double-value
+  char buffer[256];
+  snprintf(buffer, sizeof(buffer), "Point2D({ srid=%u, x_longitude=%f, y_latitude=%f })", point2d->srid, point2d->x_longitude, point2d->y_latitude);
+  return PyUnicode_FromFormat("%s", buffer);
 }
 
 // Helper function for implementing richcompare.
@@ -620,7 +623,6 @@ cleanup:
   return NULL;
 }
 
-// TODO(gitbuda): Verify that the richcompare is correct.
 static PyObject *point2d_richcompare(Point2DObject *lhs, PyObject *rhs, int op) {
   PyObject *tlhs = NULL;
   PyObject *trhs = NULL;
@@ -650,8 +652,8 @@ int point2d_init(Point2DObject *point2d, PyObject *args, PyObject *kwargs) {
   double x_longitude = 0;
   double y_latitude = 0;
   static char *kwlist[] = {"", "", "", NULL};
-  // TODO(gitbuda): https://docs.python.org/3/c-api/arg.html#numbers
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Idd", kwlist, &srid, &x_longitude, &y_latitude)) {
+  // https://docs.python.org/3/c-api/arg.html#numbers
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Hdd", kwlist, &srid, &x_longitude, &y_latitude)) {
     return -1;
   }
 

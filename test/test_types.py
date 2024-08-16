@@ -49,9 +49,23 @@ def test_path():
     assert str(path) == "(:Label1)-[:Edge1]->(:Label2)<-[:Edge2]-(:Label3)"
 
 
-# TODO(gitbuda): Add Point2&3D test.
 def test_point2d():
-    p1 = mgclient.Point2D(0, 1, 2.1);
-    p2 = mgclient.Point2D(0, 1.2, 2.1);
-    assert p1 == p2
-    assert str(p1) == "Point2D" and repr(p1) == "Point2D"
+    p1 = mgclient.Point2D(0, 1, 2);
+    assert p1.srid == 0 
+    assert p1.x_longitude == 1
+    assert p1.y_latitude == 2
+    assert str(p1) == "Point2D({ srid=0, x_longitude=1.000000, y_latitude=2.000000 })"
+    assert repr(p1).startswith("<mgclient.Point2D(srid=0, x_longitude=1.000000, y_latitude=2.000000)")
+
+    p2 = mgclient.Point2D(1, 1.2, 2.1);
+    assert p2.srid == 1
+    assert p2.x_longitude == 1.2
+    assert p2.y_latitude == 2.1
+    assert str(p2) == "Point2D({ srid=1, x_longitude=1.200000, y_latitude=2.100000 })"
+    assert repr(p2).startswith("<mgclient.Point2D(srid=1, x_longitude=1.200000, y_latitude=2.100000)")
+
+    assert p1 != p2
+
+
+def test_point3d():
+    assert False

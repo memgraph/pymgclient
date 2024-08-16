@@ -171,6 +171,7 @@ static struct {
                   {"Node", &NodeType},
                   {"Relationship", &RelationshipType},
                   {"Path", &PathType},
+                  {"Point2D", &Point2DType},
                   {NULL, NULL}};
 
 static int add_module_types(PyObject *module) {

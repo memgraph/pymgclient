@@ -50,3 +50,8 @@ def test_path():
 
 
 # TODO(gitbuda): Add Point2&3D test.
+def test_point2d():
+    p1 = mgclient.Point2D(0, 1, 2.1);
+    p2 = mgclient.Point2D(0, 1.2, 2.1);
+    assert p1 == p2
+    assert str(p1) == "Point2D" and repr(p1) == "Point2D"

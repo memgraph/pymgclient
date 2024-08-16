@@ -572,7 +572,126 @@ PyTypeObject PathType = {
     .tp_new = PyType_GenericNew
 };
 
-// TODO(gitbuda): Add Point2&3D equivalent to e.g. node.
+static void point2d_dealloc(Point2DObject *point2d) {
+  Py_TYPE(point2d)->tp_free(point2d);
+}
+
+static PyObject *point2d_repr(Point2DObject *point2d) {
+  return PyUnicode_FromFormat("<%s(srid=%u, x_longitude=%d, y_latitude=%d) at %p>",
+                              Py_TYPE(point2d)->tp_name, point2d->x_longitude, point2d->y_latitude,
+                              point2d);
+}
+
+static PyObject *point2d_str(Point2DObject *point2d) {
+  return PyUnicode_FromFormat("Point2D({ srid=%u, x_longitude=%d, y_latitude=%d })",
+                              point2d->srid, point2d->x_longitude, point2d->y_latitude);
+}
+
+// Helper function for implementing richcompare.
+static PyObject *point2d_astuple(Point2DObject *point2d) {
+  PyObject *tuple = NULL;
+  PyObject *srid = NULL;
+  PyObject *x_longitude = NULL;
+  PyObject *y_latitude = NULL;
+
+  if (!(srid = PyLong_FromUnsignedLong(point2d->srid))) {
+    goto cleanup;
+  }
+  if (!(x_longitude = PyFloat_FromDouble(point2d->x_longitude))) {
+    goto cleanup;
+  }
+  if (!(y_latitude = PyFloat_FromDouble(point2d->y_latitude))) {
+    goto cleanup;
+  }
+  if (!(tuple = PyTuple_New(3))) {
+    goto cleanup;
+  }
+
+  PyTuple_SET_ITEM(tuple, 0, srid);
+  PyTuple_SET_ITEM(tuple, 1, x_longitude);
+  PyTuple_SET_ITEM(tuple, 2, y_latitude);
+  return tuple;
+  
+cleanup:
+  Py_XDECREF(tuple);
+  Py_XDECREF(srid);
+  Py_XDECREF(x_longitude);
+  Py_XDECREF(y_latitude);
+  return NULL;
+}
+
+// TODO(gitbuda): Verify that the richcompare is correct.
+static PyObject *point2d_richcompare(Point2DObject *lhs, PyObject *rhs, int op) {
+  PyObject *tlhs = NULL;
+  PyObject *trhs = NULL;
+  PyObject *ret = NULL;
+
+  if (Py_TYPE(rhs) == &Point2DType) {
+    if (!(tlhs = point2d_astuple(lhs))) {
+      goto exit;
+    }
+    if (!(trhs = point2d_astuple((Point2DObject *)rhs))) {
+      goto exit;
+    }
+    ret = PyObject_RichCompare(tlhs, trhs, op);
+  } else {
+    Py_INCREF(Py_False);
+    ret = Py_False;
+  }
+
+exit:
+  Py_XDECREF(tlhs);
+  Py_XDECREF(trhs);
+  return ret;
+}
+
+int point2d_init(Point2DObject *point2d, PyObject *args, PyObject *kwargs) {
+  uint16_t srid = 0;
+  double x_longitude = 0;
+  double y_latitude = 0;
+  static char *kwlist[] = {"", "", "", NULL};
+  // TODO(gitbuda): https://docs.python.org/3/c-api/arg.html#numbers
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Idd", kwlist, &srid, &x_longitude, &y_latitude)) {
+    return -1;
+  }
+
+  point2d->srid = srid;
+  point2d->x_longitude = x_longitude;
+  point2d->y_latitude = y_latitude;
+  return 0;
+}
+
+PyDoc_STRVAR(Point2DType_srid_doc,
+             "Point2D srid (a unique identifier associated with a specific coordinate system, tolerance, and resolution).");
+PyDoc_STRVAR(Point2DType_x_longitude_doc, "Point2D x or longitude value.");
+PyDoc_STRVAR(Point2DType_y_latitude_doc, "Point2D y or latitude value.");
+static PyMemberDef point2d_members[] = {
+    {"srid", T_USHORT, offsetof(Point2DObject, srid), READONLY, Point2DType_srid_doc},
+    {"x_longitude", T_DOUBLE, offsetof(Point2DObject, x_longitude), READONLY, Point2DType_x_longitude_doc},
+    {"y_latitude", T_DOUBLE, offsetof(Point2DObject, y_latitude), READONLY, Point2DType_y_latitude_doc},
+    {NULL}};
+
+PyDoc_STRVAR(Point2DType_doc,
+             "A Point2D object.");
+// clang-format off
+PyTypeObject Point2DType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "mgclient.Point2D",
+    .tp_basicsize = sizeof(Point2DObject),
+    .tp_itemsize = 0,
+    .tp_dealloc = (destructor)point2d_dealloc,
+    .tp_repr = (reprfunc)point2d_repr,
+    .tp_str = (reprfunc)point2d_str,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_doc = Point2DType_doc,
+    .tp_richcompare = (richcmpfunc)point2d_richcompare,
+    .tp_members = point2d_members,
+    .tp_init = (initproc)point2d_init,
+    .tp_new = PyType_GenericNew
+};
+// clang-format on
+
+// TODO(gitbuda): Add Point3D
 
 #undef CHECK_ATTRIBUTE
 // clang-format on

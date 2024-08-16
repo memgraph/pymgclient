@@ -597,6 +597,12 @@ mg_duration *py_delta_to_mg_duration(PyObject *obj) {
   return mg_duration_make(0, days, seconds, microseconds * 1000);
 }
 
+mg_point_2d *py_point2d_to_mg_point_2d(PyObject *point_object) {
+  assert(Py_TYPE(point_object) == &Point2DType);
+  Point2DObject *py_point2d = (Point2DObject *)point_object;
+  return mg_point_2d_make(py_point2d->srid, py_point2d->x_longitude, py_point2d->y_latitude);
+}
+
 mg_value *py_object_to_mg_value(PyObject *object) {
   mg_value *ret = NULL;
 
@@ -658,7 +664,13 @@ mg_value *py_object_to_mg_value(PyObject *object) {
       return NULL;
     }
     ret = mg_value_make_duration(dur);
-  // TODO(gitbuda): Add Point2&3D.
+  } else if (Py_TYPE(object) == &Point2DType) {
+    mg_point_2d *point = py_point2d_to_mg_point_2d(object);
+    if (!point) {
+      return NULL;
+    }
+    ret = mg_value_make_point_2d(point);
+  // TODO(gitbuda): Add Point3D.
   } else {
     PyErr_Format(PyExc_ValueError,
                  "value of type '%s' can't be used as query parameter",

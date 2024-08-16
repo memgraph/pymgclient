@@ -51,7 +51,7 @@ def test_path():
 
 def test_point2d():
     p1 = mgclient.Point2D(0, 1, 2);
-    assert p1.srid == 0 
+    assert p1.srid == 0
     assert p1.x_longitude == 1
     assert p1.y_latitude == 2
     assert str(p1) == "Point2D({ srid=0, x_longitude=1.000000, y_latitude=2.000000 })"

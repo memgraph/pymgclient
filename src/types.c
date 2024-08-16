@@ -614,7 +614,7 @@ static PyObject *point2d_astuple(Point2DObject *point2d) {
   PyTuple_SET_ITEM(tuple, 1, x_longitude);
   PyTuple_SET_ITEM(tuple, 2, y_latitude);
   return tuple;
-  
+
 cleanup:
   Py_XDECREF(tuple);
   Py_XDECREF(srid);

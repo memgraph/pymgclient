@@ -342,6 +342,20 @@ PyObject *mg_duration_to_py_delta(const mg_duration *dur) {
   return make_py_delta(days, seconds, (nanoseconds / 1000));
 }
 
+PyObject *mg_point_2d_to_py_point2d(const mg_point_2d *point2d) {
+  PyObject *ret = PyObject_CallFunction(
+      (PyObject *)&Point2DType, "Hdd", mg_point_2d_srid(point2d),
+      mg_point_2d_x(point2d), mg_point_2d_y(point2d));
+  return ret;
+}
+
+PyObject *mg_point_3d_to_py_point3d(const mg_point_3d *point3d) {
+  PyObject *ret = PyObject_CallFunction(
+      (PyObject *)&Point3DType, "Hddd", mg_point_3d_srid(point3d),
+      mg_point_3d_x(point3d), mg_point_3d_y(point3d), mg_point_3d_z(point3d));
+  return ret;
+}
+
 PyObject *mg_value_to_py_object(const mg_value *value) {
   switch (mg_value_get_type(value)) {
     case MG_VALUE_TYPE_NULL:
@@ -379,6 +393,10 @@ PyObject *mg_value_to_py_object(const mg_value *value) {
       return mg_local_date_time_to_py_datetime(mg_value_local_date_time(value));
     case MG_VALUE_TYPE_DURATION:
       return mg_duration_to_py_delta(mg_value_duration(value));
+    case MG_VALUE_TYPE_POINT_2D:
+      return mg_point_2d_to_py_point2d(mg_value_point_2d(value));
+    case MG_VALUE_TYPE_POINT_3D:
+      return mg_point_3d_to_py_point3d(mg_value_point_3d(value));
     default:
       PyErr_SetString(PyExc_RuntimeError,
                       "encountered a mg_value of unknown type");
@@ -587,6 +605,20 @@ mg_duration *py_delta_to_mg_duration(PyObject *obj) {
   return mg_duration_make(0, days, seconds, microseconds * 1000);
 }
 
+mg_point_2d *py_point2d_to_mg_point_2d(PyObject *point_object) {
+  assert(Py_TYPE(point_object) == &Point2DType);
+  Point2DObject *py_point2d = (Point2DObject *)point_object;
+  return mg_point_2d_make(py_point2d->srid, py_point2d->x_longitude,
+                          py_point2d->y_latitude);
+}
+
+mg_point_3d *py_point3d_to_mg_point_3d(PyObject *point_object) {
+  assert(Py_TYPE(point_object) == &Point3DType);
+  Point3DObject *py_point3d = (Point3DObject *)point_object;
+  return mg_point_3d_make(py_point3d->srid, py_point3d->x_longitude,
+                          py_point3d->y_latitude, py_point3d->z_height);
+}
+
 mg_value *py_object_to_mg_value(PyObject *object) {
   mg_value *ret = NULL;
 
@@ -648,6 +680,18 @@ mg_value *py_object_to_mg_value(PyObject *object) {
       return NULL;
     }
     ret = mg_value_make_duration(dur);
+  } else if (Py_TYPE(object) == &Point2DType) {
+    mg_point_2d *point = py_point2d_to_mg_point_2d(object);
+    if (!point) {
+      return NULL;
+    }
+    ret = mg_value_make_point_2d(point);
+  } else if (Py_TYPE(object) == &Point3DType) {
+    mg_point_3d *point = py_point3d_to_mg_point_3d(object);
+    if (!point) {
+      return NULL;
+    }
+    ret = mg_value_make_point_3d(point);
   } else {
     PyErr_Format(PyExc_ValueError,
                  "value of type '%s' can't be used as query parameter",

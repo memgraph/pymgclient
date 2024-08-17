@@ -263,3 +263,35 @@ def test_duration(memgraph_connection):
     cursor.execute("RETURN $value", {"value": datetime.timedelta(64, 7, 11, 1)})
     result = cursor.fetchall()
     assert result == [(datetime.timedelta(64, 7, 1011),)]
+
+
+def test_point2d_receive(memgraph_connection):
+    conn = memgraph_connection
+    cursor = conn.cursor()
+    cursor.execute("RETURN point({x:0, y:1}) AS point;")
+    result = cursor.fetchall()
+    assert result == [(mgclient.Point2D(7203, 0, 1),)]
+
+
+def test_point2d_send(memgraph_connection):
+    conn = memgraph_connection
+    cursor = conn.cursor()
+    cursor.execute("RETURN $value", {"value": mgclient.Point2D(7203, 0, 1)})
+    result = cursor.fetchall()
+    assert result == [(mgclient.Point2D(7203, 0, 1),)]
+
+
+def test_point3d_receive(memgraph_connection):
+    conn = memgraph_connection
+    cursor = conn.cursor()
+    cursor.execute("RETURN point({x:0, y:1, z:2}) AS point;")
+    result = cursor.fetchall()
+    assert result == [(mgclient.Point3D(9757, 0, 1, 2),)]
+
+
+def test_point3d_send(memgraph_connection):
+    conn = memgraph_connection
+    cursor = conn.cursor()
+    cursor.execute("RETURN $value", {"value": mgclient.Point3D(9757, 0, 1, 2)})
+    result = cursor.fetchall()
+    assert result == [(mgclient.Point3D(9757, 0, 1, 2),)]

@@ -47,3 +47,41 @@ def test_path():
 
     path = mgclient.Path([n1, n2, n3], [e1, e2])
     assert str(path) == "(:Label1)-[:Edge1]->(:Label2)<-[:Edge2]-(:Label3)"
+
+
+def test_point2d():
+    p1 = mgclient.Point2D(0, 1, 2);
+    assert p1.srid == 0
+    assert p1.x_longitude == 1
+    assert p1.y_latitude == 2
+    assert str(p1) == "Point2D({ srid=0, x_longitude=1.000000, y_latitude=2.000000 })"
+    assert repr(p1).startswith("<mgclient.Point2D(srid=0, x_longitude=1.000000, y_latitude=2.000000)")
+
+    p2 = mgclient.Point2D(1, 1.2, 2.1);
+    assert p2.srid == 1
+    assert p2.x_longitude == 1.2
+    assert p2.y_latitude == 2.1
+    assert str(p2) == "Point2D({ srid=1, x_longitude=1.200000, y_latitude=2.100000 })"
+    assert repr(p2).startswith("<mgclient.Point2D(srid=1, x_longitude=1.200000, y_latitude=2.100000)")
+
+    assert p1 != p2
+
+
+def test_point3d():
+    p1 = mgclient.Point3D(0, 1, 2, 3);
+    assert p1.srid == 0
+    assert p1.x_longitude == 1
+    assert p1.y_latitude == 2
+    assert p1.z_height == 3
+    assert str(p1) == "Point3D({ srid=0, x_longitude=1.000000, y_latitude=2.000000, z_height=3.000000 })"
+    assert repr(p1).startswith("<mgclient.Point3D(srid=0, x_longitude=1.000000, y_latitude=2.000000, z_height=3.000000)")
+
+    p2 = mgclient.Point3D(1, 1.2, 2.1, 3.3);
+    assert p2.srid == 1
+    assert p2.x_longitude == 1.2
+    assert p2.y_latitude == 2.1
+    assert p2.z_height == 3.3
+    assert str(p2) == "Point3D({ srid=1, x_longitude=1.200000, y_latitude=2.100000, z_height=3.300000 })"
+    assert repr(p2).startswith("<mgclient.Point3D(srid=1, x_longitude=1.200000, y_latitude=2.100000, z_height=3.300000)")
+
+    assert p1 != p2

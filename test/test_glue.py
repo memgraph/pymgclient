@@ -268,20 +268,17 @@ def test_duration(memgraph_connection):
 def test_point2d_receive(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()
-
     cursor.execute("RETURN point({x:0, y:1}) AS point;")
     result = cursor.fetchall()
-    # TODO(gitbuda): Pointer to the object is also take into account; Point2D == doesn't work
-    assert result == [(mgclient.Point2D(7203, 0, 1))]
+    assert result == [(mgclient.Point2D(7203, 0, 1),)]
 
 
 def test_point2d_send(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()
-
     cursor.execute("RETURN $value", {"value": mgclient.Point2D(7203, 0, 1)})
     result = cursor.fetchall()
-    # TODO(gitbuda): Pointer to the object is also take into account; Point2D == doesn't work
-    assert result == [(mgclient.Point2D(7203, 0, 1))]
+    assert result == [(mgclient.Point2D(7203, 0, 1),)]
 
-# TODO(gitbuda): Add spatial tests equivalent to temporal.
+
+# TODO(gitbuda): Add Point3D test.

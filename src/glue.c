@@ -608,13 +608,15 @@ mg_duration *py_delta_to_mg_duration(PyObject *obj) {
 mg_point_2d *py_point2d_to_mg_point_2d(PyObject *point_object) {
   assert(Py_TYPE(point_object) == &Point2DType);
   Point2DObject *py_point2d = (Point2DObject *)point_object;
-  return mg_point_2d_make(py_point2d->srid, py_point2d->x_longitude, py_point2d->y_latitude);
+  return mg_point_2d_make(py_point2d->srid, py_point2d->x_longitude,
+                          py_point2d->y_latitude);
 }
 
 mg_point_3d *py_point3d_to_mg_point_3d(PyObject *point_object) {
   assert(Py_TYPE(point_object) == &Point3DType);
   Point3DObject *py_point3d = (Point3DObject *)point_object;
-  return mg_point_3d_make(py_point3d->srid, py_point3d->x_longitude, py_point3d->y_latitude, py_point3d->z_height);
+  return mg_point_3d_make(py_point3d->srid, py_point3d->x_longitude,
+                          py_point3d->y_latitude, py_point3d->z_height);
 }
 
 mg_value *py_object_to_mg_value(PyObject *object) {

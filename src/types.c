@@ -571,6 +571,7 @@ PyTypeObject PathType = {
     .tp_init = (initproc)path_init,
     .tp_new = PyType_GenericNew
 };
+// clang-format on
 
 static void point2d_dealloc(Point2DObject *point2d) {
   Py_TYPE(point2d)->tp_free(point2d);
@@ -693,7 +694,135 @@ PyTypeObject Point2DType = {
 };
 // clang-format on
 
-// TODO(gitbuda): Add Point3D
+static void point3d_dealloc(Point3DObject *point3d) {
+  Py_TYPE(point3d)->tp_free(point3d);
+}
+
+static PyObject *point3d_repr(Point3DObject *point3d) {
+  char buffer[256];
+  snprintf(buffer, sizeof(buffer), "<%s(srid=%u, x_longitude=%f, y_latitude=%f, z_height=%f) at %p>", Py_TYPE(point3d)->tp_name, point3d->srid, point3d->x_longitude, point3d->y_latitude, point3d->z_height, point3d);
+  return PyUnicode_FromFormat("%s", buffer);
+}
+
+static PyObject *point3d_str(Point3DObject *point3d) {
+  // NOTE: Somehow, PyUnicode_FromFormat doesn't suppord formatting double values.
+  // https://stackoverflow.com/questions/1701055/what-is-the-maximum-length-in-chars-needed-to-represent-any-double-value
+  char buffer[256];
+  snprintf(buffer, sizeof(buffer), "Point3D({ srid=%u, x_longitude=%f, y_latitude=%f, z_height=%f })", point3d->srid, point3d->x_longitude, point3d->y_latitude, point3d->z_height);
+  return PyUnicode_FromFormat("%s", buffer);
+}
+
+// Helper function for implementing richcompare.
+static PyObject *point3d_astuple(Point3DObject *point3d) {
+  PyObject *tuple = NULL;
+  PyObject *srid = NULL;
+  PyObject *x_longitude = NULL;
+  PyObject *y_latitude = NULL;
+  PyObject *z_height = NULL;
+
+  if (!(srid = PyLong_FromUnsignedLong(point3d->srid))) {
+    goto cleanup;
+  }
+  if (!(x_longitude = PyFloat_FromDouble(point3d->x_longitude))) {
+    goto cleanup;
+  }
+  if (!(y_latitude = PyFloat_FromDouble(point3d->y_latitude))) {
+    goto cleanup;
+  }
+  if (!(z_height = PyFloat_FromDouble(point3d->z_height))) {
+    goto cleanup;
+  }
+  if (!(tuple = PyTuple_New(4))) {
+    goto cleanup;
+  }
+
+  PyTuple_SET_ITEM(tuple, 0, srid);
+  PyTuple_SET_ITEM(tuple, 1, x_longitude);
+  PyTuple_SET_ITEM(tuple, 2, y_latitude);
+  PyTuple_SET_ITEM(tuple, 3, z_height);
+  return tuple;
+
+cleanup:
+  Py_XDECREF(tuple);
+  Py_XDECREF(srid);
+  Py_XDECREF(x_longitude);
+  Py_XDECREF(y_latitude);
+  Py_XDECREF(z_height);
+  return NULL;
+}
+
+static PyObject *point3d_richcompare(Point3DObject *lhs, PyObject *rhs, int op) {
+  PyObject *tlhs = NULL;
+  PyObject *trhs = NULL;
+  PyObject *ret = NULL;
+
+  if (Py_TYPE(rhs) == &Point3DType) {
+    if (!(tlhs = point3d_astuple(lhs))) {
+      goto exit;
+    }
+    if (!(trhs = point3d_astuple((Point3DObject *)rhs))) {
+      goto exit;
+    }
+    ret = PyObject_RichCompare(tlhs, trhs, op);
+  } else {
+    Py_INCREF(Py_False);
+    ret = Py_False;
+  }
+
+exit:
+  Py_XDECREF(tlhs);
+  Py_XDECREF(trhs);
+  return ret;
+}
+
+int point3d_init(Point3DObject *point3d, PyObject *args, PyObject *kwargs) {
+  uint16_t srid = 0;
+  double x_longitude = 0;
+  double y_latitude = 0;
+  double z_height = 0;
+  static char *kwlist[] = {"", "", "", "", NULL};
+  // https://docs.python.org/3/c-api/arg.html#numbers
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Hddd", kwlist, &srid, &x_longitude, &y_latitude, &z_height)) {
+    return -1;
+  }
+
+  point3d->srid = srid;
+  point3d->x_longitude = x_longitude;
+  point3d->y_latitude = y_latitude;
+  point3d->z_height = z_height;
+  return 0;
+}
+
+PyDoc_STRVAR(Point3DType_srid_doc,
+             "Point3D srid (a unique identifier associated with a specific coordinate system, tolerance, and resolution).");
+PyDoc_STRVAR(Point3DType_x_longitude_doc, "Point3D x or longitude value.");
+PyDoc_STRVAR(Point3DType_y_latitude_doc, "Point3D y or latitude value.");
+PyDoc_STRVAR(Point3DType_z_height_doc, "Point3D z or height value.");
+static PyMemberDef point3d_members[] = {
+    {"srid", T_USHORT, offsetof(Point3DObject, srid), READONLY, Point3DType_srid_doc},
+    {"x_longitude", T_DOUBLE, offsetof(Point3DObject, x_longitude), READONLY, Point3DType_x_longitude_doc},
+    {"y_latitude", T_DOUBLE, offsetof(Point3DObject, y_latitude), READONLY, Point3DType_y_latitude_doc},
+    {"z_height", T_DOUBLE, offsetof(Point3DObject, z_height), READONLY, Point3DType_z_height_doc},
+    {NULL}};
+
+PyDoc_STRVAR(Point3DType_doc,
+             "A Point3D object.");
+// clang-format off
+PyTypeObject Point3DType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "mgclient.Point3D",
+    .tp_basicsize = sizeof(Point3DObject),
+    .tp_itemsize = 0,
+    .tp_dealloc = (destructor)point3d_dealloc,
+    .tp_repr = (reprfunc)point3d_repr,
+    .tp_str = (reprfunc)point3d_str,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_doc = Point3DType_doc,
+    .tp_richcompare = (richcmpfunc)point3d_richcompare,
+    .tp_members = point3d_members,
+    .tp_init = (initproc)point3d_init,
+    .tp_new = PyType_GenericNew
+};
+// clang-format on
 
 #undef CHECK_ATTRIBUTE
-// clang-format on

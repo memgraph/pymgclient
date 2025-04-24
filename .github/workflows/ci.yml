@@ -78,7 +78,7 @@ jobs:
               bash -c "pip3 install --upgrade networkx pytest pyopenssl sphinx"
 
             docker exec -i testcontainer \
-              bash -c "ln -s /dev/null /etc/systemd/system/memgraph.service"  # Prevents Memgraph from starting.
+              bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service"  # Prevents Memgraph from starting.
 
             docker exec -i testcontainer \
               bash -c "dnf install -y /$LOCAL_PACKAGE_NAME"

@@ -21,7 +21,7 @@ jobs:
           - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest'}
           - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest'}
           - {platform: 'fedora-41', python_version: '3.13', mgversion: 'latest'}
-    runs-on: ["self-hosted"]
+    runs-on: ["self-hosted", "X64"]
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
@@ -40,16 +40,15 @@ jobs:
           echo "MGVERSION=$mgversion" >> $GITHUB_ENV
 
       - name: Download Memgraph
-        if: steps.cache-memgraph-community.outputs.cache-hit != 'true'
         run: |
           if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
-            MEMGRAPH_PACKAGE_NAME="memgraph_${mgversion}_1-1.x86_64.rpm"
+            MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}_1-1.x86_64.rpm"
             LOCAL_PACKAGE_NAME=memgraph.rpm
           else
-            MEMGRAPH_PACKAGE_NAME="memgraph_${mgversion}-1_amd64.deb"
+            MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}-1_amd64.deb"
             LOCAL_PACKAGE_NAME=memgraph.deb
           fi
-          curl -L https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/${{ matrix.platform }}/${MEMGRAPH_PACKAGE_NAME} > ${LOCAL_PACKAGE_NAME}
+          curl -L "https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/${{ matrix.platform }}/${MEMGRAPH_PACKAGE_NAME}" > "${LOCAL_PACKAGE_NAME}"
           echo "LOCAL_PACKAGE_NAME=$LOCAL_PACKAGE_NAME" >> $GITHUB_ENV
         
       - name: Set up Docker Buildx
@@ -91,7 +90,7 @@ jobs:
             docker exec -i testcontainer \
               bash -c "pip3 install --upgrade networkx pytest pyopenssl sphinx --break-system-packages"
             docker exec -i testcontainer \
-              bash -c "ln -s /dev/null /etc/systemd/system/memgraph.service" # Prevents Memgraph from starting.
+              bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service" # Prevents Memgraph from starting.
             docker exec -i testcontainer \
               bash -c "dpkg -i /$LOCAL_PACKAGE_NAME"
           fi

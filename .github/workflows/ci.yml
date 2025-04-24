@@ -67,7 +67,7 @@ jobs:
         run: |
           platform="${{ matrix.platform }}"
           tag=${platform//-/:}
-          docker run -d -rm --name testcontainer "$tag" sleep infinity            
+          docker run -d --rm --name testcontainer "$tag" sleep infinity            
 
       - name: Install system dependencies
         run: |

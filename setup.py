@@ -278,7 +278,7 @@ setup(
     author="Marin Tomic",
     author_email="marin.tomic@memgraph.com",
     license="Apache2",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     description="Memgraph database adapter for Python language",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -287,11 +287,13 @@ setup(
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Database",
         "Topic :: Database :: Front-Ends",
@@ -309,4 +311,8 @@ setup(
         "Documentation": "https://memgraph.github.io/pymgclient",
     },
     cmdclass={"build_ext": BuildMgclientExt},
+    install_requires=[
+        "pyopenssl",
+        "networkx"
+    ]
 )

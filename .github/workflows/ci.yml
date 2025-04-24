@@ -113,8 +113,12 @@ jobs:
       - name: Install pymgclient
         if: matrix.mgversion != '1.3.0'
         run: |
+          break_packages=""
+          if [[ "${{ matrix.platform }}" == "ubuntu*" ]]; then
+            break_packages="--break-system-packages"
+          fi
           docker exec -i testcontainer \
-            bash -c "python3 -m pip install ./pymgclient/dist/pymgclient-*"
+            bash -c "python3 -m pip install ./pymgclient/dist/pymgclient-* $break_packages"
 
       - name: Import mgclient to validate installation
         run: |

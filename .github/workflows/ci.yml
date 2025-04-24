@@ -117,7 +117,7 @@ jobs:
             break_packages="--break-system-packages"
           fi
           docker exec -i testcontainer \
-            bash -c "python3 -m pip install ./pymgclient/dist/pymgclient-* $break_packages"
+            bash -c "python3 -m pip install ./pymgclient/dist/pymgclient-* ${break_packages}"
 
       - name: Import mgclient to validate installation
         run: |

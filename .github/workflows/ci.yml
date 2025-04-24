@@ -132,7 +132,7 @@ jobs:
           docker cp testcontainer:/pymgclient/dist .
 
       - name: Save source distribution package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: pymgclient
           path: dist/

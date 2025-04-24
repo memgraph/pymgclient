@@ -86,7 +86,9 @@ jobs:
               bash -c "dnf install -y /$LOCAL_PACKAGE_NAME"
           else
             docker exec -i testcontainer \
-              bash -c "add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools"
+              bash -c "apt update && apt install software-properties-common && add-apt-repository ppa:deadsnakes/ppa"
+            docker exec -i testcontainer \
+              bash -c "apt update && apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools"
             docker exec -i testcontainer \
               bash -c "pip3 install --upgrade networkx pytest pyopenssl sphinx --break-system-packages"
             docker exec -i testcontainer \

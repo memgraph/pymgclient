@@ -113,7 +113,7 @@ jobs:
       - name: Install pymgclient
         run: |
           break_packages=""
-          if [[ "${{ matrix.platform }}" == ubuntu.* ]]; then
+          if [[ "${{ matrix.platform }}" == ubuntu* ]]; then
             break_packages="--break-system-packages"
           fi
           docker exec -i testcontainer \

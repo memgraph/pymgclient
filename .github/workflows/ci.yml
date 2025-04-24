@@ -144,7 +144,7 @@ jobs:
         run: |
           docker stop testcontainer || echo "Container does not exist"
           docker wait testcontainer || echo "Container does not exist"
-          docker rmi ${{ env.MGVERSION }} || ecoh "Image does not exist"
+          docker rmi ${{ env.MGVERSION }} || echo "Image does not exist"
 
   build_and_test_windows:
     if: ${{ github.event_name == 'workflow_dispatch' }}

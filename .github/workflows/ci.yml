@@ -42,7 +42,7 @@ jobs:
       - name: Download Memgraph
         run: |
           if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
-            MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}_1-1.x86_64.rpm"
+            MEMGRAPH_PACKAGE_NAME="memgraph-${{ env.MGVERSION }}_1-1.x86_64.rpm"
             LOCAL_PACKAGE_NAME=memgraph.rpm
           else
             MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}-1_amd64.deb"

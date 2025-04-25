@@ -19,8 +19,8 @@ jobs:
         #  - {platform: 'ubuntu-24.04', python_version: '3.10', mgversion: 'latest'}
         #  - {platform: 'ubuntu-24.04', python_version: '3.11', mgversion: 'latest'}
         #  - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest'}
-          - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest'}
-        #  - {platform: 'fedora-41', python_version: '3.13', mgversion: 'latest'}
+        #  - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest'}
+          - {platform: 'fedora-41', python_version: '3.13', mgversion: 'latest'}
     runs-on: ["self-hosted", "X64"]
     steps:
       - name: Checkout repository and submodules

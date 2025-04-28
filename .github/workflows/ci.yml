@@ -205,16 +205,12 @@ jobs:
           distribution: Ubuntu-24.04
       - name: Set Memgraph Version
         run: |
-          if [[ "${{ matrix.mgversion }}" == "latest" ]]; then
-            mgversion=$(
+          mgversion=$(
               curl -s https://api.github.com/repos/memgraph/memgraph/releases/latest \
               | grep -m1 '"tag_name":' \
               | sed -E 's/.*"([^"]+)".*/\1/' \
               | sed 's/^v//'
-            )
-          else
-            mgversion="${{ matrix.mgversion }}"
-          fi
+          )
           echo "MGVERSION=$mgversion" >> $GITHUB_ENV
       - name: Download, install and run Memgraph under WSL
         shell: wsl-bash {0} # root shell

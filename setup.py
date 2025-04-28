@@ -279,6 +279,7 @@ def set_extra_compile_args():
         args += ["-Werror=all"]
     return args
 
+print(f"ARGS: {set_extra_compile_args()} {sys.platform}")
 
 setup(
     name="pymgclient",

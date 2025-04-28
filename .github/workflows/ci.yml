@@ -170,7 +170,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-2022 ]
+        os: [windows-2022, windows-2025]
         arch:
           - { mingw: "64", msys: x86_64, python: "x64" }
         python_version:

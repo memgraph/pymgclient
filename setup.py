@@ -235,7 +235,7 @@ class BuildMgclientExt(build_ext):
             f"-DCMAKE_INSTALL_PREFIX={mgclient_install_path}",
             "-DBUILD_TESTING=OFF",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
-            f'-DCMAKE_C_FLAGS="{self.get_cflags()}"',
+            f'-DCMAKE_C_FLAGS={self.get_cflags()}',
             f"-DOPENSSL_USE_STATIC_LIBS={'ON' if self.static_openssl else 'OFF'}",
         ]
 

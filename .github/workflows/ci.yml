@@ -194,7 +194,13 @@ jobs:
           msystem: MINGW${{ matrix.arch.mingw }}
           update: true
           release: false
-          install: git mingw-w64-${{ matrix.arch.msys }}-toolchain mingw-w64-${{ matrix.arch.msys }}-cmake mingw-w64-${{ matrix.arch.msys }}-openssl
+          install: >
+            git 
+            mingw-w64-${{ matrix.arch.msys }}-toolchain 
+            mingw-w64-${{ matrix.arch.msys }}-cmake 
+            mingw-w64-${{ matrix.arch.msys }}-openssl 
+            mingw-w64-${{ matrix.arch.msys }}-python-pip
+            mingw-w64-${{ matrix.arch.msys }}-python-pytest
       - name: Add mingw${{ matrix.arch.mingw }} to PATH
         run: |
           # First make sure python would resolve to the windows native python, not mingw one

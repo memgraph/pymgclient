@@ -120,6 +120,8 @@ jobs:
             static_ssl="--no-build-isolation --global-option=build_ext --global-option '--static-openssl=False'"
           fi
           docker exec -i testcontainer \
+            bash -c "python3 -m pip install --upgrade pip setuptools wheel ${break_packages}"
+          docker exec -i testcontainer \
             bash -c "python3 -m pip install ${static_ssl} ./pymgclient/dist/pymgclient-* ${break_packages}"
 
       - name: Import mgclient to validate installation

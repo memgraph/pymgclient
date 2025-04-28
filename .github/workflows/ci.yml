@@ -68,6 +68,20 @@ jobs:
           tag=${platform//-/:}
           docker run -d --rm --name testcontainer "$tag" sleep infinity            
 
+      - name: Set Environment Variables
+        run: |
+          break_packages=""
+          static_ssl=""
+          if [[ "${{ matrix.platform }}" == "ubuntu-24.04" ]]; then
+            # this option is specific to ubuntu, not fedora
+            break_packages="--break-system-packages"
+          elif [[ "${{ matrix.platform }}" == fedora* ]]; then
+            # rpm distros do not ship with static lib for openssl
+            static_ssl="--no-build-isolation --global-option=build_ext --global-option '--static-openssl=False'"
+          fi
+          echo "BREAK_PACKAGES=$break_packages" >> $GITHUB_ENV
+          echo "STATIC_SSL=$static_ssl" >> $GITHUB_ENV
+
       - name: Install system dependencies
         run: |
           docker cp $LOCAL_PACKAGE_NAME testcontainer:/$LOCAL_PACKAGE_NAME
@@ -94,7 +108,7 @@ jobs:
             docker exec -i testcontainer \
               bash -c "apt update && apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools $curl_package cmake libssl-dev netcat-traditional"
             docker exec -i testcontainer \
-              bash -c "pip3 install --upgrade networkx pytest pyopenssl sphinx --break-system-packages"
+              bash -c "pip3 install --upgrade networkx pytest pyopenssl sphinx ${{ env.BREAK_PACKAGES }}"
             docker exec -i testcontainer \
               bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service" # Prevents Memgraph from starting.
             docker exec -i testcontainer \
@@ -113,22 +127,22 @@ jobs:
 
       - name: Install pymgclient
         run: |
-          break_packages=""
-          static_ssl=""
-          if [[ "${{ matrix.platform }}" == ubuntu* ]]; then
-            # this option is specific to ubuntu, not fedora
-            break_packages="--break-system-packages"
-          elif [[ "${{ matrix.platform }}" == fedora* ]]; then
-            # rpm distros do not ship with static lib for openssl
-            static_ssl="--no-build-isolation --global-option=build_ext --global-option '--static-openssl=False'"
+          # break_packages=""
+          # static_ssl=""
+          # if [[ "${{ matrix.platform }}" == ubuntu* ]]; then
+          #   # this option is specific to ubuntu, not fedora
+          #   break_packages="--break-system-packages"
+          # elif [[ "${{ matrix.platform }}" == fedora* ]]; then
+          #   # rpm distros do not ship with static lib for openssl
+          #   static_ssl="--no-build-isolation --global-option=build_ext --global-option '--static-openssl=False'"
 
-            # # 
-            # docker exec -i testcontainer \
-            #   bash -c "python3 -m pip install --upgrade pip setuptools wheel ${break_packages}"
-          fi
+          #   # # 
+          #   # docker exec -i testcontainer \
+          #   #   bash -c "python3 -m pip install --upgrade pip setuptools wheel ${break_packages}"
+          # fi
           
           docker exec -i testcontainer \
-            bash -c "python3 -m pip install ${static_ssl} ./pymgclient/dist/pymgclient-* ${break_packages}"
+            bash -c "python3 -m pip install ${{ env.STATIC_SSL }} ./pymgclient/dist/pymgclient-* ${{ env.BREAK_PACKAGES }}"
 
       - name: Import mgclient to validate installation
         run: |
@@ -155,7 +169,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pymgclient
-          path: dist/
+          path: dist/${{ matrix.platform }}-${{ matrix.python_version }}
 
       - name: Cleanup
         if: always()

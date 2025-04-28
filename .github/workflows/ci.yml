@@ -168,6 +168,7 @@ jobs:
   build_and_test_windows:
     # if: ${{ github.event_name == 'workflow_dispatch' }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ windows-2022 ]
         arch:

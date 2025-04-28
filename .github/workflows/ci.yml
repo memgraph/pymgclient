@@ -12,7 +12,7 @@ on:
 
 jobs:
   build_and_test_linux:
-    #if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:

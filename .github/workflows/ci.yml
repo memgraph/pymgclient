@@ -281,7 +281,9 @@ jobs:
       - name: Build pymgclient
         run: python${{ matrix.python_version }} setup.py sdist
       - name: Install pymgclient
-        run: python${{ matrix.python_version }} -m pip install dist/*
+        run: |
+          export PIP_BREAK_SYSTEM_PACKAGES=1
+          python${{ matrix.python_version }} -m pip install dist/*
       - name: Import mgclient to validate installation
         run: python${{ matrix.python_version }} -c "import mgclient"
       - name: Save artifact name on x86 machines

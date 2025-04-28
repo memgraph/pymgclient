@@ -190,9 +190,8 @@ class BuildMgclientExt(build_ext):
 
     def get_cflags(self):
         cflags = "{0} -Werror=all".format(os.getenv("CFLAGS", "")).strip()
-        if sys.version_info >= (3, 12):
-            # Python 3.12 headers trigger a harmless array-bounds warning under MinGW
-            cflags += " -Wno-error=array-bounds"
+        if sys.platform.startswith("win") or "mingw" in platform.system().lower():
+            return cflags
         return cflags
 
     def build_mgclient_for(self, extension: Extension):
@@ -235,7 +234,7 @@ class BuildMgclientExt(build_ext):
             f"-DCMAKE_INSTALL_PREFIX={mgclient_install_path}",
             "-DBUILD_TESTING=OFF",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
-            f'-DCMAKE_C_FLAGS={self.get_cflags()}',
+            f'-DCMAKE_C_FLAGS="{self.get_cflags()}"',
             f"-DOPENSSL_USE_STATIC_LIBS={'ON' if self.static_openssl else 'OFF'}",
         ]
 

@@ -72,7 +72,7 @@ jobs:
           docker cp $LOCAL_PACKAGE_NAME testcontainer:/$LOCAL_PACKAGE_NAME
           if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
             docker exec -i testcontainer \
-              bash -c "dnf install -y python${{ matrix.python_version }} python3-pip python3-setuptools cmake g++ openssl-devel nmap-ncat"
+              bash -c "dnf install -y python${{ matrix.python_version }} python3-pip python3-setuptools python3-devel cmake g++ openssl-devel nmap-ncat"
 
             docker exec -i testcontainer \
               bash -c "pip3 install --upgrade networkx pytest pyopenssl sphinx"

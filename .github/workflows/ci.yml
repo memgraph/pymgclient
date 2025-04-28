@@ -243,7 +243,7 @@ jobs:
           path: dist/
 
   build_macos:
-    # if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:

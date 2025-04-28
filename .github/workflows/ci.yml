@@ -225,7 +225,7 @@ jobs:
           sleep 1 # Wait for Memgraph a bit.
       - run: python -m pip install -U pip wheel setuptools pytest pyopenssl
       - name: Build pymgclient
-        run: python setup.py bdist_wheel
+        run: python setup.py build_ext --static-openssl=False bdist_wheel
       - name: Install pymgclient
         run: python -m pip install --verbose -f dist --no-index pymgclient
         env:

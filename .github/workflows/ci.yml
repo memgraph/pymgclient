@@ -72,7 +72,7 @@ jobs:
           docker cp $LOCAL_PACKAGE_NAME testcontainer:/$LOCAL_PACKAGE_NAME
           if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
             docker exec -i testcontainer \
-              bash -c "dnf install -y python${{ matrix.python_version }} python3-pip python3-setuptools python3-devel cmake g++ openssl-devel nmap-ncat"
+              bash -c "dnf install -y python${{ matrix.python_version }} python3-pip python3-setuptools python3-wheel python3-devel cmake g++ openssl-devel nmap-ncat"
 
             docker exec -i testcontainer \
               bash -c "pip3 install --upgrade networkx pytest pyopenssl sphinx"
@@ -115,12 +115,17 @@ jobs:
           break_packages=""
           static_ssl=""
           if [[ "${{ matrix.platform }}" == ubuntu* ]]; then
+            # this option is specific to ubuntu, not fedora
             break_packages="--break-system-packages"
           elif [[ "${{ matrix.platform }}" == fedora* ]]; then
+            # rpm distros do not ship with static lib for openssl
             static_ssl="--no-build-isolation --global-option=build_ext --global-option '--static-openssl=False'"
+
+            # # 
+            # docker exec -i testcontainer \
+            #   bash -c "python3 -m pip install --upgrade pip setuptools wheel ${break_packages}"
           fi
-          docker exec -i testcontainer \
-            bash -c "python3 -m pip install --upgrade pip setuptools wheel ${break_packages}"
+          
           docker exec -i testcontainer \
             bash -c "python3 -m pip install ${static_ssl} ./pymgclient/dist/pymgclient-* ${break_packages}"
 

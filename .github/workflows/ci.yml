@@ -239,7 +239,7 @@ jobs:
           MEMGRAPH_HOST: "localhost"
           MEMGRAPH_STARTED_WITH_SSL:
       - name: Save wheel package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: pymgclient-win${{ matrix.arch.mingw }}-${{ matrix.python_version }}
           path: dist/
@@ -292,7 +292,7 @@ jobs:
         # Convert macOS-11.6-ARM64 to macos-11.6-arm64 to be consistent with full lowercase naming
         run: echo OS_TYPE=`echo "${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr "[:upper:]" "[:lower:]"` >> $GITHUB_ENV
       - name: Save wheel package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: pymgclient-${{ env.OS_TYPE }}-${{ matrix.python_version }}
           path: dist/

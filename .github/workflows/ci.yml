@@ -228,13 +228,15 @@ jobs:
           sleep 1 # Wait for Memgraph a bit.
       - run: python -m pip install -U pip wheel setuptools pytest pyopenssl
       - name: Build pymgclient
-        run: python setup.py sdist
+        shell: msys2 {0}
+        run: python setup.py build_ext --static-openssl=False sdist
       - name: Install pymgclient
-        shell: bash -l {0}
-        run: python -m pip install --no-build-isolation --global-option=build_ext --global-option '--static-openssl=False' --verbose dist/*
+        shell: msys2 {0}
+        run: python -m pip install --verbose dist/*.whl
         env:
           VERBOSE: 1
       - name: Run tests
+        shell: msys2 {0}
         run: |
           python3 -m pytest -v
         env:

@@ -189,7 +189,11 @@ class BuildMgclientExt(build_ext):
         self.finalize_linux_like(extension, ["ssl", "crypto"])
 
     def get_cflags(self):
-        return "{0} -Werror=all".format(os.getenv("CFLAGS", "")).strip()
+        cflags = "{0} -Werror=all".format(os.getenv("CFLAGS", "")).strip()
+        if sys.version_info >= (3, 12):
+            # Python 3.12 headers trigger a harmless array-bounds warning under MinGW
+            cflags += " -Wno-error=array-bounds"
+        return cflags
 
     def build_mgclient_for(self, extension: Extension):
         """

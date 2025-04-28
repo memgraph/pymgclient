@@ -273,6 +273,13 @@ class BuildMgclientExt(build_ext):
             finalize(extension)
 
 
+def set_extra_compile_args():
+    args = ["-std=c99"]
+    if sys.platform.startswith("win") or "mingw" in platform.system().lower():
+        args += ["-Werror=all"]
+    return args
+
+
 setup(
     name="pymgclient",
     version=version,
@@ -307,7 +314,7 @@ setup(
         "Operating System :: Microsoft :: Windows",
     ],
     ext_modules=[
-        Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_compile_args=["-Werror=all", "-std=c99"])
+        Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_compile_args=set_extra_compile_args())
     ],
     project_urls={
         "Source": "https://github.com/memgraph/pymgclient",

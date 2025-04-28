@@ -180,19 +180,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Set Memgraph Version
-        run: |
-          if [[ "${{ matrix.mgversion }}" == "latest" ]]; then
-            mgversion=$(
-              curl -s https://api.github.com/repos/memgraph/memgraph/releases/latest \
-              | grep -m1 '"tag_name":' \
-              | sed -E 's/.*"([^"]+)".*/\1/' \
-              | sed 's/^v//'
-            )
-          else
-            mgversion="${{ matrix.mgversion }}"
-          fi
-          echo "MGVERSION=$mgversion" >> $GITHUB_ENV
       - name: Setup python
         uses: actions/setup-python@v2.2.2
         with:
@@ -216,6 +203,19 @@ jobs:
       - uses: Vampire/setup-wsl@v5
         with:
           distribution: Ubuntu-24.04
+      - name: Set Memgraph Version
+        run: |
+          if [[ "${{ matrix.mgversion }}" == "latest" ]]; then
+            mgversion=$(
+              curl -s https://api.github.com/repos/memgraph/memgraph/releases/latest \
+              | grep -m1 '"tag_name":' \
+              | sed -E 's/.*"([^"]+)".*/\1/' \
+              | sed 's/^v//'
+            )
+          else
+            mgversion="${{ matrix.mgversion }}"
+          fi
+          echo "MGVERSION=$mgversion" >> $GITHUB_ENV
       - name: Download, install and run Memgraph under WSL
         shell: wsl-bash {0} # root shell
         run: |
@@ -251,11 +251,11 @@ jobs:
       matrix:
         platform: [macos-15, macos-14]
         python_version:
-          - '3.8'
+          - '3.9'
           - '3.13'
-        include:
-          - {platform: [macOS-15, ARM64, self-hosted], python_version: '3.13'}
-          - {platform: [macOS-15, ARM64, self-hosted], python_version: '3.8'}
+        # include:
+        #   - {platform: [macOS-15, ARM64, self-hosted], python_version: '3.13'}
+        #   - {platform: [macOS-15, ARM64, self-hosted], python_version: '3.9'}
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2

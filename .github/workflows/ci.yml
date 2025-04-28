@@ -117,7 +117,7 @@ jobs:
           if [[ "${{ matrix.platform }}" == ubuntu* ]]; then
             break_packages="--break-system-packages"
           elif [[ "${{ matrix.platform }}" == fedora* ]]; then
-            static_ssl="--global-option=build_ext --global-option '--static-openssl=False'"
+            static_ssl="--no-build-isolation --global-option=build_ext --global-option '--static-openssl=False'"
           fi
           docker exec -i testcontainer \
             bash -c "python3 -m pip install ${static_ssl} ./pymgclient/dist/pymgclient-* ${break_packages}"

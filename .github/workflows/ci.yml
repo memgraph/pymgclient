@@ -369,7 +369,7 @@ jobs:
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
           echo $PATH
-          python -m pytest -v --norecursedirs=memgraph
+          python -m pytest -v 
 
         env:
           pythonLocation: ${{ env.pythonLocation }}

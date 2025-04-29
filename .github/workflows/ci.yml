@@ -259,6 +259,7 @@ jobs:
         shell: msys2 {0}
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
+          pkg-config --libs --static libcrypto
           echo "🔎 Checking for required DLLs in PATH:"
           for dll in libssl-3-x64.dll libcrypto-3-x64.dll python311.dll; do
             found=0

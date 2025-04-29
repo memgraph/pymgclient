@@ -233,9 +233,7 @@ class BuildMgclientExt(build_ext):
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             f'-DCMAKE_C_FLAGS="{self.get_cflags()}"',
             f"-DOPENSSL_USE_STATIC_LIBS={'ON' if self.static_openssl else 'OFF'}",
-            "-DPKG_CONFIG_USE_STATIC_LIBS=ON",
-            '-DCMAKE_SHARED_LINKER_FLAGS="-lcrypt32 -lws2_32 -lgdi32"',
-            '-DCMAKE_EXE_LINKER_FLAGS="-lcrypt32 -lws2_32 -lgdi32"'
+            "-DPKG_CONFIG_USE_STATIC_LIBS=ON"
         ]
 
         finalize_cmake_config_command = getattr(self, "finalize_cmake_config_command_" + sys.platform, None)

@@ -322,9 +322,10 @@ jobs:
           # openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
           # nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="" --bolt-key-file="" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --data-recovery-on-startup=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
+          ps aux | grep memgraph
 
-      - name: Wait for Memgraph to Start
-        run: Start-Sleep -Seconds 1
+      # - name: Wait for Memgraph to Start
+      #   run: Start-Sleep -Seconds 1
 
       # - name: Ensure required DLLs are available
       #   shell: pwsh
@@ -389,12 +390,31 @@ jobs:
         shell: wsl-bash {0}
         run: |
           # process
+          ps aux | grep memgraph
           if ! pgrep -f /usr/lib/memgraph/memgraph; then
             echo "❌ Memgraph not running" >&2
             exit 1
           fi
           echo "✅ Memgraph check passed"
 
+          echo "🔍 Checking if port 7687 is open..."
+          if command -v ss >/dev/null 2>&1; then
+            ss -tln | grep ':7687' || (echo "❌ Port 7687 not open!" && exit 1)
+          elif command -v netstat >/dev/null 2>&1; then
+            netstat -an | grep ':7687' || (echo "❌ Port 7687 not open!" && exit 1)
+          else
+            echo "⚠️  Warning: Neither ss nor netstat is available to check ports."
+            exit 1
+          fi
+          echo "✅ Memgraph port 7687 is open."
+          
+      - name: Verify Memgraph is reachable from Windows (MSYS2)
+        shell: msys2 {0}
+        run: |
+          echo "🔍 Checking connection to Memgraph from MSYS2 shell..."
+          timeout 3 bash -c "</dev/tcp/localhost/7687" && echo "✅ Memgraph is reachable on port 7687." || (echo "❌ Cannot connect to Memgraph on localhost:7687!" && exit 1)
+
+            
       - name: Run Tests
         shell: msys2 {0}
         run: |

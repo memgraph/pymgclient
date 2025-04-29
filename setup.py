@@ -232,7 +232,8 @@ class BuildMgclientExt(build_ext):
             "-DBUILD_TESTING=OFF",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             f'-DCMAKE_C_FLAGS="{self.get_cflags()}"',
-            f"-DOPENSSL_USE_STATIC_LIBS={'ON' if self.static_openssl else 'OFF'}"
+            f"-DOPENSSL_USE_STATIC_LIBS={'ON' if self.static_openssl else 'OFF'}",
+            '-DPKG_CONFIG_EXECUTABLE="pkg-config --static"'
         ]
 
         finalize_cmake_config_command = getattr(self, "finalize_cmake_config_command_" + sys.platform, None)

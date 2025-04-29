@@ -248,7 +248,7 @@ jobs:
           nohup sudo memgraph --bolt-port 7687 &
 
       - name: Wait for Memgraph to Start
-        run: timeout 10
+        run: Start-Sleep -Seconds 10
 
       - name: Run Tests
         shell: msys2 {0}

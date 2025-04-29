@@ -233,6 +233,7 @@ jobs:
           Get-ChildItem -Recurse -Filter "mgclient.cp*.pyd" -Path $env:pythonLocation
       
       - name: Check mgclient.pyd DLL Dependencies
+        uses: microsoft/setup-msbuild@v1.3.1
         run: |
           $mgclientPath = Get-ChildItem -Recurse -Filter "mgclient.cp*.pyd" -Path $env:pythonLocation | Select-Object -ExpandProperty FullName
           if (Test-Path "$mgclientPath") {
@@ -270,6 +271,14 @@ jobs:
 
       - name: Wait for Memgraph to Start
         run: Start-Sleep -Seconds 10
+
+      - name: Run Tests
+        run: |
+          $env:Path += ";C:\msys64\mingw64\bin"
+          python -m pytest -v
+        env:
+          MEMGRAPH_HOST: localhost
+      
 
       - name: Run Tests
         shell: msys2 {0}

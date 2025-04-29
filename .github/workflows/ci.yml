@@ -243,7 +243,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y curl
-          curl -L https://download.memgraph.com/memgraph/v${MGVERSION}/ubuntu-24.04/memgraph_${MGVERSION}-1_amd64.deb -o memgraph.deb
+          curl -L https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/ubuntu-24.04/memgraph_${{ env.MGVERSION }}-1_amd64.deb -o memgraph.deb
           sudo apt install ./memgraph.deb
           nohup sudo memgraph --bolt-port 7687 &
 

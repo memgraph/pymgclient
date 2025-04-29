@@ -228,6 +228,29 @@ jobs:
         env:
           pythonLocation: ${{ env.pythonLocation }}
 
+      - name: Check that required DLLs are in PATH
+        shell: msys2 {0}
+        run: |
+          export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
+          pkg-config --libs --static libcrypto
+          echo "🔎 Checking for required DLLs in PATH:"
+          for dll in libssl-3-x64.dll libcrypto-3-x64.dll python311.dll; do
+            found=0
+            for dir in $(echo $PATH | tr ':' '\n'); do
+              if [ -f "$dir/$dll" ]; then
+                echo "✅ Found $dll in $dir"
+                found=1
+                break
+              fi
+            done
+            if [ "$found" -eq 0 ]; then
+              echo "❌ Missing $dll!"
+              exit 1
+            fi
+          done
+        env:
+          pythonLocation: ${{ env.pythonLocation }}
+          
       - name: Build pymgclient Wheel
         shell: msys2 {0}
         run: |
@@ -255,28 +278,7 @@ jobs:
           objdump -p "$mgclient_path" | grep 'DLL Name'
         shell: msys2 {0}
 
-      - name: Check that required DLLs are in PATH
-        shell: msys2 {0}
-        run: |
-          export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
-          pkg-config --libs --static libcrypto
-          echo "🔎 Checking for required DLLs in PATH:"
-          for dll in libssl-3-x64.dll libcrypto-3-x64.dll python311.dll; do
-            found=0
-            for dir in $(echo $PATH | tr ':' '\n'); do
-              if [ -f "$dir/$dll" ]; then
-                echo "✅ Found $dll in $dir"
-                found=1
-                break
-              fi
-            done
-            if [ "$found" -eq 0 ]; then
-              echo "❌ Missing $dll!"
-              exit 1
-            fi
-          done
-        env:
-          pythonLocation: ${{ env.pythonLocation }}
+
       
 
       # - name: Setup WSL Ubuntu

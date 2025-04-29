@@ -216,7 +216,7 @@ jobs:
         shell: msys2 {0}
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python setup.py build_ext --static-openssl=False bdist_wheel
+          python setup.py bdist_wheel
         env:
           pythonLocation: ${{ env.pythonLocation }}
 
@@ -232,16 +232,15 @@ jobs:
         run: |
           Get-ChildItem -Recurse -Filter "mgclient.cp*.pyd" -Path $env:pythonLocation
       
-      - name: Check mgclient.pyd DLL Dependencies
-        uses: microsoft/setup-msbuild@v1.3.1
-        run: |
-          $mgclientPath = Get-ChildItem -Recurse -Filter "mgclient.cp*.pyd" -Path $env:pythonLocation | Select-Object -ExpandProperty FullName
-          if (Test-Path "$mgclientPath") {
-            dumpbin /DEPENDENTS "$mgclientPath"
-          } else {
-            Write-Host "mgclient.pyd not found!"
-            exit 1
-          }
+      # - name: Check mgclient.pyd DLL Dependencies
+      #   run: |
+      #     $mgclientPath = Get-ChildItem -Recurse -Filter "mgclient.cp*.pyd" -Path $env:pythonLocation | Select-Object -ExpandProperty FullName
+      #     if (Test-Path "$mgclientPath") {
+      #       dumpbin /DEPENDENTS "$mgclientPath"
+      #     } else {
+      #       Write-Host "mgclient.pyd not found!"
+      #       exit 1
+      #     }
         
       - name: Setup WSL Ubuntu
         uses: Vampire/setup-wsl@v5

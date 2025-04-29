@@ -227,21 +227,18 @@ jobs:
           python -m pip install dist/*.whl
         env:
           pythonLocation: ${{ env.pythonLocation }}
-
-      - name: Locate mgclient Python extension
+    
+      - name: Check mgclient.pyd DLL Dependencies (MSYS2)
         run: |
-          Get-ChildItem -Recurse -Filter "mgclient.cp*.pyd" -Path $env:pythonLocation
+          mgclient_path=$(find $pythonLocation -name "mgclient.cp*.pyd" | head -n1)
+          if [ -z "$mgclient_path" ]; then
+            echo "mgclient.pyd not found!"
+            exit 1
+          fi
+          echo "Found: $mgclient_path"
+          objdump -p "$mgclient_path" | grep 'DLL Name'
+        shell: msys2 {0}
       
-      # - name: Check mgclient.pyd DLL Dependencies
-      #   run: |
-      #     $mgclientPath = Get-ChildItem -Recurse -Filter "mgclient.cp*.pyd" -Path $env:pythonLocation | Select-Object -ExpandProperty FullName
-      #     if (Test-Path "$mgclientPath") {
-      #       dumpbin /DEPENDENTS "$mgclientPath"
-      #     } else {
-      #       Write-Host "mgclient.pyd not found!"
-      #       exit 1
-      #     }
-        
       - name: Setup WSL Ubuntu
         uses: Vampire/setup-wsl@v5
         with:

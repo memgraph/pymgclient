@@ -432,6 +432,8 @@ jobs:
           python${{ matrix.python_version }} -m pip install pyopenssl pytest setuptools
       - name: Build pymgclient
         run: python${{ matrix.python_version }} setup.py sdist
+      - name: Build pymgclient
+        run: python${{ matrix.python_version }} setup.py bdist_wheel
       - name: Install pymgclient
         run: |
           export PIP_BREAK_SYSTEM_PACKAGES=1

@@ -254,7 +254,7 @@ jobs:
       - name: Run Tests
         shell: msys2 {0}
         run: |
-          export PATH="$(cygpath -u "$pythonLocation"):$PATH"
+          export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
           python -m pytest -v
         env:
           pythonLocation: ${{ env.pythonLocation }}

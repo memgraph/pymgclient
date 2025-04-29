@@ -181,11 +181,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Set up Windows Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: x64
 
       - name: Set up MSYS2
         uses: msys2/setup-msys2@v2
@@ -197,7 +192,19 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-make
             mingw-w64-x86_64-openssl
+      
+      - name: Add MSYS2 mingw64/bin to PATH
+        shell: pwsh
+        run: |
+          echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+              
+      - name: Set up Windows Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
 
+              
       - name: Debug Find OpenSSL DLLs
         shell: msys2 {0}
         run: |
@@ -270,7 +277,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          $env:Path += ";C:\msys64\mingw64\bin"
+          $env:Path = "C:\msys64\mingw64\bin;$env:Path"
           python -m pytest -v
         env:
           MEMGRAPH_HOST: localhost

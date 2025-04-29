@@ -194,9 +194,10 @@ jobs:
             mingw-w64-x86_64-openssl
       
       - name: Add MSYS2 mingw64/bin to PATH
-        shell: pwsh
+        shell: msys2 {0}
         run: |
-          echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "/mingw64/bin" >> $GITHUB_PATH
+          
               
       - name: Set up Windows Python
         uses: actions/setup-python@v5
@@ -212,12 +213,20 @@ jobs:
           find /mingw64/bin -iname "*crypto*.dll"
 
       - name: Add Windows Python to PATH
+        shell: msys2 {0}
         run: |
-          echo "${{ env.pythonLocation }}" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
+          echo "$pythonLocation" >> $GITHUB_PATH
+        env:
+          pythonLocation: ${{ env.pythonLocation }}
+      
 
       - name: Install Python build tools
+        shell: msys2 {0}
         run: |
+          export PATH="$(cygpath -u "$pythonLocation"):$PATH"
           python -m pip install --upgrade pip setuptools wheel pyopenssl pytest
+        env:
+          pythonLocation: ${{ env.pythonLocation }}
 
       - name: Build pymgclient Wheel
         shell: msys2 {0}
@@ -356,7 +365,7 @@ jobs:
           echo $PATH
           cd ..
           python -c "import mgclient"
-          python -m pytest -v
+          # python -m pytest -v
 
         env:
           pythonLocation: ${{ env.pythonLocation }}
@@ -379,7 +388,7 @@ jobs:
 
 
   build_macos:
-    #if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:

@@ -198,6 +198,12 @@ jobs:
             mingw-w64-x86_64-make
             mingw-w64-x86_64-openssl
 
+      - name: Debug Find OpenSSL DLLs
+        shell: msys2 {0}
+        run: |
+          find /mingw64/bin -iname "*ssl*.dll"
+          find /mingw64/bin -iname "*crypto*.dll"
+
       - name: Add Windows Python to PATH
         run: |
           echo "${{ env.pythonLocation }}" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
@@ -222,6 +228,20 @@ jobs:
         env:
           pythonLocation: ${{ env.pythonLocation }}
 
+      - name: Locate mgclient Python extension
+        run: |
+          Get-ChildItem -Recurse -Filter "mgclient.cp*.pyd" -Path $env:pythonLocation
+      
+      - name: Check mgclient.pyd DLL Dependencies
+        run: |
+          $mgclientPath = Get-ChildItem -Recurse -Filter "mgclient.cp*.pyd" -Path $env:pythonLocation | Select-Object -ExpandProperty FullName
+          if (Test-Path "$mgclientPath") {
+            dumpbin /DEPENDENTS "$mgclientPath"
+          } else {
+            Write-Host "mgclient.pyd not found!"
+            exit 1
+          }
+        
       - name: Setup WSL Ubuntu
         uses: Vampire/setup-wsl@v5
         with:

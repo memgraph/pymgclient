@@ -355,6 +355,7 @@ jobs:
           export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
           python -c "import mgbuild"
           python -m pytest -v
+          
         env:
           pythonLocation: ${{ env.pythonLocation }}
           MEMGRAPH_HOST: localhost

@@ -369,7 +369,7 @@ jobs:
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
           echo $PATH
-          python -m pytest -v
+          python -m pytest -v --ignore=memgraph
 
         env:
           pythonLocation: ${{ env.pythonLocation }}

@@ -268,31 +268,6 @@ jobs:
         env:
           pythonLocation: ${{ env.pythonLocation }}
       
-      
-      # - name: Check that required DLLs are in PATH
-      #   shell: pwsh
-      #   run: |
-      #     $dlls = @(
-      #       "libssl-3-x64.dll",
-      #       "libcrypto-3-x64.dll",
-      #       "python311.dll"
-      #     )
-      
-      #     foreach ($dll in $dlls) {
-      #       $found = $false
-      #       foreach ($dir in $env:Path.Split(";")) {
-      #         if (Test-Path (Join-Path $dir $dll)) {
-      #           Write-Host "✅ Found $dll in $dir"
-      #           $found = $true
-      #           break
-      #         }
-      #       }
-      #       if (-not $found) {
-      #         Write-Host "❌ Missing $dll"
-      #         exit 1
-      #       }
-      #     }
-      
 
       - name: Setup WSL Ubuntu
         uses: Vampire/setup-wsl@v5
@@ -326,48 +301,6 @@ jobs:
           ps aux | grep memgraph
           cat $HOME/memgraph/memgraph.log || true
 
-
-      # - name: Ensure required DLLs are available
-      #   shell: pwsh
-      #   run: |
-      #     $ErrorActionPreference = "Stop"
-      
-      #     # Paths
-      #     $mingwBin = "C:\msys64\mingw64\bin"
-      #     $pythonLib = "$env:pythonLocation\Lib\site-packages"
-      
-      #     # DLLs that mgclient depends on
-      #     $dlls = @(
-      #       "libssl-3-x64.dll",
-      #       "libcrypto-3-x64.dll"
-      #     )
-      
-      #     # Copy DLLs from MSYS2 into Python site-packages if missing
-      #     foreach ($dll in $dlls) {
-      #       $destPath = Join-Path $pythonLib $dll
-      #       if (-Not (Test-Path $destPath)) {
-      #         $srcPath = Join-Path $mingwBin $dll
-      #         if (Test-Path $srcPath) {
-      #           Copy-Item $srcPath -Destination $destPath
-      #           Write-Host "✅ Copied $dll to site-packages."
-      #         } else {
-      #           Write-Host "❌ $dll not found in $mingwBin!"
-      #           exit 1
-      #         }
-      #       } else {
-      #         Write-Host "✅ $dll already present in site-packages."
-      #       }
-      #     }
-      
-      #     # python311.dll should already be available from pythonLocation, no need to move
-      
-
-      # - name: Run Tests
-      #   run: |
-      #     $env:Path = "C:\msys64\mingw64\bin;$env:Path"
-      #     python -m pytest -v
-      #   env:
-      #     MEMGRAPH_HOST: localhost
       - name: Copy required DLLs from MSYS2 to Python site-packages
         shell: msys2 {0}
         run: |
@@ -440,113 +373,21 @@ jobs:
           cat $HOME/memgraph/memgraph.log || true
 
 
-  # build_and_test_windows:
-  #   # if: ${{ github.event_name == 'workflow_dispatch' }}
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: [windows-2022, windows-2025]
-  #       arch:
-  #         - { mingw: "64", msys: x86_64, python: "x64" }
-  #       python_version:
-  #         # - '3.7' # this does work, but do we bother with such an old version?
-  #         - '3.10'
-  #         - '3.11'
-  #         - '3.12'
-  #         - '3.13'
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         submodules: true
-  #     - name: Setup python
-  #       uses: actions/setup-python@v2.2.2
-  #       with:
-  #         python-version: ${{ matrix.python_version }}
-  #         architecture: ${{ matrix.arch.python }}
-  #     - uses: msys2/setup-msys2@v2
-  #       with:
-  #         msystem: MINGW${{ matrix.arch.mingw }}
-  #         update: true
-  #         release: false
-  #         install: >
-  #           git 
-  #           mingw-w64-${{ matrix.arch.msys }}-toolchain 
-  #           mingw-w64-${{ matrix.arch.msys }}-cmake 
-  #           mingw-w64-${{ matrix.arch.msys }}-openssl 
-  #           mingw-w64-${{ matrix.arch.msys }}-python-pip
-  #           mingw-w64-${{ matrix.arch.msys }}-python-pytest
-  #     - name: Add mingw${{ matrix.arch.mingw }} to PATH
-  #       run: |
-  #         # First make sure python would resolve to the windows native python, not mingw one
-  #         echo "C:\msys64\mingw${{ matrix.arch.mingw }}\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-  #         echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-  #     - name: Print OpenSSL version
-  #       shell: msys2 {0}
-  #       run: |
-  #         openssl version -a
-  #     - uses: Vampire/setup-wsl@v5
-  #       with:
-  #         distribution: Ubuntu-24.04
-  #     - name: Set Memgraph Version
-  #       shell: bash -l {0}
-  #       run: |
-  #         mgversion=$(
-  #             curl -s https://api.github.com/repos/memgraph/memgraph/releases/latest \
-  #             | grep -m1 '"tag_name":' \
-  #             | sed -E 's/.*"([^"]+)".*/\1/' \
-  #             | sed 's/^v//'
-  #         )
-  #         echo "MGVERSION=$mgversion" >> $GITHUB_ENV
-  #     - name: Download, install and run Memgraph under WSL
-  #       shell: wsl-bash {0} # root shell
-  #       run: |
-  #         mkdir ~/memgraph
-  #         curl -L https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/ubuntu-24.04/memgraph_${{ env.MGVERSION }}-1_amd64.deb --output ~/memgraph/memgraph.deb
-  #         dpkg -i ~/memgraph/memgraph.deb
-  #         openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
-  #         nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-recover-on-startup=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
-  #         sleep 1 # Wait for Memgraph a bit.
-  #     - run: python -m pip install -U pip wheel setuptools pytest pyopenssl
-  #     - name: Build pymgclient
-  #       shell: msys2 {0}
-  #       run: |
-  #         python -m pip install setuptools
-  #         python setup.py build_ext --static-openssl=False bdist_wheel
-  #     - name: Install pymgclient
-  #       shell: msys2 {0}
-  #       run: python -m pip install --verbose dist/*.whl
-  #       env:
-  #         VERBOSE: 1
-  #     - name: Run tests
-  #       shell: msys2 {0}
-  #       run: |
-  #         python3 -m pytest -v
-  #       env:
-  #         MEMGRAPH_HOST: "localhost"
-  #         MEMGRAPH_STARTED_WITH_SSL:
-  #     - name: Save wheel package
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: pymgclient-win${{ matrix.arch.mingw }}-${{ matrix.python_version }}
-  #         path: dist/
 
   build_macos:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    #if: ${{ github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:
         platform: [macos-15, macos-14]
         python_version:
           #- '3.9' # this does work, but is old
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
+         # - '3.10'
+         # - '3.11'
+         # - '3.12'
+         # - '3.13'
         include:
           - {platform: [self-hosted, macos-12, ARM64], python_version: '3.13'}
-        #   - {platform: [macOS-15, ARM64, self-hosted], python_version: '3.13'}
-        #   - {platform: [macOS-15, ARM64, self-hosted], python_version: '3.9'}
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2

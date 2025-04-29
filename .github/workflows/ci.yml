@@ -209,12 +209,18 @@ jobs:
       - name: Build pymgclient Wheel
         shell: msys2 {0}
         run: |
+          export PATH="$(cygpath -u "$pythonLocation"):$PATH"
           python setup.py build_ext --static-openssl=False bdist_wheel
+        env:
+          pythonLocation: ${{ env.pythonLocation }}
 
       - name: Install built wheel
         shell: msys2 {0}
         run: |
+          export PATH="$(cygpath -u "$pythonLocation"):$PATH"
           python -m pip install dist/*.whl
+        env:
+          pythonLocation: ${{ env.pythonLocation }}
 
       - name: Setup WSL Ubuntu
         uses: Vampire/setup-wsl@v5
@@ -247,9 +253,12 @@ jobs:
       - name: Run Tests
         shell: msys2 {0}
         run: |
+          export PATH="$(cygpath -u "$pythonLocation"):$PATH"
           python -m pytest -v
         env:
+          pythonLocation: ${{ env.pythonLocation }}
           MEMGRAPH_HOST: localhost
+      
 
       - name: Upload Wheel Artifact
         uses: actions/upload-artifact@v4

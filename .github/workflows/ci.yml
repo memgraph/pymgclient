@@ -367,23 +367,23 @@ jobs:
       #     python -m pytest -v
       #   env:
       #     MEMGRAPH_HOST: localhost
-      - name: Copy required DLLs from MSYS2 to Python site-packages
-        shell: msys2 {0}
-        run: |
-          set -e
-          PY_SITE_PACKAGES=$(cygpath -u "$pythonLocation")/Lib/site-packages
+      # - name: Copy required DLLs from MSYS2 to Python site-packages
+      #   shell: msys2 {0}
+      #   run: |
+      #     set -e
+      #     PY_SITE_PACKAGES=$(cygpath -u "$pythonLocation")/Lib/site-packages
       
-          for dll in libssl-3-x64.dll libcrypto-3-x64.dll; do
-            if [ -f /mingw64/bin/$dll ]; then
-              cp /mingw64/bin/$dll "$PY_SITE_PACKAGES"
-              echo "✅ Copied $dll to site-packages."
-            else
-              echo "❌ $dll not found in /mingw64/bin!"
-              exit 1
-            fi
-          done
-        env:
-          pythonLocation: ${{ env.pythonLocation }}
+      #     for dll in libssl-3-x64.dll libcrypto-3-x64.dll; do
+      #       if [ -f /mingw64/bin/$dll ]; then
+      #         cp /mingw64/bin/$dll "$PY_SITE_PACKAGES"
+      #         echo "✅ Copied $dll to site-packages."
+      #       else
+      #         echo "❌ $dll not found in /mingw64/bin!"
+      #         exit 1
+      #       fi
+      #     done
+      #   env:
+      #     pythonLocation: ${{ env.pythonLocation }}
   
       - name: Verify Memgraph is running under WSL
         shell: wsl-bash {0}

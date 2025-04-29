@@ -326,42 +326,40 @@ jobs:
           ps aux | grep memgraph
           cat ~/memgraph/memgraph.log || true
 
-      # - name: Wait for Memgraph to Start
-      #   run: Start-Sleep -Seconds 1
 
-      # - name: Ensure required DLLs are available
-      #   shell: pwsh
-      #   run: |
-      #     $ErrorActionPreference = "Stop"
+      - name: Ensure required DLLs are available
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
       
-      #     # Paths
-      #     $mingwBin = "C:\msys64\mingw64\bin"
-      #     $pythonLib = "$env:pythonLocation\Lib\site-packages"
+          # Paths
+          $mingwBin = "C:\msys64\mingw64\bin"
+          $pythonLib = "$env:pythonLocation\Lib\site-packages"
       
-      #     # DLLs that mgclient depends on
-      #     $dlls = @(
-      #       "libssl-3-x64.dll",
-      #       "libcrypto-3-x64.dll"
-      #     )
+          # DLLs that mgclient depends on
+          $dlls = @(
+            "libssl-3-x64.dll",
+            "libcrypto-3-x64.dll"
+          )
       
-      #     # Copy DLLs from MSYS2 into Python site-packages if missing
-      #     foreach ($dll in $dlls) {
-      #       $destPath = Join-Path $pythonLib $dll
-      #       if (-Not (Test-Path $destPath)) {
-      #         $srcPath = Join-Path $mingwBin $dll
-      #         if (Test-Path $srcPath) {
-      #           Copy-Item $srcPath -Destination $destPath
-      #           Write-Host "✅ Copied $dll to site-packages."
-      #         } else {
-      #           Write-Host "❌ $dll not found in $mingwBin!"
-      #           exit 1
-      #         }
-      #       } else {
-      #         Write-Host "✅ $dll already present in site-packages."
-      #       }
-      #     }
+          # Copy DLLs from MSYS2 into Python site-packages if missing
+          foreach ($dll in $dlls) {
+            $destPath = Join-Path $pythonLib $dll
+            if (-Not (Test-Path $destPath)) {
+              $srcPath = Join-Path $mingwBin $dll
+              if (Test-Path $srcPath) {
+                Copy-Item $srcPath -Destination $destPath
+                Write-Host "✅ Copied $dll to site-packages."
+              } else {
+                Write-Host "❌ $dll not found in $mingwBin!"
+                exit 1
+              }
+            } else {
+              Write-Host "✅ $dll already present in site-packages."
+            }
+          }
       
-      #     # python311.dll should already be available from pythonLocation, no need to move
+          # python311.dll should already be available from pythonLocation, no need to move
       
 
       # - name: Run Tests

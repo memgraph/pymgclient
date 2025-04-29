@@ -247,28 +247,42 @@ jobs:
         shell: msys2 {0}
 
       - name: Check that required DLLs are in PATH
-        shell: pwsh
+        shell: msys2 {0}
         run: |
-          $dlls = @(
-            "libssl-3-x64.dll",
-            "libcrypto-3-x64.dll",
-            "python311.dll"
-          )
-      
-          foreach ($dll in $dlls) {
-            $found = $false
-            foreach ($dir in $env:Path.Split(";")) {
-              if (Test-Path (Join-Path $dir $dll)) {
-                Write-Host "✅ Found $dll in $dir"
-                $found = $true
-                break
-              }
-            }
-            if (-not $found) {
-              Write-Host "❌ Missing $dll"
+          export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
+          echo "🔎 Checking for required DLLs in PATH:"
+          for dll in libssl-3-x64.dll libcrypto-3-x64.dll python311.dll; do
+            if command -v $dll >/dev/null 2>&1 || find /mingw64/bin -iname $dll; then
+              echo "✅ Found $dll"
+            else
+              echo "❌ Missing $dll"
               exit 1
-            }
-          }
+            fi
+          done
+      
+      # - name: Check that required DLLs are in PATH
+      #   shell: pwsh
+      #   run: |
+      #     $dlls = @(
+      #       "libssl-3-x64.dll",
+      #       "libcrypto-3-x64.dll",
+      #       "python311.dll"
+      #     )
+      
+      #     foreach ($dll in $dlls) {
+      #       $found = $false
+      #       foreach ($dir in $env:Path.Split(";")) {
+      #         if (Test-Path (Join-Path $dir $dll)) {
+      #           Write-Host "✅ Found $dll in $dir"
+      #           $found = $true
+      #           break
+      #         }
+      #       }
+      #       if (-not $found) {
+      #         Write-Host "❌ Missing $dll"
+      #         exit 1
+      #       }
+      #     }
       
 
       - name: Setup WSL Ubuntu
@@ -300,47 +314,64 @@ jobs:
       - name: Wait for Memgraph to Start
         run: Start-Sleep -Seconds 10
 
-      - name: Ensure required DLLs are available
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
+      # - name: Ensure required DLLs are available
+      #   shell: pwsh
+      #   run: |
+      #     $ErrorActionPreference = "Stop"
       
-          # Paths
-          $mingwBin = "C:\msys64\mingw64\bin"
-          $pythonLib = "$env:pythonLocation\Lib\site-packages"
+      #     # Paths
+      #     $mingwBin = "C:\msys64\mingw64\bin"
+      #     $pythonLib = "$env:pythonLocation\Lib\site-packages"
       
-          # DLLs that mgclient depends on
-          $dlls = @(
-            "libssl-3-x64.dll",
-            "libcrypto-3-x64.dll"
-          )
+      #     # DLLs that mgclient depends on
+      #     $dlls = @(
+      #       "libssl-3-x64.dll",
+      #       "libcrypto-3-x64.dll"
+      #     )
       
-          # Copy DLLs from MSYS2 into Python site-packages if missing
-          foreach ($dll in $dlls) {
-            $destPath = Join-Path $pythonLib $dll
-            if (-Not (Test-Path $destPath)) {
-              $srcPath = Join-Path $mingwBin $dll
-              if (Test-Path $srcPath) {
-                Copy-Item $srcPath -Destination $destPath
-                Write-Host "✅ Copied $dll to site-packages."
-              } else {
-                Write-Host "❌ $dll not found in $mingwBin!"
-                exit 1
-              }
-            } else {
-              Write-Host "✅ $dll already present in site-packages."
-            }
-          }
+      #     # Copy DLLs from MSYS2 into Python site-packages if missing
+      #     foreach ($dll in $dlls) {
+      #       $destPath = Join-Path $pythonLib $dll
+      #       if (-Not (Test-Path $destPath)) {
+      #         $srcPath = Join-Path $mingwBin $dll
+      #         if (Test-Path $srcPath) {
+      #           Copy-Item $srcPath -Destination $destPath
+      #           Write-Host "✅ Copied $dll to site-packages."
+      #         } else {
+      #           Write-Host "❌ $dll not found in $mingwBin!"
+      #           exit 1
+      #         }
+      #       } else {
+      #         Write-Host "✅ $dll already present in site-packages."
+      #       }
+      #     }
       
-          # python311.dll should already be available from pythonLocation, no need to move
+      #     # python311.dll should already be available from pythonLocation, no need to move
       
 
-      - name: Run Tests
+      # - name: Run Tests
+      #   run: |
+      #     $env:Path = "C:\msys64\mingw64\bin;$env:Path"
+      #     python -m pytest -v
+      #   env:
+      #     MEMGRAPH_HOST: localhost
+      - name: Copy required DLLs from MSYS2 to Python site-packages
+        shell: msys2 {0}
         run: |
-          $env:Path = "C:\msys64\mingw64\bin;$env:Path"
-          python -m pytest -v
+          set -e
+          PY_SITE_PACKAGES=$(cygpath -u "$pythonLocation")/Lib/site-packages
+      
+          for dll in libssl-3-x64.dll libcrypto-3-x64.dll; do
+            if [ -f /mingw64/bin/$dll ]; then
+              cp /mingw64/bin/$dll "$PY_SITE_PACKAGES"
+              echo "✅ Copied $dll to site-packages."
+            else
+              echo "❌ $dll not found in /mingw64/bin!"
+              exit 1
+            fi
+          done
         env:
-          MEMGRAPH_HOST: localhost
+          pythonLocation: ${{ env.pythonLocation }}
       
 
       - name: Run Tests

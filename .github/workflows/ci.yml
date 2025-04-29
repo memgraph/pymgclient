@@ -535,7 +535,8 @@ jobs:
           - '3.11'
           - '3.12'
           - '3.13'
-        # include:
+        include:
+          - {platform: [self-hosted, macos-12, ARM64], python_version: '3.13'}
         #   - {platform: [macOS-15, ARM64, self-hosted], python_version: '3.13'}
         #   - {platform: [macOS-15, ARM64, self-hosted], python_version: '3.9'}
     runs-on: ${{ matrix.platform }}

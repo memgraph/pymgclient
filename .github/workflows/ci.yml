@@ -216,7 +216,7 @@ jobs:
         shell: msys2 {0}
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python setup.py bdist_wheel --static-openssl=False
+          python setup.py build_ext --static-openssl=False bdist_wheel
         env:
           pythonLocation: ${{ env.pythonLocation }}
 

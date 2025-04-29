@@ -426,20 +426,35 @@ jobs:
         run: |
           brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
           python${{ matrix.python_version }} --version
+      - name: Create Virtual Env
+        run: |
+          python${{ matrix.python_version }} -m venv env
+
       - name: Install pytest and pyopenssl
         run: |
           export PIP_BREAK_SYSTEM_PACKAGES=1
+          source env/bin/activate
           python${{ matrix.python_version }} -m pip install pyopenssl pytest setuptools
+
       - name: Build pymgclient
-        run: python${{ matrix.python_version }} setup.py sdist
+        run: |
+          source env/bin/activate
+          python${{ matrix.python_version }} setup.py sdist
+
       - name: Build pymgclient
-        run: python${{ matrix.python_version }} setup.py bdist_wheel
+        run: |
+          source env/bin/activate
+          python${{ matrix.python_version }} setup.py bdist_wheel
+
       - name: Install pymgclient
         run: |
           export PIP_BREAK_SYSTEM_PACKAGES=1
+          source env/bin/activate
           python${{ matrix.python_version }} -m pip install dist/*
       - name: Import mgclient to validate installation
-        run: python${{ matrix.python_version }} -c "import mgclient"
+        run: |
+          source env/bin/activate
+          python${{ matrix.python_version }} -c "import mgclient"
       - name: Save artifact name on x86 machines
         if: ${{ !contains(matrix.platform, 'ARM64') }}
         run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV
@@ -452,3 +467,8 @@ jobs:
         with:
           name: pymgclient-${{ env.OS_TYPE }}-${{ matrix.python_version }}
           path: dist/
+
+      - name: Cleanup
+        run: |
+          rm -fr dist
+          rm -fr env

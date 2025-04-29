@@ -60,9 +60,10 @@ pymgclient can be installed from source on:
 * all platforms that have prebuilt binaries
 * on various Linux distributions, including:
 
-  * Ubuntu 18.04+
-  * Debian 10+
-  * CentOS 8+
+  * Ubuntu 22.04+
+  * Debian 11+
+  * Centos 9+
+  * Fedora 41+
 
 *******************
 Build prerequisites
@@ -71,8 +72,8 @@ Build prerequisites
 pymgclient is a C wrapper around the `mgclient`_ Memgraph client library. To
 build it from you will need:
 
-* Python 3.7 or newer
-* Python 3.7 or newer header files
+* Python 3.7 (3.9 for Mac OS) or newer
+* Python 3.7 (3.9 for Mac OS) or newer header files
 * A C compiler supporting C11 standard
 * A C++ compiler (it is not used directly, but necessary for CMake to work)
 * Preqrequisites of `mgclient`_:
@@ -88,9 +89,9 @@ First install the prerequisites:
 * On Debian/Ubuntu::
 
   $ sudo apt install python3-dev cmake make gcc g++ libssl-dev
-* On CentOS::
+* On CentOS/Fedora::
 
-  $ sudo yum install -y python3-devel cmake3 make gcc gcc-c++ openssl-devel
+  $ sudo dnf install -y python3-devel cmake3 make gcc gcc-c++ openssl-devel
 
 After the prerequisites are installed pymgclient can be installed via pip::
 

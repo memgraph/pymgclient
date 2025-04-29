@@ -6,13 +6,12 @@ concurrency:
 on:
   pull_request:
   workflow_dispatch:
-#  schedule:
-#    - cron: "0 1 * * *"
+  schedule:
+    - cron: "0 0 * * 0"
 
 
 jobs:
   build_and_test_linux:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
     name: "Build and test on Linux 👍"
     strategy:
       fail-fast: false
@@ -168,7 +167,6 @@ jobs:
 
 
   build_and_test_windows:
-    #if: ${{ github.event_name == 'workflow_dispatch' }}
     name: Build and Test on Windows
     runs-on: ${{ matrix.os }}
     strategy:
@@ -207,13 +205,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
-              
-      # - name: Debug Find OpenSSL DLLs
-      #   shell: msys2 {0}
-      #   run: |
-      #     find /mingw64/bin -iname "*ssl*.dll"
-      #     find /mingw64/bin -iname "*crypto*.dll"
-
       - name: Add Windows Python to PATH
         shell: msys2 {0}
         run: |
@@ -229,29 +220,6 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel pyopenssl pytest
         env:
           pythonLocation: ${{ env.pythonLocation }}
-
-      # - name: Check that required DLLs are in PATH
-      #   shell: msys2 {0}
-      #   run: |
-      #     export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
-      #     pkg-config --libs --static libcrypto
-      #     echo "🔎 Checking for required DLLs in PATH:"
-      #     for dll in libssl-3-x64.dll libcrypto-3-x64.dll python311.dll; do
-      #       found=0
-      #       for dir in $(echo $PATH | tr ':' '\n'); do
-      #         if [ -f "$dir/$dll" ]; then
-      #           echo "✅ Found $dll in $dir"
-      #           found=1
-      #           break
-      #         fi
-      #       done
-      #       if [ "$found" -eq 0 ]; then
-      #         echo "❌ Missing $dll!"
-      #         exit 1
-      #       fi
-      #     done
-      #   env:
-      #     pythonLocation: ${{ env.pythonLocation }}
           
       - name: Build pymgclient Wheel
         shell: msys2 {0}
@@ -268,20 +236,6 @@ jobs:
           python -m pip install dist/*.whl
         env:
           pythonLocation: ${{ env.pythonLocation }}
-    
-      # - name: Check mgclient.pyd DLL Dependencies (MSYS2)
-      #   run: |
-      #     mgclient_path=$(find $pythonLocation -name "mgclient.cp*.pyd" | head -n1)
-      #     if [ -z "$mgclient_path" ]; then
-      #       echo "mgclient.pyd not found!"
-      #       exit 1
-      #     fi
-      #     echo "Found: $mgclient_path"
-      #     objdump -p "$mgclient_path" | grep 'DLL Name'
-      #   shell: msys2 {0}
-
-
-      
 
       - name: Setup WSL Ubuntu
         uses: Vampire/setup-wsl@v5
@@ -316,54 +270,6 @@ jobs:
           ps aux | grep memgraph
           
 
-      # - name: Copy required DLLs from MSYS2 to Python site-packages
-      #   shell: msys2 {0}
-      #   run: |
-      #     set -e
-      #     PY_SITE_PACKAGES=$(cygpath -u "$pythonLocation")/Lib/site-packages
-      
-      #     for dll in libssl-3-x64.dll libcrypto-3-x64.dll; do
-      #       if [ -f /mingw64/bin/$dll ]; then
-      #         cp /mingw64/bin/$dll "$PY_SITE_PACKAGES"
-      #         echo "✅ Copied $dll to site-packages."
-      #       else
-      #         echo "❌ $dll not found in /mingw64/bin!"
-      #         exit 1
-      #       fi
-      #     done
-      #   env:
-      #     pythonLocation: ${{ env.pythonLocation }}
-  
-      # - name: Verify Memgraph is running under WSL
-      #   shell: wsl-bash {0}
-      #   run: |
-      #     # process
-      #     ps aux | grep memgraph
-      #     if ! pgrep -f /usr/lib/memgraph/memgraph; then
-      #       echo "❌ Memgraph not running" >&2
-      #       cat $HOME/memgraph/memgraph.log || true
-      #       exit 1
-      #     fi
-      #     echo "✅ Memgraph check passed"
-
-      #     echo "🔍 Checking if port 7687 is open..."
-      #     if command -v ss >/dev/null 2>&1; then
-      #       ss -tln | grep ':7687' || (echo "❌ Port 7687 not open!" && exit 1)
-      #     elif command -v netstat >/dev/null 2>&1; then
-      #       netstat -an | grep ':7687' || (echo "❌ Port 7687 not open!" && exit 1)
-      #     else
-      #       echo "⚠️  Warning: Neither ss nor netstat is available to check ports."
-      #       exit 1
-      #     fi
-      #     echo "✅ Memgraph port 7687 is open."
-          
-      # - name: Verify Memgraph is reachable from Windows (MSYS2)
-      #   shell: msys2 {0}
-      #   run: |
-      #     echo "🔍 Checking connection to Memgraph from MSYS2 shell..."
-      #     timeout 3 bash -c "</dev/tcp/localhost/7687" && echo "✅ Memgraph is reachable on port 7687." || (echo "❌ Cannot connect to Memgraph on localhost:7687!" && exit 1)
-
-            
       - name: Run Tests
         shell: msys2 {0}
         run: |
@@ -383,16 +289,9 @@ jobs:
           name: pymgclient-win-${{ matrix.os }}-py${{ matrix.python-version }}
           path: dist/
 
-      # - name: Print Log
-      #   shell: wsl-bash {0}
-      #   if: always()
-      #   run: |
-      #     cat $HOME/memgraph/memgraph.log || true
-
 
 
   build_macos:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
     name: Build and test on MacOS
     strategy:
       fail-fast: false
@@ -438,11 +337,6 @@ jobs:
           export PIP_BREAK_SYSTEM_PACKAGES=1
           source env/bin/activate
           python${{ matrix.python_version }} -m pip install pyopenssl pytest setuptools
-
-      # - name: Build pymgclient
-      #   run: |
-      #     source env/bin/activate
-      #     python${{ matrix.python_version }} setup.py sdist
 
       - name: Build pymgclient
         run: |

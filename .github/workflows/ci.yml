@@ -313,7 +313,7 @@ jobs:
       - name: Install and Run Memgraph in WSL
         shell: wsl-bash {0}
         run: |
-          mkdir ~/memgraph
+          mkdir -p ~/memgraph/data
           sudo apt update
           sudo apt install -y curl
           curl -L https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/ubuntu-24.04/memgraph_${{ env.MGVERSION }}-1_amd64.deb -o memgraph.deb

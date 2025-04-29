@@ -384,7 +384,16 @@ jobs:
           done
         env:
           pythonLocation: ${{ env.pythonLocation }}
-      
+  
+      - name: Verify Memgraph is running under WSL
+        shell: wsl-bash {0}
+        run: |
+          # process
+          if ! pgrep -x memgraph; then
+            echo "❌ Memgraph not running" >&2
+            exit 1
+          fi
+          echo "✅ Memgraph check passed"
 
       - name: Run Tests
         shell: msys2 {0}

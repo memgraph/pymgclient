@@ -371,7 +371,7 @@ jobs:
         env:
           pythonLocation: ${{ env.pythonLocation }}
           MEMGRAPH_HOST: localhost
-          MEMGRAPH_STARTED_WITH_SSL:
+          MEMGRAPH_STARTED_WITH_SSL: "false"
       
 
       - name: Upload Wheel Artifact

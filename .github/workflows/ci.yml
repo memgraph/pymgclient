@@ -342,11 +342,11 @@ jobs:
       #     fi
       #     echo "✅ Memgraph port 7687 is open."
           
-      - name: Verify Memgraph is reachable from Windows (MSYS2)
-        shell: msys2 {0}
-        run: |
-          echo "🔍 Checking connection to Memgraph from MSYS2 shell..."
-          timeout 3 bash -c "</dev/tcp/localhost/7687" && echo "✅ Memgraph is reachable on port 7687." || (echo "❌ Cannot connect to Memgraph on localhost:7687!" && exit 1)
+      # - name: Verify Memgraph is reachable from Windows (MSYS2)
+      #   shell: msys2 {0}
+      #   run: |
+      #     echo "🔍 Checking connection to Memgraph from MSYS2 shell..."
+      #     timeout 3 bash -c "</dev/tcp/localhost/7687" && echo "✅ Memgraph is reachable on port 7687." || (echo "❌ Cannot connect to Memgraph on localhost:7687!" && exit 1)
 
             
       - name: Run Tests
@@ -367,11 +367,11 @@ jobs:
           name: pymgclient-win-${{ matrix.os }}-py${{ matrix.python-version }}
           path: dist/
 
-      - name: Print Log
-        shell: wsl-bash {0}
-        if: always()
-        run: |
-          cat $HOME/memgraph/memgraph.log || true
+      # - name: Print Log
+      #   shell: wsl-bash {0}
+      #   if: always()
+      #   run: |
+      #     cat $HOME/memgraph/memgraph.log || true
 
 
 

@@ -305,7 +305,7 @@ setup(
         "Operating System :: Microsoft :: Windows",
     ],
     ext_modules=[
-        Extension(EXTENSION_NAME, sources=sources, depends=headers, libraries=["ssl", "crypto", "crypt32", "ws2_32"])
+        Extension(EXTENSION_NAME, sources=sources, depends=headers)
     ],
     project_urls={
         "Source": "https://github.com/memgraph/pymgclient",

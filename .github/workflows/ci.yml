@@ -252,13 +252,22 @@ jobs:
           export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
           echo "🔎 Checking for required DLLs in PATH:"
           for dll in libssl-3-x64.dll libcrypto-3-x64.dll python311.dll; do
-            if command -v $dll >/dev/null 2>&1 || find /mingw64/bin -iname $dll; then
-              echo "✅ Found $dll"
-            else
-              echo "❌ Missing $dll"
+            found=0
+            for dir in $(echo $PATH | tr ':' '\n'); do
+              if [ -f "$dir/$dll" ]; then
+                echo "✅ Found $dll in $dir"
+                found=1
+                break
+              fi
+            done
+            if [ "$found" -eq 0 ]; then
+              echo "❌ Missing $dll!"
               exit 1
             fi
           done
+        env:
+          pythonLocation: ${{ env.pythonLocation }}
+      
       
       # - name: Check that required DLLs are in PATH
       #   shell: pwsh

@@ -354,7 +354,7 @@ jobs:
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
           cd ..
-          python -c "import mgbuild"
+          python -c "import mgclient"
           python -m pytest -v
 
         env:

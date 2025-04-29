@@ -436,10 +436,10 @@ jobs:
           source env/bin/activate
           python${{ matrix.python_version }} -m pip install pyopenssl pytest setuptools
 
-      - name: Build pymgclient
-        run: |
-          source env/bin/activate
-          python${{ matrix.python_version }} setup.py sdist
+      # - name: Build pymgclient
+      #   run: |
+      #     source env/bin/activate
+      #     python${{ matrix.python_version }} setup.py sdist
 
       - name: Build pymgclient
         run: |

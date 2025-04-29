@@ -12,7 +12,7 @@ on:
 
 jobs:
   build_and_test_linux:
-    #if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     name: "Build and test on Linux 👍"
     strategy:
       fail-fast: false
@@ -369,7 +369,7 @@ jobs:
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
           echo $PATH
-          python -m pytest -v --ignore=memgraph
+          python -m pytest -v --norecursedirs=memgraph
 
         env:
           pythonLocation: ${{ env.pythonLocation }}
@@ -392,7 +392,7 @@ jobs:
 
 
   build_macos:
-    #if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     name: Build and test on MacOS
     strategy:
       fail-fast: false

@@ -12,7 +12,7 @@ on:
 
 jobs:
   build_and_test_linux:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    #if: ${{ github.event_name == 'workflow_dispatch' }}
     name: "Build and test on Linux 👍"
     strategy:
       fail-fast: false
@@ -168,7 +168,7 @@ jobs:
 
 
   build_and_test_windows:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    #if: ${{ github.event_name == 'workflow_dispatch' }}
     name: Build and Test on Windows
     runs-on: ${{ matrix.os }}
     strategy:
@@ -392,7 +392,7 @@ jobs:
 
 
   build_macos:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    #if: ${{ github.event_name == 'workflow_dispatch' }}
     name: Build and test on MacOS
     strategy:
       fail-fast: false

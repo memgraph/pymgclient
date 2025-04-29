@@ -244,8 +244,9 @@ jobs:
           sudo apt update
           sudo apt install -y curl
           curl -L https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/ubuntu-24.04/memgraph_${{ env.MGVERSION }}-1_amd64.deb -o memgraph.deb
+          sudo mkdir -p /etc/systemd/system && sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
           sudo apt install ./memgraph.deb
-          nohup sudo memgraph --bolt-port 7687 &
+          nohup sudo memgraph --bolt-port 7687 --telemetry-enabled=False &
 
       - name: Wait for Memgraph to Start
         run: Start-Sleep -Seconds 10

@@ -270,7 +270,16 @@ class BuildMgclientExt(build_ext):
         if finalize is not None:
             finalize(extension)
 
-
+if sys.platform == "win32":
+    extra_link_args = [
+        "-l:libssl.a",
+        "-l:libcrypto.a",
+        "-lcrypt32",
+        "-lws2_32"
+    ]
+else:
+    extra_link_args = None
+    
 setup(
     name="pymgclient",
     version=version,
@@ -305,13 +314,7 @@ setup(
         "Operating System :: Microsoft :: Windows",
     ],
     ext_modules=[
-        Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_link_args=[
-                "-l:libssl.a",
-                "-l:libcrypto.a",
-                "-lcrypt32",
-                "-lws2_32"
-            ],
-        )
+        Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_link_args=extra_link_args)
     ],
     project_urls={
         "Source": "https://github.com/memgraph/pymgclient",

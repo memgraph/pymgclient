@@ -232,10 +232,7 @@ class BuildMgclientExt(build_ext):
             "-DBUILD_TESTING=OFF",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             f'-DCMAKE_C_FLAGS="{self.get_cflags()}"',
-            f"-DOPENSSL_USE_STATIC_LIBS={'ON' if self.static_openssl else 'OFF'}",
-            "-DCMAKE_SHARED_LINKER_FLAGS=-lcrypt32 -lws2_32",
-            "-DCMAKE_EXE_LINKER_FLAGS=-lcrypt32 -lws2_32",
-            '-DCMAKE_FIND_LIBRARY_SUFFIXES=".a"'
+            f"-DOPENSSL_USE_STATIC_LIBS={'ON' if self.static_openssl else 'OFF'}"
         ]
 
         finalize_cmake_config_command = getattr(self, "finalize_cmake_config_command_" + sys.platform, None)
@@ -273,14 +270,6 @@ class BuildMgclientExt(build_ext):
             finalize(extension)
 
 
-def set_extra_compile_args():
-    args = ["-std=c99"]
-    if sys.platform.startswith("win") or "mingw" in platform.system().lower():
-        args += ["-Werror=all"]
-    return args
-
-print(f"ARGS: {set_extra_compile_args()} {sys.platform}")
-
 setup(
     name="pymgclient",
     version=version,
@@ -315,7 +304,7 @@ setup(
         "Operating System :: Microsoft :: Windows",
     ],
     ext_modules=[
-        Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_compile_args=set_extra_compile_args(), libraries=["ssl", "crypto", "crypt32", "ws2_32"])
+        Extension(EXTENSION_NAME, sources=sources, depends=headers, libraries=["ssl", "crypto", "crypt32", "ws2_32"])
     ],
     project_urls={
         "Source": "https://github.com/memgraph/pymgclient",

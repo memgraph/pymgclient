@@ -172,7 +172,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, windows-2025]
+        os: [windows-2022]
         python-version: ["3.11"]
 
     steps:
@@ -216,7 +216,7 @@ jobs:
         shell: msys2 {0}
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python setup.py bdist_wheel
+          python setup.py bdist_wheel --static-openssl=False
         env:
           pythonLocation: ${{ env.pythonLocation }}
 

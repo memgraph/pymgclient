@@ -102,7 +102,11 @@ echo "Linux Distro: $distro $version"
 
 # detect if we need sudo or not
 SUDO=()
-if [[ "$USER" != "root" ]]; then
+if (( EUID != 0 )); then
+  if ! command -v sudo &>/dev/null; then
+    echo "Error: root privileges or sudo required." >&2
+    exit 1
+  fi
   SUDO=(sudo)
 fi
 

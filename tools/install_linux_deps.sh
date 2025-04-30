@@ -101,9 +101,9 @@ fi
 echo "Linux Distro: $distro $version"
 
 # detect if we need sudo or not
-SUDO=""
+SUDO=()
 if [[ "$USER" != "root" ]]; then
-  SUDO="sudo"
+  SUDO=(sudo)
 fi
 
 DEB_DEPS=(
@@ -139,9 +139,9 @@ install_deb() {
       exit 1
     else
       echo "Adding deadsnakes PPA"
-      "$SUDO" apt-get update
-      "$SUDO" apt-get install -y software-properties-common 
-      "$SUDO" add-apt-repository -y ppa:deadsnakes/ppa
+      "${SUDO[@]}" apt-get update
+      "${SUDO[@]}" apt-get install -y software-properties-common 
+      "${SUDO[@]}" add-apt-repository -y ppa:deadsnakes/ppa
     fi
   fi
   if [[ ("$distro" == "ubuntu" && ${version#*.} -ge 24)  \
@@ -150,13 +150,13 @@ install_deb() {
   else
     DEB_DEPS+=( libcurl4 )
   fi
-  "$SUDO" apt-get update
-  "$SUDO" apt-get install -y ${DEB_DEPS[*]}
+  "${SUDO[@]}" apt-get update
+  "${SUDO[@]}" apt-get install -y ${DEB_DEPS[*]}
 }
 
 install_rpm() {
   echo "Installing RPM dependencies..."
-  "$SUDO" dnf install -y ${RPM_DEPS[*]}
+  "${SUDO[@]}" dnf install -y ${RPM_DEPS[*]}
 }
 
 case "$distro" in
@@ -174,5 +174,10 @@ esac
 
 # install python dependencies
 export PIP_BREAK_SYSTEM_PACKAGES=1
-"$python_binary" -m pip install --upgrade networkx pytest pyopenssl sphinx
-
+pkgs=( networkx pytest pyopenssl sphinx )
+for pkg in "${pkgs[@]}"; do
+  echo "Installing/upgrading $pkg..."
+  if ! "$python_binary" -m pip install --upgrade "$pkg"; then
+    echo "Warning: pip failed on $pkg, continuing…" >&2
+  fi
+done

@@ -8,7 +8,7 @@ set -euo pipefail
 
 # defaults
 python_version=""
-distro_arg=""
+distro=""
 
 usage() {
   cat <<EOF
@@ -40,8 +40,8 @@ while [[ $# -gt 0 ]]; do
       usage
       ;;
     *)    # first non-flag is our distro
-      if [[ -z "$distro_arg" ]]; then
-        distro_arg="$1"
+      if [[ -z "$distro" ]]; then
+        distro="$1"
         shift
       else
         echo "Unexpected argument: $1" >&2
@@ -83,7 +83,6 @@ if [[ $# -gt 1 ]]; then
   usage
 fi
 
-distro="${1-}"
 python_version="3.13"
 python_binary="python${python_version}"
 

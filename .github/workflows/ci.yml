@@ -98,7 +98,7 @@ jobs:
 
           # Install dependencies
           docker exec -i testcontainer \
-              bash -c "cd /pymgclient && ./tools/install_linux_deps.sh ${{ matrix.platform }} --python-version ${{ matrix.python_version }}"
+              bash -c "cd /pymgclient && ./tools/install_linux_deps.sh ${{ matrix.platform }} --python-version ${{ matrix.python_version }} --force-update"
 
           # Install Memgraph package
           if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then

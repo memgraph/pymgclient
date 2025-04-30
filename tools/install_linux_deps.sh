@@ -9,6 +9,7 @@ set -euo pipefail
 # defaults
 python_version=""
 distro=""
+force_update=false
 
 usage() {
   cat <<EOF
@@ -16,6 +17,7 @@ Usage: $0 [<distro>] [--python-version X.Y]
   <distro>               Optional distro tag, e.g. ubuntu-24.04, fedora-42
   --python-version X.Y   Optional Python MAJOR.MINOR (e.g. 3.12).
                          Defaults to system python3's MAJOR.MINOR.
+  --force-update         Force python packages to be updated
 EOF
   exit 1
 }
@@ -31,6 +33,10 @@ while [[ $# -gt 0 ]]; do
       fi
       python_version="$2"
       shift 2
+      ;;
+    --force-update)
+      force_update=true
+      shift 1
       ;;
     -h|--help)
       usage
@@ -176,10 +182,14 @@ esac
 
 # install python dependencies
 export PIP_BREAK_SYSTEM_PACKAGES=1
-pkgs=(networkx pytest pyopenssl sphinx )
-for pkg in "${pkgs[@]}"; do
-  echo "Installing/upgrading $pkg..."
-  if ! "$python_binary" -m pip install --upgrade "$pkg"; then
-    echo "Warning: pip failed on $pkg, continuing…" >&2
-  fi
-done 
+pkgs=(networkx pytest pyopenssl sphinx setuptools wheel)
+if [[ $force_update == true ]]; then
+  "$python_binary" -m pip install --upgrade --ignore-installed ${pkgs[@]}
+else
+  for pkg in "${pkgs[@]}"; do
+    echo "Installing/upgrading $pkg..."
+    if ! "$python_binary" -m pip install --upgrade "$pkg"; then
+      echo "Warning: pip failed on $pkg, continuing…" >&2
+    fi
+  done 
+fi

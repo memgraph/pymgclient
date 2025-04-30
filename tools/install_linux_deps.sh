@@ -109,6 +109,7 @@ fi
 
 DEB_DEPS=(
   python${python_version}
+  python${python_version}-dev
   python3-pip
   python3-setuptools
   python3-wheel
@@ -175,10 +176,10 @@ esac
 
 # install python dependencies
 export PIP_BREAK_SYSTEM_PACKAGES=1
-pkgs=( networkx pytest pyopenssl sphinx )
+pkgs=(networkx pytest pyopenssl sphinx )
 for pkg in "${pkgs[@]}"; do
   echo "Installing/upgrading $pkg..."
   if ! "$python_binary" -m pip install --upgrade "$pkg"; then
     echo "Warning: pip failed on $pkg, continuing…" >&2
   fi
-done
+done 

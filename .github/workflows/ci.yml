@@ -250,7 +250,7 @@ jobs:
           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
           
       - name: Wait for Memgraph 
-        shell: msys2 {0}
+        shell: bash -l {0}
         run: |
           bash ./tools/wait_for_memgraph.sh localhost
       

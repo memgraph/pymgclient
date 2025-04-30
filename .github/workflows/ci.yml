@@ -114,24 +114,24 @@ jobs:
       - name: Build Python Wheel
         run: |
           docker exec -i testcontainer \
-            bash -c "cd /pymgclient && python3 setup.py ${{ env.STATIC_SSL }} bdist_wheel"
+            bash -c "cd /pymgclient && python${{ matrix.python_version }} setup.py ${{ env.STATIC_SSL }} bdist_wheel"
 
       - name: Install pymgclient
         run: |
           docker exec -i testcontainer \
-            bash -c "python3 -m pip install ./pymgclient/dist/pymgclient-* ${{ env.BREAK_PACKAGES }}"
+            bash -c "python${{ matrix.python_version }} -m pip install ./pymgclient/dist/pymgclient-* ${{ env.BREAK_PACKAGES }}"
 
       - name: Import mgclient to validate installation
         run: |
           docker exec -i testcontainer \
-            bash -c "python3 -c 'import mgclient'"
+            bash -c "python${{ matrix.python_version }} -c 'import mgclient'"
 
       - name: Run tests
         run: |
           MEMGRAPH_PORT=10000 # what's this for?
 
           docker exec -i testcontainer \
-            bash -c "cd /pymgclient && python3 -m pytest -v"
+            bash -c "cd /pymgclient && python${{ matrix.python_version }} -m pytest -v"
 
       - name: Build docs
         run: |

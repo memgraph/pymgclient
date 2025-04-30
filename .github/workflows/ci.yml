@@ -78,7 +78,8 @@ jobs:
             break_packages="--break-system-packages"
           elif [[ "${{ matrix.platform }}" == fedora* ]]; then
             # rpm distros do not ship with static lib for openssl
-            static_ssl="--no-build-isolation --global-option=build_ext --global-option '--static-openssl=False'"
+            #static_ssl="--no-build-isolation --global-option=build_ext --global-option '--static-openssl=False'"
+            static_ssl="build_ext --static-openssl=False"
           fi
           echo "BREAK_PACKAGES=$break_packages" >> $GITHUB_ENV
           echo "STATIC_SSL=$static_ssl" >> $GITHUB_ENV
@@ -110,15 +111,15 @@ jobs:
           rm -v $LOCAL_PACKAGE_NAME
       
           
-      - name: Build source distribution
+      - name: Build Python Wheel
         run: |
           docker exec -i testcontainer \
-            bash -c "cd /pymgclient && python3 setup.py sdist"
+            bash -c "cd /pymgclient && python3 setup.py ${{ env.STATIC_SSL }} bdist_wheel"
 
       - name: Install pymgclient
         run: |
           docker exec -i testcontainer \
-            bash -c "python3 -m pip install ${{ env.STATIC_SSL }} ./pymgclient/dist/pymgclient-* ${{ env.BREAK_PACKAGES }}"
+            bash -c "python3 -m pip install ./pymgclient/dist/pymgclient-* ${{ env.BREAK_PACKAGES }}"
 
       - name: Import mgclient to validate installation
         run: |
@@ -157,6 +158,7 @@ jobs:
 
   build_and_test_windows:
     name: Build and Test on Windows
+    if: ${{ github.event_name == 'matt' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -281,6 +283,7 @@ jobs:
 
 
   build_macos:
+    if: ${{ github.event_name == 'matt' }}
     name: Build and test on MacOS
     strategy:
       fail-fast: false

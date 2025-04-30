@@ -255,8 +255,6 @@ jobs:
           sudo apt install ./memgraph.deb
           openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
-          # nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="" --bolt-key-file="" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --data-recovery-on-startup=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-level=TRACE --log-file='$HOME/memgraph/memgraph.log' &
-          # nohup /usr/lib/memgraph/memgraph --telemetry-enabled=False &
           sleep 1
           ps aux | grep memgraph
           

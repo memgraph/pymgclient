@@ -136,7 +136,7 @@ RPM_DEPS=(
 
 install_deb() {
   echo "Installing DEB dependencies..."
-  installed_python_version="$(python3 --version | grep -Po '(?<=Python )\d+\.\d+')"
+  installed_python_version="$(( python3 --version 2>&1 || echo ) | grep -Po '(?<=Python )\d+\.\d+' || true)"
   if [[ "$python_version" != "$installed_python_version" ]]; then
     echo "Installed Python version ${installed_python_version} does not match requested version ${python_version}"
     if [[ "$distro" == "debian" ]]; then

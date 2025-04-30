@@ -122,10 +122,10 @@ DEB_DEPS=(
 
 RPM_DEPS=(
   python${python_version}
+  python${python_version}-devel
   python3-pip
   python3-setuptools
   python3-wheel
-  python3-devel
   cmake
   g++
   openssl-devel

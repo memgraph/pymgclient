@@ -127,7 +127,7 @@ RPM_DEPS=(
   python3-devel
   cmake
   g++
-  libssl-dev
+  openssl-devel
   nmap-ncat
 )
 

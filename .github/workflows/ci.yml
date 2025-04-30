@@ -181,6 +181,7 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-make
             mingw-w64-x86_64-openssl
+            inetutils
       
       - name: Add MSYS2 mingw64/bin to PATH
         shell: msys2 {0}
@@ -250,7 +251,7 @@ jobs:
           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
           
       - name: Wait for Memgraph 
-        shell: bash -l {0}
+        shell: msys2 {0}
         run: |
           bash ./tools/wait_for_memgraph.sh localhost
       

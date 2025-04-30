@@ -34,8 +34,7 @@ jobs:
       - name: Set Memgraph Version
         run: |
           if [[ "${{ matrix.mgversion }}" == "latest" ]]; then
-            mgversion=$(curl -s https://api.github.com/repos/memgraph/memgraph/releases/latest | jq -r .tag_name)
-            mgversion=${mgversion#v}
+            mgversion=$(./tools/get_memgraph_version.sh)
           else
             mgversion="${{ matrix.mgversion }}"
           fi
@@ -236,12 +235,7 @@ jobs:
       - name: Set Memgraph Version
         shell: bash -l {0}
         run: |
-          mgversion=$(
-              curl -s https://api.github.com/repos/memgraph/memgraph/releases/latest \
-              | grep -m1 '"tag_name":' \
-              | sed -E 's/.*"([^"]+)".*/\1/' \
-              | sed 's/^v//'
-          )
+          mgversion=$(./tools/get_memgraph_version.sh)
           echo "MGVERSION=$mgversion" >> $GITHUB_ENV
 
       - name: Install and Run Memgraph in WSL

@@ -157,7 +157,6 @@ jobs:
 
   build_and_test_windows:
     name: Build and Test on Windows
-    if: ${{ github.event_name == 'matt' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -276,7 +275,6 @@ jobs:
 
 
   build_macos:
-    if: ${{ github.event_name == 'matt' }}
     name: Build and test on MacOS
     strategy:
       fail-fast: false

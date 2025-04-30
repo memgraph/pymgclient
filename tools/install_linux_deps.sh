@@ -83,9 +83,6 @@ if [[ $# -gt 1 ]]; then
   usage
 fi
 
-python_version="3.13"
-python_binary="python${python_version}"
-
 # If distro not provided, detect it
 if [[ -z "$distro" ]]; then
   read distro version < <(detect_distro)

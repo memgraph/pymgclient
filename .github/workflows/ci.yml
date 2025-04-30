@@ -83,43 +83,32 @@ jobs:
           echo "BREAK_PACKAGES=$break_packages" >> $GITHUB_ENV
           echo "STATIC_SSL=$static_ssl" >> $GITHUB_ENV
 
+      - name: Copy Repo Into Container
+        run: |
+          docker cp . testcontainer:/pymgclient
+
       - name: Install system dependencies
         run: |
           docker cp $LOCAL_PACKAGE_NAME testcontainer:/$LOCAL_PACKAGE_NAME
+
+          # Prevents Memgraph from starting.
+          docker exec -i testcontainer \
+              bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service"  
+
+          # Install dependencies
+          docker exec -i testcontainer \
+              bash -c "cd /pymgclient && ./tools/install_linux_deps.sh ${{ matrix.platform }} --python-version ${{ matrix.python_version }}"
+
+          # Install Memgraph package
           if [[ "${{ matrix.platform }}" == "fedora-42" ]]; then
-            docker exec -i testcontainer \
-              bash -c "dnf install -y python${{ matrix.python_version }} python3-pip python3-setuptools python3-wheel python3-devel cmake g++ openssl-devel nmap-ncat"
-
-            docker exec -i testcontainer \
-              bash -c "pip3 install --upgrade networkx pytest pyopenssl sphinx"
-
-            docker exec -i testcontainer \
-              bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service"  # Prevents Memgraph from starting.
-
             docker exec -i testcontainer \
               bash -c "dnf install -y /$LOCAL_PACKAGE_NAME"
           else
-            if [[ "${{ matrix.platform }}" == "ubuntu-22.04" ]]; then
-              curl_package=libcurl4
-            else
-              curl_package=libcurl4t64
-            fi
-            docker exec -i testcontainer \
-              bash -c "apt update && apt install -y software-properties-common && add-apt-repository ppa:deadsnakes/ppa"
-            docker exec -i testcontainer \
-              bash -c "apt update && apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools $curl_package cmake libssl-dev netcat-traditional"
-            docker exec -i testcontainer \
-              bash -c "pip3 install --upgrade networkx pytest pyopenssl sphinx ${{ env.BREAK_PACKAGES }}"
-            docker exec -i testcontainer \
-              bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service" # Prevents Memgraph from starting.
             docker exec -i testcontainer \
               bash -c "dpkg -i /$LOCAL_PACKAGE_NAME"
           fi
           rm -v $LOCAL_PACKAGE_NAME
       
-      - name: Copy Repo Into Container
-        run: |
-          docker cp . testcontainer:/pymgclient
           
       - name: Build source distribution
         run: |

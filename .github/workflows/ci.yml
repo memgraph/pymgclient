@@ -49,11 +49,11 @@ jobs:
     name: Pull Request Tests
     uses: "./.github/workflows/reusable_buildtest.yml"
     with:
-      test_linux: false
-      test_windows: false
-      test_macintosh: false
+      test_linux: true
+      test_windows: true
+      test_macintosh: true
       build_source_dist: true
-      upload_artifacts: true
+      upload_artifacts: false
     secrets: inherit
 
   manual_test:

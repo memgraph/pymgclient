@@ -285,16 +285,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-15, macos-14]
-        python_version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
+        # platform: [macos-15, macos-14]
+        # python_version:
+        #   - '3.10'
+        #   - '3.11'
+        #   - '3.12'
+        #   - '3.13'
         include:
-          - {platform: [self-hosted, macos-12, ARM64], python_version: '3.10'}
-          - {platform: [self-hosted, macos-12, ARM64], python_version: '3.11'}
-          - {platform: [self-hosted, macos-12, ARM64], python_version: '3.12'}
+          # - {platform: [self-hosted, macos-12, ARM64], python_version: '3.10'}
+          # - {platform: [self-hosted, macos-12, ARM64], python_version: '3.11'}
+          # - {platform: [self-hosted, macos-12, ARM64], python_version: '3.12'}
           - {platform: [self-hosted, macos-12, ARM64], python_version: '3.13'}
     runs-on: ${{ matrix.platform }}
     steps:
@@ -343,6 +343,7 @@ jobs:
 
       - name: Run tests
         run: |
+          source env/bin/activate
           python${{ matrix.python_version }} -m pytest -v
 
       - name: Save artifact name on x86 machines

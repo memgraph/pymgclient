@@ -362,16 +362,19 @@ jobs:
           brew install python@${{ matrix.python_version }} openssl@1.1
           brew link --force --overwrite openssl@1.1
           openssl version -a
+
       - name: Manage OpenSSL 3 on ARM machines
         if: ${{ contains(matrix.platform, 'ARM64') }}
         run: |
           brew install openssl@3
           brew link --force --overwrite openssl@3
           openssl version -a
+
       - name: Make used python version default
         run: |
           brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
           python${{ matrix.python_version }} --version
+
       - name: Create Virtual Env
         run: |
           python${{ matrix.python_version }} -m venv env
@@ -392,6 +395,7 @@ jobs:
           export PIP_BREAK_SYSTEM_PACKAGES=1
           source env/bin/activate
           python${{ matrix.python_version }} -m pip install dist/*
+
       - name: Import mgclient to validate installation
         run: |
           source env/bin/activate
@@ -401,6 +405,6 @@ jobs:
         if: ${{ inputs.upload_artifacts }}
         uses: actions/upload-artifact@v4
         with:
-          name: pymgclient-${{ matrix.platform[0] }}-${{ matrix.python_version }}
+          name: pymgclient-${{ matrix.platform[0] || matrix.platform }}-${{ matrix.python_version }}
           path: dist/
 

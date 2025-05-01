@@ -97,6 +97,7 @@ if (( HAVE_MGCONSOLE )); then
   wait_for_memgraph "$HOST" "$PORT" "$TIMEOUT"
 else
   if [[ $timed_out == 1 ]]; then
+    echo "mgconsole not found"
     exit 1
   fi
   echo "Note: mgconsole not found; skipping memgraph-console check."

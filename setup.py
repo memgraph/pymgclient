@@ -233,6 +233,7 @@ class BuildMgclientExt(build_ext):
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             f'-DCMAKE_C_FLAGS="{self.get_cflags()}"',
             f"-DOPENSSL_USE_STATIC_LIBS={'ON' if self.static_openssl else 'OFF'}",
+            "-DPKG_CONFIG_USE_STATIC_LIBS=ON"
         ]
 
         finalize_cmake_config_command = getattr(self, "finalize_cmake_config_command_" + sys.platform, None)
@@ -269,7 +270,16 @@ class BuildMgclientExt(build_ext):
         if finalize is not None:
             finalize(extension)
 
-
+if sys.platform == "win32":
+    extra_link_args = [
+        "-l:libssl.a",
+        "-l:libcrypto.a",
+        "-lcrypt32",
+        "-lws2_32"
+    ]
+else:
+    extra_link_args = None
+    
 setup(
     name="pymgclient",
     version=version,
@@ -278,7 +288,7 @@ setup(
     author="Marin Tomic",
     author_email="marin.tomic@memgraph.com",
     license="Apache2",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     description="Memgraph database adapter for Python language",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -287,11 +297,13 @@ setup(
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Database",
         "Topic :: Database :: Front-Ends",
@@ -302,11 +314,15 @@ setup(
         "Operating System :: Microsoft :: Windows",
     ],
     ext_modules=[
-        Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_compile_args=["-Werror=all", "-std=c99"])
+        Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_link_args=extra_link_args)
     ],
     project_urls={
         "Source": "https://github.com/memgraph/pymgclient",
         "Documentation": "https://memgraph.github.io/pymgclient",
     },
     cmdclass={"build_ext": BuildMgclientExt},
+    install_requires=[
+        "pyopenssl",
+        "networkx"
+    ]
 )

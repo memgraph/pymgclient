@@ -1,18 +1,17 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Introduction &#8212; pymgclient 1.2.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <title>Introduction &#8212; pymgclient 1.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=bb516dca"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Basic module usage" href="usage.html" />
@@ -20,8 +19,9 @@
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   
@@ -34,28 +34,40 @@
           <div class="body" role="main">
             
   <section id="introduction">
-<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
-<p>pymgclient is a <a class="reference external" href="https://memgraph.com/">Memgraph</a> database adapter for
-Python language compliant with the DB-API 2.0 specification described by
-<span class="target" id="index-0"></span><a class="pep reference external" href="https://www.python.org/dev/peps/pep-0249"><strong>PEP 249</strong></a>.</p>
+<h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h1>
+<p>pymgclient is a <a class="reference external" href="https://memgraph.com/">Memgraph</a> database adapter for Python
+language compliant with the DB-API 2.0 specification described by <span class="target" id="index-0"></span><a class="pep reference external" href="https://peps.python.org/pep-0249/"><strong>PEP 249</strong></a>.</p>
 <p><a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> module is the current implementation of the adapter. It is
 implemented in C as a wrapper around <a class="reference external" href="https://github.com/memgraph/mgclient">mgclient</a>, the official Memgraph client
 library. As a C extension, it is only compatible with CPython implementation of
 the Python programming language.</p>
 <p><a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> only works with Python 3.</p>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<p>pymgclient has prebuilt binary packages for</p>
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>pymgclient has prebuilt binary packages for <a href="#id1"><span class="problematic" id="id2">`</span></a>Python</dt><dd><p>&lt;<a class="reference external" href="https://www.python.org/downloads/">https://www.python.org/downloads/</a>&gt;`_ 3.10 - 3.13 on</p>
+</dd>
+</dl>
 <ul class="simple">
-<li><p>macOS Catalina (version 10.15) and newer on x86_64 with <a class="reference external" href="https://www.python.org/downloads/">Python</a> 3.7+</p></li>
-<li><p>macOS Monterey (version 12) and newer on arm64 with <a class="reference external" href="https://www.python.org/downloads/">Python</a> 3.7+</p></li>
-<li><p>Windows 10 x86_64 with <a class="reference external" href="https://www.python.org/downloads/">Python</a> 3.7+</p></li>
+<li><p>Linux amd64</p></li>
+<li><p>macOS 12 (Montery), 14 (Sonoma) and 15 (Sequoia) on arm64</p></li>
+<li><p>Windows x86_64</p></li>
 </ul>
-<p>To intall pymgclient binaries on these platforms see <a class="reference internal" href="#install-binaries">Install binaries</a>
-section or check <a class="reference internal" href="#install-from-source">Install from source</a> for other platforms.</p>
+<p>To install pymgclient binaries on these platforms see <a class="reference internal" href="#install-binaries">Install binaries</a> section.
+A source distribution is also provided for other distributions and can be installed
+using <code class="docutils literal notranslate"><span class="pre">pip</span></code> after installing <a class="reference internal" href="#build-prerequisites">Build prerequisites</a>; alternatively -
+see <a class="reference internal" href="#install-from-source">Install from source</a>.</p>
 <section id="install-binaries">
-<h3>Install binaries<a class="headerlink" href="#install-binaries" title="Permalink to this headline">¶</a></h3>
-<p>On macOS run:</p>
+<h3>Install binaries<a class="headerlink" href="#install-binaries" title="Link to this heading">¶</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>All of the binary packages are statically linked against OpenSSL, that means the
+version of OpenSSL they are using is fixed. If security is important for you,
+you should check how to build pymgclient with dynamically linked OpenSSL, so
+pymgclient can use the latest version of OpenSSL that is installed on your
+machine.</p>
+</div>
+<p>On Linux and macOS run:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip3 install --user pymgclient
 </pre></div>
 </div>
@@ -63,42 +75,47 @@ section or check <a class="reference internal" href="#install-from-source">Insta
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ py -3 -m pip install --user pymgclient
 </pre></div>
 </div>
-<p>Alternatively on Windows, if the launcher is not installed, just run:</p>
+<p>Alternatively, on Windows, if the launcher is not installed, just run:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install --user pymgclient
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some platforms may require using the <code class="docutils literal notranslate"><span class="pre">--break-system-packages</span></code> flag.</p>
+</div>
 </section>
 <section id="install-from-source">
-<h3>Install from source<a class="headerlink" href="#install-from-source" title="Permalink to this headline">¶</a></h3>
+<h3>Install from source<a class="headerlink" href="#install-from-source" title="Link to this heading">¶</a></h3>
 <p>pymgclient can be installed from source on:</p>
 <ul class="simple">
 <li><p>all platforms that have prebuilt binaries</p></li>
 <li><p>on various Linux distributions, including:</p>
 <ul>
-<li><p>Ubuntu 18.04+</p></li>
-<li><p>Debian 10+</p></li>
-<li><p>CentOS 8+</p></li>
+<li><p>Ubuntu 22.04+</p></li>
+<li><p>Debian 11+</p></li>
+<li><p>Centos 9+</p></li>
+<li><p>Fedora 41+</p></li>
 </ul>
 </li>
 </ul>
 <section id="build-prerequisites">
-<h4>Build prerequisites<a class="headerlink" href="#build-prerequisites" title="Permalink to this headline">¶</a></h4>
+<h4>Build prerequisites<a class="headerlink" href="#build-prerequisites" title="Link to this heading">¶</a></h4>
 <p>pymgclient is a C wrapper around the <a class="reference external" href="https://github.com/memgraph/mgclient">mgclient</a> Memgraph client library. To
 build it from you will need:</p>
 <ul class="simple">
-<li><p>Python 3.6 or newer</p></li>
-<li><p>Python 3.6 or newer header files</p></li>
+<li><p>Python 3.7 (3.9 for Mac OS) or newer</p></li>
+<li><p>Python 3.7 (3.9 for Mac OS) or newer header files</p></li>
 <li><p>A C compiler supporting C11 standard</p></li>
 <li><p>A C++ compiler (it is not used directly, but necessary for CMake to work)</p></li>
 <li><p>Preqrequisites of <a class="reference external" href="https://github.com/memgraph/mgclient">mgclient</a>:</p>
 <ul>
 <li><p>CMake 3.8 or newer</p></li>
-<li><p>OpenSSL 1.0.2 or newer (but not OpenSSL 3.0) and its header files</p></li>
+<li><p>OpenSSL 1.0.2 or newer (including OpenSSL 3.0.0+) and its header files</p></li>
 </ul>
 </li>
 </ul>
 <section id="building-on-linux">
-<h5>Building on Linux<a class="headerlink" href="#building-on-linux" title="Permalink to this headline">¶</a></h5>
+<h5>Building on Linux<a class="headerlink" href="#building-on-linux" title="Link to this heading">¶</a></h5>
 <p>First install the prerequisites:</p>
 <ul>
 <li><p>On Debian/Ubuntu:</p>
@@ -106,8 +123,8 @@ build it from you will need:</p>
 </pre></div>
 </div>
 </li>
-<li><p>On CentOS:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sudo yum install -y python3-devel cmake3 make gcc gcc-c++ openssl-devel
+<li><p>On CentOS/Fedora:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sudo dnf install -y python3-devel cmake3 make gcc gcc-c++ openssl-devel
 </pre></div>
 </div>
 </li>
@@ -116,21 +133,29 @@ build it from you will need:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip3 install --user pymgclient
 </pre></div>
 </div>
-<p>This will download the source package of pymgclient and build the binary
-package before installing it. Alternatively pymgclient can be installed by
-using <code class="file docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
+<p>If you want to dynamically link OpenSSL for better security, you can use the
+following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip3 install --user \
+               --global-option=build_ext \
+               --global-option=&quot;--static-openssl=false&quot; \
+               pymgclient
+</pre></div>
+</div>
+<p>This will download the source package of pymgclient and build the binary package
+before installing it. Alternatively, pymgclient can be installed by using
+<code class="file docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python3 setup.py install
 </pre></div>
 </div>
 </section>
 <section id="building-on-macos">
-<h5>Building on macOS<a class="headerlink" href="#building-on-macos" title="Permalink to this headline">¶</a></h5>
+<h5>Building on macOS<a class="headerlink" href="#building-on-macos" title="Link to this heading">¶</a></h5>
 <p>To install the C/C++ compiler, run:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ xcode-select --install
 </pre></div>
 </div>
 <p>The rest of the build prerequisites can be installed easily via <a class="reference external" href="https://brew.sh">brew</a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ brew install python3 openssl@1.1 cmake
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ brew install python3 openssl cmake
 </pre></div>
 </div>
 <p>It is important to mention that on M1/ARM machines pymgclient cannot be built
@@ -141,14 +166,22 @@ in the technical notes below.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip3 install --user pymgclient --no-binary :all:
 </pre></div>
 </div>
-<p>This will download the source package of pymgclient and build the binary
-package before installing it. Alternatively pymgclient can be installed by
-using <code class="file docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
+<p>This will download the source package of pymgclient and build the binary package
+before installing it. If you want to dynamically link OpenSSL for better
+security, you can use the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip3 install --user \
+               --global-option=build_ext \
+               --global-option=&quot;--static-openssl=false&quot; \
+               pymgclient \
+               --no-binary :all:
+</pre></div>
+</div>
+<p>Alternatively, pymgclient can be installed by using <code class="file docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python3 setup.py install
 </pre></div>
 </div>
 <section id="technical-note-for-arm64-machines">
-<h6>Technical note for arm64 machines<a class="headerlink" href="#technical-note-for-arm64-machines" title="Permalink to this headline">¶</a></h6>
+<h6>Technical note for arm64 machines<a class="headerlink" href="#technical-note-for-arm64-machines" title="Link to this heading">¶</a></h6>
 <p>The default installed Python is in the so called <a class="reference external" href="https://en.wikipedia.org/wiki/Universal_binary#Universal_2">Universal Binary 2</a> format. That
 means all of the packages that are built with this Python version have to be
 built also as a universal binary. Though pymgclient builds on both x86_64 and
@@ -159,10 +192,10 @@ binaries in x86_64 binary format.</p>
 </section>
 </section>
 <section id="building-on-windows">
-<h5>Building on Windows<a class="headerlink" href="#building-on-windows" title="Permalink to this headline">¶</a></h5>
-<p>Building pymgclient on Windows is only advised for advanced users, therefore
-the following description assumes technical knowledge about Windows,
-compiling C/C++ applications and Python package.</p>
+<h5>Building on Windows<a class="headerlink" href="#building-on-windows" title="Link to this heading">¶</a></h5>
+<p>Building pymgclient on Windows is only advised for advanced users, therefore the
+following description assumes technical knowledge about Windows, compiling C/C++
+applications and Python package.</p>
 <p>To build pymgclient on Windows, the <a class="reference external" href="https://www.msys2.org/">MSYS2</a>
 environment is needed. Once it is installed, run “MSYS2 MSYS” from Start menu
 and install the necessary packages:</p>
@@ -184,7 +217,16 @@ pymgclient can be installed via pip:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install --user pymgclient --no-binary :all:
 </pre></div>
 </div>
-<p>Alternatively pymgclient can be installed by using <code class="file docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
+<p>If you want to dynamically link OpenSSL for better security, you can use the
+following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install --user \
+              --global-option=build_ext \
+              --global-option=&quot;--static-openssl=false&quot; \
+              pymgclient \
+              --no-binary :all:
+</pre></div>
+</div>
+<p>Alternatively, pymgclient can be installed by using <code class="file docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python setup.py install
 </pre></div>
 </div>
@@ -193,36 +235,35 @@ pymgclient can be installed via pip:</p>
 </section>
 </section>
 <section id="running-the-test-suite">
-<h2>Running the test suite<a class="headerlink" href="#running-the-test-suite" title="Permalink to this headline">¶</a></h2>
-<p>If pymgclient is installed from downloaded source, you can run the test suite
-to verify it is working correctly. From the source directory, you can run:</p>
+<h2>Running the test suite<a class="headerlink" href="#running-the-test-suite" title="Link to this heading">¶</a></h2>
+<p>If pymgclient is installed from downloaded source, you can run the test suite to
+verify it is working correctly. From the source directory, you can run:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python3 -m pytest
 </pre></div>
 </div>
-<p>To run the tests, you will need to have Memgraph, pytest and pyopenssl
-installed on your machine. The tests will try to start the Memgraph binary from
-the standard installation path (usually <code class="file docutils literal notranslate"><span class="pre">/usr/lib/memgraph/memgraph</span></code>)
+<p>To run the tests, you will need to have Memgraph, pytest and pyopenssl installed
+on your machine. The tests will try to start the Memgraph binary from the
+standard installation path (usually <code class="file docutils literal notranslate"><span class="pre">/usr/lib/memgraph/memgraph</span></code>)
 listening on port 7687. You can configure a different path or port by setting
 the following environment variables:</p>
 <ul class="simple">
 <li><p><span class="target" id="index-2"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">MEMGRAPH_PATH</span></code></p></li>
 <li><p><span class="target" id="index-3"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">MEMGRAPH_PORT</span></code></p></li>
 </ul>
-<p>Alternatively you can also run the tests with an already running Memgraph
-by configuring the host and port by setting the following environment
-variables:</p>
+<p>Alternatively you can also run the tests with an already running Memgraph by
+configuring the host and port by setting the following environment variables:</p>
 <ul class="simple">
 <li><p><span class="target" id="index-4"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">MEMGRAPH_HOST</span></code></p></li>
 <li><p><span class="target" id="index-5"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">MEMGRAPH_PORT</span></code></p></li>
 </ul>
 <p>When an already running Memgraph is used, then some of the tests might get
 skipped if Memgraph hasn’t been started with a suitable configuration. The
-<span class="target" id="index-6"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">MEMGRAPH_STARTED_WITH_SSL</span></code> environment variable can be used to
-indicate whether Memgraph is started using SSL or not. If the environment
-variable is defined (regardless its value), then the tests connect via secure
-Bolt connection, otherwise they connect with regular Bolt connection.</p>
-<p>The <strong>tests insert data into Memgraph</strong>, so they shouldn’t be used with
-a Memgraph running in “production” environment.</p>
+<span class="target" id="index-6"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">MEMGRAPH_STARTED_WITH_SSL</span></code> environment variable can be used to indicate
+whether Memgraph is started using SSL or not. If the environment variable is
+defined (regardless of its value), then the tests connect via secure Bolt
+connection, otherwise they connect with regular Bolt connection.</p>
+<p>The <strong>tests insert data into Memgraph</strong>, so they shouldn’t be used with a
+Memgraph running in “production” environment.</p>
 <blockquote>
 <div></div></blockquote>
 </section>
@@ -233,7 +274,7 @@ a Memgraph running in “production” environment.</p>
           
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">pymgclient</a></h1>
 
@@ -244,7 +285,16 @@ a Memgraph running in “production” environment.</p>
 
 
 
-<h3>Navigation</h3>
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
@@ -267,16 +317,6 @@ a Memgraph running in “production” environment.</p>
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
 
 
 
@@ -290,11 +330,11 @@ a Memgraph running in “production” environment.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2022, Memgraph Ltd..
+      &#169;2022, Memgraph Ltd..
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |
       <a href="_sources/introduction.rst.txt"

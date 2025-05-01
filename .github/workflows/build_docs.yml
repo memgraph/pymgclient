@@ -1,0 +1,54 @@
+name: Build Docs
+
+on: 
+  workflow_dispatch:
+    inputs:
+      publish_doc:
+        type: boolean
+        description: 'If set to true, then the documentation will be published.'
+        default: false
+        required: false
+  workflow_call:
+    inputs:
+      publish_doc:
+        type: boolean
+        description: 'If set to true, then the documentation will be published.'
+        default: false
+        required: false
+        
+jobs:
+  build_docs:
+    name: Build Documentation
+    runs-on: [self-hosted, Linux]
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Python Dependencies
+        run: |
+          python3 -m venv env
+          source env/bin/activate
+          pip install sphinx
+
+      - name: Build docs
+        run: |
+          source env/bin/activate
+          cd docs
+          make html
+          rm build/html/.buildinfo
+          touch build/html/.nojekyll
+
+      - name: Deploy docs
+        if: ${{ github.event.inputs.publish_doc == 'true' }}
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/build/html
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -rf env || true

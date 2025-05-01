@@ -86,12 +86,19 @@ wait_for_memgraph() {
 
 # --- run checks ---
 echo "Waiting for TCP port $HOST:$PORT (timeout ${TIMEOUT}s)..."
-wait_port "$HOST" "$PORT" "$TIMEOUT"
+if wait_port "$HOST" "$PORT" "$TIMEOUT"; then
+  timed_out=0
+else
+  timed_out=1
+fi
 
 if (( HAVE_MGCONSOLE )); then
   echo "Waiting for memgraph console on $HOST:$PORT (timeout ${TIMEOUT}s)..."
   wait_for_memgraph "$HOST" "$PORT" "$TIMEOUT"
 else
+  if [[ $timed_out == 1 ]]; then
+    exit 1
+  fi
   echo "Note: mgconsole not found; skipping memgraph-console check."
 fi
 

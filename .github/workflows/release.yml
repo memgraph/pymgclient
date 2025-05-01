@@ -24,7 +24,7 @@ jobs:
     name: Release Package and Test
     uses: "./.github/workflows/reusable_buildtest.yml"
     with:
-      test_linux: false
+      test_linux: true
       test_windows: false
       test_macintosh: false
       build_source_dist: true

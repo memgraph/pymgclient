@@ -28,11 +28,28 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+
       - name: Install Python Dependencies
         run: |
           python3 -m venv env
           source env/bin/activate
           pip install sphinx
+
+      - name: Get Current Python Version
+        run: |
+          version="$(( python3 --version 2>&1 || echo ) | grep -Po '(?<=Python )\d+\.\d+' || true)"
+          echo "Found version $version"
+          echo "PYTHON_VERSION=$version" >> $GITHUB_ENV
+
+      - name: Download Python Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pymgclient-linux-${{ env.PYTHON_VERSION }}
+          path: ./dist
+
+      - name: Install Pymgclient
+        run: |
+          pip install dist/*.whl
 
       - name: Build docs
         run: |

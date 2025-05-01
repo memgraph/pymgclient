@@ -142,6 +142,7 @@ jobs:
             bash -c "cd /pymgclient && python${{ matrix.python_version }} setup.py ${{ env.STATIC_SSL }} bdist_wheel"
 
       - name: Audit Wheel
+        if: ${{ matrix.platform == 'ubuntu-24.04' }}
         run: |
           docker exec -i testcontainer \
             bash -c "cd /pymgclient && auditwheel repair dist/*.whl --plat manylinux_2_39_x86_64 -w dist/ && rm dist/*linux_x86_64.whl"

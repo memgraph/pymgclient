@@ -1,4 +1,6 @@
 name: Release
+
+
 on:
   workflow_dispatch:
     inputs:
@@ -24,12 +26,14 @@ jobs:
     with:
       test_linux: false
       test_windows: false
-      test_macintosh: true
+      test_macintosh: false
       build_source_dist: true
       upload_artifacts: true
+      version: ${{ inputs.version }}
     secrets: inherit
 
   build_docs:
+    needs: [release_tests]
     name: Build Docs
     uses: "./.github/workflows/build_docs.yml"
     with:
@@ -38,8 +42,8 @@ jobs:
 
   publish_artifacts:
     name: Collect Artifacts
-    runs-on: ubuntu-latest
-    needs: [release_tests]
+    runs-on: ubuntu-24.04
+    needs: [release_tests, build_docs]
 
     steps:
       - name: Download all artifacts

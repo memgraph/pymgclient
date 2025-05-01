@@ -24,7 +24,9 @@ on:
         type: boolean
         default: true
         description: "Upload Artifacts"
-      
+      version:
+        required: false
+        type: string
 
 jobs:
   build_and_test_linux:
@@ -47,6 +49,12 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
+
+      - name: Set override version if provided
+        if: ${{ inputs.version != '' }}
+        run: |
+          echo "Building version ${{ inputs.version }}"
+          echo "PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
 
       - name: Set Memgraph Version
         run: |
@@ -175,13 +183,20 @@ jobs:
   build_source_dist:
     if: ${{ inputs.build_source_dist }}
     name: "Build Source Distribution"
-    runs-on: ["self-hosted", "X64", "Ubuntu-24.04"]
+    #runs-on: ["self-hosted", "X64", "Ubuntu-24.04"]
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
+
+      - name: Set override version if provided
+        if: ${{ inputs.version != '' }}
+        run: |
+          echo "Building version ${{ inputs.version }}"
+          echo "PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
 
       - name: Create Python Virtual Environment
         run: |
@@ -225,6 +240,12 @@ jobs:
         with:
           submodules: true
 
+      - name: Set override version if provided
+        if: ${{ inputs.version != '' }}
+        shell: bash
+        run: |
+          echo "Building version ${{ inputs.version }}"
+          echo "PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
 
       - name: Set up MSYS2
         uses: msys2/setup-msys2@v2
@@ -357,6 +378,13 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: true
+      
+      - name: Set override version if provided
+        if: ${{ inputs.version != '' }}
+        run: |
+          echo "Building version ${{ inputs.version }}"
+          echo "PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+
       - name: Install python and OpenSSL
         run: |
           brew install python@${{ matrix.python_version }} openssl@1.1

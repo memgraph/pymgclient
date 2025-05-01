@@ -19,8 +19,7 @@ on:
 jobs:
   build_docs:
     name: Build Documentation
-    #runs-on: [self-hosted, Linux, Ubuntu-24.04]
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, Linux, Ubuntu-24.04]
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4

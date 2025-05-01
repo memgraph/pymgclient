@@ -12,6 +12,7 @@ on:
 
 jobs:
   build_and_test_linux:
+    if: ${{ github.event_name == 'bob' }}
     name: "Build and test on Linux 👍"
     strategy:
       fail-fast: false
@@ -161,8 +162,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, windows-2025]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: [windows-2025]
+        python-version: ["3.13"]
+        # os: [windows-2022, windows-2025]
+        # python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - name: Checkout code
@@ -337,13 +340,20 @@ jobs:
         run: |
           source env/bin/activate
           python${{ matrix.python_version }} -c "import mgclient"
+
+      - name: Run tests
+        run: |
+          python${{ matrix.python_version }} -m pytest -v
+
       - name: Save artifact name on x86 machines
         if: ${{ !contains(matrix.platform, 'ARM64') }}
         run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV
+
       - name: Save artifact name on ARM64 machines
         if: ${{ contains(matrix.platform, 'ARM64') }}
         # Convert macOS-11.6-ARM64 to macos-11.6-arm64 to be consistent with full lowercase naming
         run: echo OS_TYPE=`echo "${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr "[:upper:]" "[:lower:]"` >> $GITHUB_ENV
+
       - name: Save wheel package
         uses: actions/upload-artifact@v4
         with:

@@ -6,352 +6,398 @@ concurrency:
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      test_linux:
+        type: boolean
+        default: true
+        description: "Run Linux Build and Test"
+      test_windows:
+        type: boolean
+        default: true
+        description: "Run Windows Build and Test" 
+      test_macintosh:
+        type: boolean
+        default: true
+        description: "Run Mac OS Build" 
+      build_source_dist:
+        type: boolean
+        default: true
+        description: "Build Source Distribution"
+      upload_artifacts:
+        type: boolean
+        default: true
+        description: "Upload Artifacts"
+      
   schedule:
     - cron: "0 0 * * 0"
 
-
 jobs:
-  build_and_test_linux:
-    if: ${{ github.event_name == 'bob' }}
-    name: "Build and test on Linux 👍"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: 'latest'}
-          - {platform: 'ubuntu-24.04', python_version: '3.10', mgversion: 'latest'}
-          - {platform: 'ubuntu-24.04', python_version: '3.11', mgversion: 'latest'}
-          - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest'}
-          - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest'}
-          - {platform: 'fedora-41', python_version: '3.13', mgversion: 'latest'}
-    runs-on: ["self-hosted", "X64"]
-    steps:
-      - name: Checkout repository and submodules
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: recursive
+  weekly_build:
+    if: ${{ github.event_name == 'schedule' }}
+    name: "Weekly Build"
+    uses: "./.github/workflows/reusable_buildtest.yml"
+    with:
+      test_linux: true
+      test_windows: true
+      test_macintosh: true
+      build_source_dist: false
+      upload_artifacts: false
 
-      - name: Set Memgraph Version
-        run: |
-          if [[ "${{ matrix.mgversion }}" == "latest" ]]; then
-            mgversion=$(./tools/get_memgraph_version.sh)
-          else
-            mgversion="${{ matrix.mgversion }}"
-          fi
-          echo "MGVERSION=$mgversion" >> $GITHUB_ENV
+  pr_test:
+    if: ${{ github.event_name == 'pull_request' }}
+    uses: "./.github/workflows/reusable_buildtest.yml"
+    with:
+      test_linux: true
+      test_windows: true
+      test_macintosh: true
+      build_source_dist: true
+      upload_artifacts: true
 
-      - name: Download Memgraph
-        run: |
-          if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
-            MEMGRAPH_PACKAGE_NAME="memgraph-${{ env.MGVERSION }}_1-1.x86_64.rpm"
-            LOCAL_PACKAGE_NAME=memgraph.rpm
-          else
-            MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}-1_amd64.deb"
-            LOCAL_PACKAGE_NAME=memgraph.deb
-          fi
-          curl -L "https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/${{ matrix.platform }}/${MEMGRAPH_PACKAGE_NAME}" > "${LOCAL_PACKAGE_NAME}"
-          echo "LOCAL_PACKAGE_NAME=$LOCAL_PACKAGE_NAME" >> $GITHUB_ENV
+
+# jobs:
+#   build_and_test_linux:
+#     if: ${{ github.event_name == 'bob' }}
+#     name: "Build and test on Linux 👍"
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         include:
+#           - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: 'latest'}
+#           - {platform: 'ubuntu-24.04', python_version: '3.10', mgversion: 'latest'}
+#           - {platform: 'ubuntu-24.04', python_version: '3.11', mgversion: 'latest'}
+#           - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest'}
+#           - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest'}
+#           - {platform: 'fedora-41', python_version: '3.13', mgversion: 'latest'}
+#     runs-on: ["self-hosted", "X64"]
+#     steps:
+#       - name: Checkout repository and submodules
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+#           submodules: recursive
+
+#       - name: Set Memgraph Version
+#         run: |
+#           if [[ "${{ matrix.mgversion }}" == "latest" ]]; then
+#             mgversion=$(./tools/get_memgraph_version.sh)
+#           else
+#             mgversion="${{ matrix.mgversion }}"
+#           fi
+#           echo "MGVERSION=$mgversion" >> $GITHUB_ENV
+
+#       - name: Download Memgraph
+#         run: |
+#           if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
+#             MEMGRAPH_PACKAGE_NAME="memgraph-${{ env.MGVERSION }}_1-1.x86_64.rpm"
+#             LOCAL_PACKAGE_NAME=memgraph.rpm
+#           else
+#             MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}-1_amd64.deb"
+#             LOCAL_PACKAGE_NAME=memgraph.deb
+#           fi
+#           curl -L "https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/${{ matrix.platform }}/${MEMGRAPH_PACKAGE_NAME}" > "${LOCAL_PACKAGE_NAME}"
+#           echo "LOCAL_PACKAGE_NAME=$LOCAL_PACKAGE_NAME" >> $GITHUB_ENV
         
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3
+#       - name: Set up Docker Buildx
+#         id: buildx
+#         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+#       - name: Log in to Docker Hub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Launch Docker Container
-        run: |
-          platform="${{ matrix.platform }}"
-          tag=${platform//-/:}
-          docker run -d --rm --name testcontainer "$tag" sleep infinity            
+#       - name: Launch Docker Container
+#         run: |
+#           platform="${{ matrix.platform }}"
+#           tag=${platform//-/:}
+#           docker run -d --rm --name testcontainer "$tag" sleep infinity            
 
-      - name: Set Environment Variables
-        run: |
-          break_packages=""
-          static_ssl=""
-          if [[ "${{ matrix.platform }}" == "ubuntu-24.04" ]]; then
-            # this option is specific to ubuntu, not fedora
-            break_packages="--break-system-packages"
-          elif [[ "${{ matrix.platform }}" == fedora* ]]; then
-            # rpm distros do not ship with static lib for openssl
-            #static_ssl="--no-build-isolation --global-option=build_ext --global-option '--static-openssl=False'"
-            static_ssl="build_ext --static-openssl=False"
-          fi
-          echo "BREAK_PACKAGES=$break_packages" >> $GITHUB_ENV
-          echo "STATIC_SSL=$static_ssl" >> $GITHUB_ENV
+#       - name: Set Environment Variables
+#         run: |
+#           break_packages=""
+#           static_ssl=""
+#           if [[ "${{ matrix.platform }}" == "ubuntu-24.04" ]]; then
+#             # this option is specific to ubuntu, not fedora
+#             break_packages="--break-system-packages"
+#           elif [[ "${{ matrix.platform }}" == fedora* ]]; then
+#             # rpm distros do not ship with static lib for openssl
+#             #static_ssl="--no-build-isolation --global-option=build_ext --global-option '--static-openssl=False'"
+#             static_ssl="build_ext --static-openssl=False"
+#           fi
+#           echo "BREAK_PACKAGES=$break_packages" >> $GITHUB_ENV
+#           echo "STATIC_SSL=$static_ssl" >> $GITHUB_ENV
 
-      - name: Copy Repo Into Container
-        run: |
-          docker cp . testcontainer:/pymgclient
+#       - name: Copy Repo Into Container
+#         run: |
+#           docker cp . testcontainer:/pymgclient
 
-      - name: Install system dependencies
-        run: |
-          docker cp $LOCAL_PACKAGE_NAME testcontainer:/$LOCAL_PACKAGE_NAME
+#       - name: Install system dependencies
+#         run: |
+#           docker cp $LOCAL_PACKAGE_NAME testcontainer:/$LOCAL_PACKAGE_NAME
 
-          # Prevents Memgraph from starting.
-          docker exec -i testcontainer \
-              bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service"  
+#           # Prevents Memgraph from starting.
+#           docker exec -i testcontainer \
+#               bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service"  
 
-          # Install dependencies
-          docker exec -i testcontainer \
-              bash -c "cd /pymgclient && ./tools/install_linux_deps.sh ${{ matrix.platform }} --python-version ${{ matrix.python_version }} --force-update"
+#           # Install dependencies
+#           docker exec -i testcontainer \
+#               bash -c "cd /pymgclient && ./tools/install_linux_deps.sh ${{ matrix.platform }} --python-version ${{ matrix.python_version }} --force-update"
 
-          # Install Memgraph package
-          if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
-            docker exec -i testcontainer \
-              bash -c "dnf install -y /$LOCAL_PACKAGE_NAME"
-          else
-            docker exec -i testcontainer \
-              bash -c "dpkg -i /$LOCAL_PACKAGE_NAME"
-          fi
-          rm -v $LOCAL_PACKAGE_NAME
+#           # Install Memgraph package
+#           if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
+#             docker exec -i testcontainer \
+#               bash -c "dnf install -y /$LOCAL_PACKAGE_NAME"
+#           else
+#             docker exec -i testcontainer \
+#               bash -c "dpkg -i /$LOCAL_PACKAGE_NAME"
+#           fi
+#           rm -v $LOCAL_PACKAGE_NAME
       
           
-      - name: Build Python Wheel
-        run: |
-          docker exec -i testcontainer \
-            bash -c "cd /pymgclient && python${{ matrix.python_version }} setup.py ${{ env.STATIC_SSL }} bdist_wheel"
+#       - name: Build Python Wheel
+#         run: |
+#           docker exec -i testcontainer \
+#             bash -c "cd /pymgclient && python${{ matrix.python_version }} setup.py ${{ env.STATIC_SSL }} bdist_wheel"
 
-      - name: Install pymgclient
-        run: |
-          docker exec -i testcontainer \
-            bash -c "python${{ matrix.python_version }} -m pip install ./pymgclient/dist/pymgclient-* ${{ env.BREAK_PACKAGES }}"
+#       - name: Install pymgclient
+#         run: |
+#           docker exec -i testcontainer \
+#             bash -c "python${{ matrix.python_version }} -m pip install ./pymgclient/dist/pymgclient-* ${{ env.BREAK_PACKAGES }}"
 
-      - name: Import mgclient to validate installation
-        run: |
-          docker exec -i testcontainer \
-            bash -c "python${{ matrix.python_version }} -c 'import mgclient'"
+#       - name: Import mgclient to validate installation
+#         run: |
+#           docker exec -i testcontainer \
+#             bash -c "python${{ matrix.python_version }} -c 'import mgclient'"
 
-      - name: Run tests
-        run: |
-          MEMGRAPH_PORT=10000 # what's this for?
+#       - name: Run tests
+#         run: |
+#           MEMGRAPH_PORT=10000 # what's this for?
 
-          docker exec -i testcontainer \
-            bash -c "cd /pymgclient && python${{ matrix.python_version }} -m pytest -v"
+#           docker exec -i testcontainer \
+#             bash -c "cd /pymgclient && python${{ matrix.python_version }} -m pytest -v"
 
-      - name: Build docs
-        run: |
-          docker exec -i testcontainer \
-            bash -c "cd /pymgclient/docs && make html"
+#       - name: Build docs
+#         run: |
+#           docker exec -i testcontainer \
+#             bash -c "cd /pymgclient/docs && make html"
 
-      - name: Copy Package
-        run: |
-          docker cp testcontainer:/pymgclient/dist .
+#       - name: Copy Package
+#         run: |
+#           docker cp testcontainer:/pymgclient/dist .
 
-      - name: Save source distribution package
-        uses: actions/upload-artifact@v4
-        with:
-          name: pymgclient
-          path: dist/${{ matrix.platform }}-${{ matrix.python_version }}
+#       - name: Save source distribution package
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: pymgclient
+#           path: dist/${{ matrix.platform }}-${{ matrix.python_version }}
 
-      - name: Cleanup
-        if: always()
-        run: |
-          docker stop testcontainer || echo "Container does not exist"
-          docker wait testcontainer || echo "Container does not exist"
-          docker rmi ${{ env.MGVERSION }} || echo "Image does not exist"
-
-
-  build_and_test_windows:
-    name: Build and Test on Windows
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2025]
-        python-version: ["3.13"]
-        # os: [windows-2022, windows-2025]
-        # python-version: ["3.10", "3.11", "3.12", "3.13"]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: true
+#       - name: Cleanup
+#         if: always()
+#         run: |
+#           docker stop testcontainer || echo "Container does not exist"
+#           docker wait testcontainer || echo "Container does not exist"
+#           docker rmi ${{ env.MGVERSION }} || echo "Image does not exist"
 
 
-      - name: Set up MSYS2
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          install: >
-            git
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-make
-            mingw-w64-x86_64-openssl
+#   build_and_test_windows:
+#     name: Build and Test on Windows
+#     runs-on: ${{ matrix.os }}
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         os: [windows-2025]
+#         python-version: ["3.13"]
+#         # os: [windows-2022, windows-2025]
+#         # python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#         with:
+#           submodules: true
+
+
+#       - name: Set up MSYS2
+#         uses: msys2/setup-msys2@v2
+#         with:
+#           msystem: MINGW64
+#           install: >
+#             git
+#             mingw-w64-x86_64-gcc
+#             mingw-w64-x86_64-cmake
+#             mingw-w64-x86_64-make
+#             mingw-w64-x86_64-openssl
       
-      - name: Add MSYS2 mingw64/bin to PATH
-        shell: msys2 {0}
-        run: |
-          echo "/mingw64/bin" >> $GITHUB_PATH
+#       - name: Add MSYS2 mingw64/bin to PATH
+#         shell: msys2 {0}
+#         run: |
+#           echo "/mingw64/bin" >> $GITHUB_PATH
           
               
-      - name: Set up Windows Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: x64
+#       - name: Set up Windows Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: ${{ matrix.python-version }}
+#           architecture: x64
 
-      - name: Add Windows Python to PATH
-        shell: msys2 {0}
-        run: |
-          echo "$pythonLocation" >> $GITHUB_PATH
-        env:
-          pythonLocation: ${{ env.pythonLocation }}
+#       - name: Add Windows Python to PATH
+#         shell: msys2 {0}
+#         run: |
+#           echo "$pythonLocation" >> $GITHUB_PATH
+#         env:
+#           pythonLocation: ${{ env.pythonLocation }}
       
 
-      - name: Install Python build tools
-        shell: msys2 {0}
-        run: |
-          export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python -m pip install --upgrade pip setuptools wheel pyopenssl pytest
-        env:
-          pythonLocation: ${{ env.pythonLocation }}
+#       - name: Install Python build tools
+#         shell: msys2 {0}
+#         run: |
+#           export PATH="$(cygpath -u "$pythonLocation"):$PATH"
+#           python -m pip install --upgrade pip setuptools wheel pyopenssl pytest
+#         env:
+#           pythonLocation: ${{ env.pythonLocation }}
           
-      - name: Build pymgclient Wheel
-        shell: msys2 {0}
-        run: |
-          export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python setup.py bdist_wheel
-        env:
-          pythonLocation: ${{ env.pythonLocation }}
+#       - name: Build pymgclient Wheel
+#         shell: msys2 {0}
+#         run: |
+#           export PATH="$(cygpath -u "$pythonLocation"):$PATH"
+#           python setup.py bdist_wheel
+#         env:
+#           pythonLocation: ${{ env.pythonLocation }}
 
-      - name: Install built wheel
-        shell: msys2 {0}
-        run: |
-          export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python -m pip install dist/*.whl
-        env:
-          pythonLocation: ${{ env.pythonLocation }}
+#       - name: Install built wheel
+#         shell: msys2 {0}
+#         run: |
+#           export PATH="$(cygpath -u "$pythonLocation"):$PATH"
+#           python -m pip install dist/*.whl
+#         env:
+#           pythonLocation: ${{ env.pythonLocation }}
 
-      - name: Setup WSL Ubuntu
-        uses: Vampire/setup-wsl@v5
-        with:
-          distribution: Ubuntu-24.04
+#       - name: Setup WSL Ubuntu
+#         uses: Vampire/setup-wsl@v5
+#         with:
+#           distribution: Ubuntu-24.04
 
-      - name: Set Memgraph Version
-        shell: bash -l {0}
-        run: |
-          mgversion=$(./tools/get_memgraph_version.sh)
-          echo "MGVERSION=$mgversion" >> $GITHUB_ENV
+#       - name: Set Memgraph Version
+#         shell: bash -l {0}
+#         run: |
+#           mgversion=$(./tools/get_memgraph_version.sh)
+#           echo "MGVERSION=$mgversion" >> $GITHUB_ENV
 
-      - name: Install and Run Memgraph in WSL
-        shell: wsl-bash {0}
-        run: |
-          mkdir -p $HOME/memgraph/data
-          sudo apt update
-          sudo apt install -y curl
-          curl -L https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/ubuntu-24.04/memgraph_${{ env.MGVERSION }}-1_amd64.deb -o memgraph.deb
-          sudo mkdir -p /etc/systemd/system && sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
-          sudo apt install ./memgraph.deb
-          openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
-          nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
+#       - name: Install and Run Memgraph in WSL
+#         shell: wsl-bash {0}
+#         run: |
+#           mkdir -p $HOME/memgraph/data
+#           sudo apt update
+#           sudo apt install -y curl
+#           curl -L https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/ubuntu-24.04/memgraph_${{ env.MGVERSION }}-1_amd64.deb -o memgraph.deb
+#           sudo mkdir -p /etc/systemd/system && sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
+#           sudo apt install ./memgraph.deb
+#           openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
+#           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
       
-          # sleep here instead of using script because it just doesn't work in Windows
-          sleep 3
-          # sed $'s/\r$//' ./tools/wait_for_memgraph.sh > ./tools/wait_for_memgraph.unix.sh
-          # bash ./tools/wait_for_memgraph.unix.sh localhost
-      
-
-      - name: Run Tests
-        shell: msys2 {0}
-        run: |
-          export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
-          echo $PATH
-          python -m pytest -v 
-
-        env:
-          pythonLocation: ${{ env.pythonLocation }}
-          MEMGRAPH_HOST: localhost
-          MEMGRAPH_STARTED_WITH_SSL:
+#           # sleep here instead of using script because it just doesn't work in Windows
+#           sleep 3
+#           # sed $'s/\r$//' ./tools/wait_for_memgraph.sh > ./tools/wait_for_memgraph.unix.sh
+#           # bash ./tools/wait_for_memgraph.unix.sh localhost
       
 
-      - name: Upload Wheel Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pymgclient-win-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: dist/
+#       - name: Run Tests
+#         shell: msys2 {0}
+#         run: |
+#           export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
+#           echo $PATH
+#           python -m pytest -v 
+
+#         env:
+#           pythonLocation: ${{ env.pythonLocation }}
+#           MEMGRAPH_HOST: localhost
+#           MEMGRAPH_STARTED_WITH_SSL:
+      
+
+#       - name: Upload Wheel Artifact
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: pymgclient-win-${{ matrix.os }}-py${{ matrix.python-version }}
+#           path: dist/
 
 
+#   # NOTE: Cannot run tests on Mac OS runners because:
+#   # - GitHub hosted runners don't have docker
+#   # - self-hosted runner unable to log in to docker due to requiring a password to unlock the keychain
+#   build_macos:
+#     name: Build and test on MacOS
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         platform: [macos-15, macos-14]
+#         python_version:
+#           - '3.10'
+#           - '3.11'
+#           - '3.12'
+#           - '3.13'
+#         include:
+#           - {platform: [self-hosted, macos-12, ARM64], python_version: '3.10'}
+#           - {platform: [self-hosted, macos-12, ARM64], python_version: '3.11'}
+#           - {platform: [self-hosted, macos-12, ARM64], python_version: '3.12'}
+#           - {platform: [self-hosted, macos-12, ARM64], python_version: '3.13'}
+#     runs-on: ${{ matrix.platform }}
+#     steps:
+#       - uses: actions/checkout@v2
+#         with:
+#           submodules: true
+#       - name: Install python and OpenSSL
+#         run: |
+#           brew install python@${{ matrix.python_version }} openssl@1.1
+#           brew link --force --overwrite openssl@1.1
+#           openssl version -a
+#       - name: Manage OpenSSL 3 on ARM machines
+#         if: ${{ contains(matrix.platform, 'ARM64') }}
+#         run: |
+#           brew install openssl@3
+#           brew link --force --overwrite openssl@3
+#           openssl version -a
+#       - name: Make used python version default
+#         run: |
+#           brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
+#           python${{ matrix.python_version }} --version
+#       - name: Create Virtual Env
+#         run: |
+#           python${{ matrix.python_version }} -m venv env
 
-  build_macos:
-    name: Build and test on MacOS
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [macos-15, macos-14]
-        python_version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
-        include:
-          - {platform: [self-hosted, macos-12, ARM64], python_version: '3.10'}
-          - {platform: [self-hosted, macos-12, ARM64], python_version: '3.11'}
-          - {platform: [self-hosted, macos-12, ARM64], python_version: '3.12'}
-          - {platform: [self-hosted, macos-12, ARM64], python_version: '3.13'}
-    runs-on: ${{ matrix.platform }}
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Install python and OpenSSL
-        run: |
-          brew install python@${{ matrix.python_version }} openssl@1.1
-          brew link --force --overwrite openssl@1.1
-          openssl version -a
-      - name: Manage OpenSSL 3 on ARM machines
-        if: ${{ contains(matrix.platform, 'ARM64') }}
-        run: |
-          brew install openssl@3
-          brew link --force --overwrite openssl@3
-          openssl version -a
-      - name: Make used python version default
-        run: |
-          brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
-          python${{ matrix.python_version }} --version
-      - name: Create Virtual Env
-        run: |
-          python${{ matrix.python_version }} -m venv env
+#       - name: Install pytest and pyopenssl
+#         run: |
+#           export PIP_BREAK_SYSTEM_PACKAGES=1
+#           source env/bin/activate
+#           python${{ matrix.python_version }} -m pip install pyopenssl pytest setuptools
 
-      - name: Install pytest and pyopenssl
-        run: |
-          export PIP_BREAK_SYSTEM_PACKAGES=1
-          source env/bin/activate
-          python${{ matrix.python_version }} -m pip install pyopenssl pytest setuptools
+#       - name: Build pymgclient
+#         run: |
+#           source env/bin/activate
+#           python${{ matrix.python_version }} setup.py bdist_wheel
 
-      - name: Build pymgclient
-        run: |
-          source env/bin/activate
-          python${{ matrix.python_version }} setup.py bdist_wheel
+#       - name: Install pymgclient
+#         run: |
+#           export PIP_BREAK_SYSTEM_PACKAGES=1
+#           source env/bin/activate
+#           python${{ matrix.python_version }} -m pip install dist/*
+#       - name: Import mgclient to validate installation
+#         run: |
+#           source env/bin/activate
+#           python${{ matrix.python_version }} -c "import mgclient"
 
-      - name: Install pymgclient
-        run: |
-          export PIP_BREAK_SYSTEM_PACKAGES=1
-          source env/bin/activate
-          python${{ matrix.python_version }} -m pip install dist/*
-      - name: Import mgclient to validate installation
-        run: |
-          source env/bin/activate
-          python${{ matrix.python_version }} -c "import mgclient"
+#       - name: Save artifact name on x86 machines
+#         if: ${{ !contains(matrix.platform, 'ARM64') }}
+#         run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV
 
-      - name: Save artifact name on x86 machines
-        if: ${{ !contains(matrix.platform, 'ARM64') }}
-        run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV
+#       - name: Save artifact name on ARM64 machines
+#         if: ${{ contains(matrix.platform, 'ARM64') }}
+#         # Convert macOS-11.6-ARM64 to macos-11.6-arm64 to be consistent with full lowercase naming
+#         run: echo OS_TYPE=`echo "${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr "[:upper:]" "[:lower:]"` >> $GITHUB_ENV
 
-      - name: Save artifact name on ARM64 machines
-        if: ${{ contains(matrix.platform, 'ARM64') }}
-        # Convert macOS-11.6-ARM64 to macos-11.6-arm64 to be consistent with full lowercase naming
-        run: echo OS_TYPE=`echo "${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr "[:upper:]" "[:lower:]"` >> $GITHUB_ENV
-
-      - name: Save wheel package
-        uses: actions/upload-artifact@v4
-        with:
-          name: pymgclient-${{ env.OS_TYPE }}-${{ matrix.python_version }}
-          path: dist/
+#       - name: Save wheel package
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: pymgclient-${{ env.OS_TYPE }}-${{ matrix.python_version }}
+#           path: dist/
 

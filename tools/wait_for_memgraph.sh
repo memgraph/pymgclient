@@ -56,13 +56,15 @@ fi
 wait_port() {
   local host=$1 port=$2 timeout=$3 start now
   start=$(date +%s)
-  until nc -z "$host" "$port"; do
+  while true; do
+    if timeout 1 bash -c "(exec 3<>'/dev/tcp/${host}/${port}')" 2>/dev/null; then
+      return 0
+    fi
     now=$(date +%s)
     (( now - start >= timeout )) && {
       echo "Timeout ($timeout s) waiting for $host:$port" >&2
       return 1
     }
-    sleep 0.1
   done
 }
 

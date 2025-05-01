@@ -72,9 +72,10 @@ wait_port() {
 wait_for_memgraph() {
   local host=$1 port=$2 timeout=$3 start now
   start=$(date +%s)
-  while ! echo "return 1;" \
-        | "$MEMGRAPH_CONSOLE_BINARY" --host "$host" --port "$port" \
-            >/dev/null 2>&1; do
+  while true; do
+    if timeout 1 bash -c "echo 'RETURN 1;' | \"$MEMGRAPH_CONSOLE_BINARY\" --host \"$host\" --port \"$port\" >/dev/null 2>&1"; then
+      return 0
+    fi
     now=$(date +%s)
     (( now - start >= timeout )) && {
       echo "Timeout ($timeout s) waiting for memgraph at $host:$port" >&2

@@ -80,7 +80,7 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
+          repository_url: https://test.pypi.org/legacy/
 # jobs:
 #   build_and_test_ubuntu:
 #     strategy:

@@ -31,8 +31,8 @@ jobs:
     uses: "./.github/workflows/reusable_buildtest.yml"
     with:
       test_linux: true
-      test_windows: false
-      test_macintosh: false
+      test_windows: true
+      test_macintosh: true
       build_source_dist: true
       upload_artifacts: true
       version: ${{ inputs.version }}

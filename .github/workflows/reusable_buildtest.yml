@@ -50,12 +50,6 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Set override version if provided
-        if: ${{ inputs.version != '' }}
-        run: |
-          echo "Building version ${{ inputs.version }}"
-          echo "PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
-
       - name: Set Memgraph Version
         run: |
           if [[ "${{ matrix.mgversion }}" == "latest" ]]; then
@@ -91,7 +85,14 @@ jobs:
         run: |
           platform="${{ matrix.platform }}"
           tag=${platform//-/:}
-          docker run -d --rm --name testcontainer "$tag" sleep infinity            
+          if [[ "${{ inputs.version }}" != "" ]]; then
+            echo "Building version ${{ inputs.version }}"
+             docker run -d --rm \
+            -e PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }} \
+            --name testcontainer "$tag" sleep infinity     
+          else
+            docker run -d --rm --name testcontainer "$tag" sleep infinity            
+          fi
 
       - name: Set Environment Variables
         run: |

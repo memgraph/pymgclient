@@ -7,196 +7,236 @@ on:
         type: string
       publish_doc:
         description: 'If set to true, then the documentation will be published.'
-        default: 'false'
+        default: false
         required: false
-      openssl_1_version:
-        description: 'The expected version of OpenSSL 1, e.g.: 1.1.1o.'
-        required: true
-        type: string
-      openssl_3_version:
-        description: 'The expected version of OpenSSL 3, e.g.: 3.0.3.'
-        required: true
-        type: string
+        type: boolean
+      test:
+        default: true
+        description: "Run test release (no docs, publish to test.pypi.org)"
+        type: boolean
 env:
   PYMGCLIENT_OVERRIDE_VERSION: "${{ github.event.inputs.version }}"
 
 jobs:
-  build_and_test_ubuntu:
-    strategy:
-     matrix:
-       include:
-        - {platform: 'ubuntu-20.04', python_version: '3.8', mgversion: '2.10.1'}
-        - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: '2.10.1'}
-    runs-on: ${{ matrix.platform }}
-    steps:
-    - name: Install system dependencies (Ubuntu 20.04)
-      run: |
-        sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
-        sudo pip3 install --upgrade networkx pytest pyopenssl sphinx
-        mkdir ~/memgraph
-        curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-20.04/memgraph_${{matrix.mgversion}}-1_amd64.deb > ~/memgraph/memgraph.deb
-        sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
-        sudo dpkg -i ~/memgraph/memgraph.deb
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build source distribution
-      run: python3 setup.py sdist
-    - name: Install pymgclient
-      run: python3 -m pip install ./dist/pymgclient-*
-    - name: Run tests
-      run: MEMGRAPH_PORT=10000 python3 -m pytest
-    - name: Build docs
-      run: |
-        cd docs
-        make html
-        rm build/html/.buildinfo
-        touch build/html/.nojekyll
-    - name: Save source distribution package
-      uses: actions/upload-artifact@v2
-      with:
-        name: pymgclient-${{ github.event.inputs.version }}
-        path: dist/
-    - name: Deploy docs
-      if: ${{ github.event.inputs.publish_doc == 'true' }}
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs/build/html
+  release_tests:
+    name: Release Package and Test
+    uses: "./.github/workflows/reusable_buildtest.yml"
+    with:
+      test_linux: false
+      test_windows: false
+      test_macintosh: true
+      build_source_dist: true
+      upload_artifacts: true
+    secrets: inherit
 
-  build_windows_and_test:
-    runs-on: windows-2019
-    strategy:
-      matrix:
-        arch:
-          - { mingw: "64", msys: x86_64, python: "x64"}
-        python_version:
-          - '3.7'
-          - '3.8'
-          - '3.9'
-          - '3.10'
-        # TODO(gitbuda): Fix "The file cannot be accessed by the system... rocksdb_durability"
-        mgversion:
-          - 2.8.0
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Setup python
-        uses: actions/setup-python@v2.2.2
-        with:
-          python-version: ${{ matrix.python_version }}
-          architecture: ${{ matrix.arch.python }}
-      - uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW${{ matrix.arch.mingw }}
-          update: true
-          release: false
-          install: git mingw-w64-${{ matrix.arch.msys }}-toolchain mingw-w64-${{ matrix.arch.msys }}-cmake mingw-w64-${{ matrix.arch.msys }}-openssl
-      - name: Add mingw${{ matrix.arch.mingw }} to PATH
-        run: |
-          # First make sure python would resolve to the windows native python, not mingw one
-          echo "C:\msys64\mingw${{ matrix.arch.mingw }}\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-          echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-      - name: Print OpenSSL version
-        shell: msys2 {0}
-        run: |
-          openssl version -a
-      - name: Check version
-        shell: msys2 {0}
-        run: |
-          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_1_version }}" ]
-      - uses: Vampire/setup-wsl@v1
-        with:
-            distribution: Ubuntu-20.04
-      - name: Download, install and run Memgraph under WSL
-        shell: wsl-bash {0} # root shell
-        run: |
-          mkdir ~/memgraph
-          curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-20.04/memgraph_${{matrix.mgversion}}-1_amd64.deb --output ~/memgraph/memgraph.deb
-          dpkg -i ~/memgraph/memgraph.deb
-          openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
-          nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-recover-on-startup=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
-          sleep 1 # Wait for Memgraph a bit.
-      - run: python -m pip install -U pip wheel setuptools pytest pyopenssl
-      - name: Build pymgclient
-        run: python setup.py bdist_wheel
-      - name: Install pymgclient
-        run: python -m pip install --verbose -f dist --no-index pymgclient
-        env:
-          VERBOSE: 1
-      - name: Run tests
-        run: |
-          python -m pytest -v
-        env:
-          MEMGRAPH_HOST: "localhost"
-          MEMGRAPH_STARTED_WITH_SSL:
-      - name: Save wheel package
-        uses: actions/upload-artifact@v2
-        with:
-          name: pymgclient-${{ github.event.inputs.version }}-win${{ matrix.arch.mingw }}-${{ matrix.python_version }}
-          path: dist/
+  build_docs:
+    name: Build Docs
+    uses: "./.github/workflows/build_docs.yml"
+    with:
+      publish_doc: false
+    secrets: inherit
 
-  build_macos:
-    strategy:
-      matrix:
-        platform: [macos-11]
-        python_version:
-          - '3.7'
-          - '3.8'
-          - '3.9'
-          - '3.10'
-        include:
-          - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.10'}
-          - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.9'}
-          - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.8'}
-    runs-on: ${{ matrix.platform }}
+  publish_artifacts:
+    name: Collect Artifacts
+    runs-on: ubuntu-latest
+    needs: [release_tests]
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
-          submodules: true
-      - name: Install python
+          # omit ‘name’ to fetch *every* artifact uploaded earlier
+          path: ./downloaded-artifacts
+
+      - name: Move Artifacts
         run: |
-          brew update
-          brew install python@${{ matrix.python_version }}
-      - name: Manage OpenSSL 1 on x86 machines
-        if: ${{ !contains(matrix.platform, 'ARM64') }}
+          mkdir -p artifacts
+          mv -v downloaded-artifacts/*/* artifacts/
+
+      - name: Show contents
         run: |
-          brew uninstall -f openssl@3
-          brew install openssl@1.1
-          brew upgrade openssl@1.1
-          brew link --force --overwrite openssl@1.1
-          openssl version -a
-          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_1_version }}" ]
-      - name: Manage OpenSSL 3 on ARM machines
-        if: ${{ contains(matrix.platform, 'ARM64') }}
-        run: |
-          brew install openssl@3
-          brew upgrade openssl@3
-          brew link --force --overwrite openssl@3
-          openssl version -a
-          [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_3_version }}" ]
-      - name: Make used python version default
-        run: |
-          brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
-          python${{ matrix.python_version }} --version
-      - name: Install pytest and pyopenssl
-        run: python${{ matrix.python_version }} -m pip install pyopenssl pytest
-      - name: Build pymgclient
-        run: python${{ matrix.python_version }} setup.py bdist_wheel
-      - name: Install pymgclient
-        run: python${{ matrix.python_version }} -m pip install -f dist --no-index pymgclient
-      - name: Import mgclient to validate installation
-        run: python${{ matrix.python_version }} -c "import mgclient"
-      - name: Save artifact name on x86 machines
-        if: ${{ !contains(matrix.platform, 'ARM64') }}
-        run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV
-      - name: Save artifact name on ARM64 machines
-        if: ${{ contains(matrix.platform, 'ARM64') }}
-        # Convert macOS-11.6-ARM64 to macos-11.6-arm64 to be consistent with full lowercase naming
-        run: echo OS_TYPE=`echo "${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr "[:upper:]" "[:lower:]"` >> $GITHUB_ENV
-      - name: Save wheel package
-        uses: actions/upload-artifact@v2
-        with:
-          name: pymgclient-${{ github.event.inputs.version }}-${{ env.OS_TYPE }}-${{ matrix.python_version }}
-          path: dist/
+          ls artifacts/
+
+      
+  
+
+# jobs:
+#   build_and_test_ubuntu:
+#     strategy:
+#      matrix:
+#        include:
+#         - {platform: 'ubuntu-20.04', python_version: '3.8', mgversion: '2.10.1'}
+#         - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: '2.10.1'}
+#     runs-on: ${{ matrix.platform }}
+#     steps:
+#     - name: Install system dependencies (Ubuntu 20.04)
+#       run: |
+#         sudo apt install -y libpython${{ matrix.python_version }} python3-pip python3-setuptools
+#         sudo pip3 install --upgrade networkx pytest pyopenssl sphinx
+#         mkdir ~/memgraph
+#         curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-20.04/memgraph_${{matrix.mgversion}}-1_amd64.deb > ~/memgraph/memgraph.deb
+#         sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
+#         sudo dpkg -i ~/memgraph/memgraph.deb
+#     - uses: actions/checkout@v2
+#       with:
+#         submodules: true
+#     - name: Build source distribution
+#       run: python3 setup.py sdist
+#     - name: Install pymgclient
+#       run: python3 -m pip install ./dist/pymgclient-*
+#     - name: Run tests
+#       run: MEMGRAPH_PORT=10000 python3 -m pytest
+#     - name: Build docs
+#       run: |
+#         cd docs
+#         make html
+#         rm build/html/.buildinfo
+#         touch build/html/.nojekyll
+#     - name: Save source distribution package
+#       uses: actions/upload-artifact@v2
+#       with:
+#         name: pymgclient-${{ github.event.inputs.version }}
+#         path: dist/
+#     - name: Deploy docs
+#       if: ${{ github.event.inputs.publish_doc == 'true' }}
+#       uses: peaceiris/actions-gh-pages@v3
+#       with:
+#         github_token: ${{ secrets.GITHUB_TOKEN }}
+#         publish_dir: ./docs/build/html
+
+#   build_windows_and_test:
+#     runs-on: windows-2019
+#     strategy:
+#       matrix:
+#         arch:
+#           - { mingw: "64", msys: x86_64, python: "x64"}
+#         python_version:
+#           - '3.7'
+#           - '3.8'
+#           - '3.9'
+#           - '3.10'
+#         # TODO(gitbuda): Fix "The file cannot be accessed by the system... rocksdb_durability"
+#         mgversion:
+#           - 2.8.0
+#     steps:
+#       - uses: actions/checkout@v2
+#         with:
+#           submodules: true
+#       - name: Setup python
+#         uses: actions/setup-python@v2.2.2
+#         with:
+#           python-version: ${{ matrix.python_version }}
+#           architecture: ${{ matrix.arch.python }}
+#       - uses: msys2/setup-msys2@v2
+#         with:
+#           msystem: MINGW${{ matrix.arch.mingw }}
+#           update: true
+#           release: false
+#           install: git mingw-w64-${{ matrix.arch.msys }}-toolchain mingw-w64-${{ matrix.arch.msys }}-cmake mingw-w64-${{ matrix.arch.msys }}-openssl
+#       - name: Add mingw${{ matrix.arch.mingw }} to PATH
+#         run: |
+#           # First make sure python would resolve to the windows native python, not mingw one
+#           echo "C:\msys64\mingw${{ matrix.arch.mingw }}\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+#           echo "${{ env.pythonLocation }}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+#       - name: Print OpenSSL version
+#         shell: msys2 {0}
+#         run: |
+#           openssl version -a
+#       - name: Check version
+#         shell: msys2 {0}
+#         run: |
+#           [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_1_version }}" ]
+#       - uses: Vampire/setup-wsl@v1
+#         with:
+#             distribution: Ubuntu-20.04
+#       - name: Download, install and run Memgraph under WSL
+#         shell: wsl-bash {0} # root shell
+#         run: |
+#           mkdir ~/memgraph
+#           curl -L https://download.memgraph.com/memgraph/v${{matrix.mgversion}}/ubuntu-20.04/memgraph_${{matrix.mgversion}}-1_amd64.deb --output ~/memgraph/memgraph.deb
+#           dpkg -i ~/memgraph/memgraph.deb
+#           openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
+#           nohup /usr/lib/memgraph/memgraph --bolt-port 7687 --bolt-cert-file="cert.pem" --bolt-key-file="key.pem" --data-directory="~/memgraph/data" --storage-properties-on-edges=true --storage-snapshot-interval-sec=0 --storage-wal-enabled=false --storage-recover-on-startup=false --storage-snapshot-on-exit=false --telemetry-enabled=false --log-file='' &
+#           sleep 1 # Wait for Memgraph a bit.
+#       - run: python -m pip install -U pip wheel setuptools pytest pyopenssl
+#       - name: Build pymgclient
+#         run: python setup.py bdist_wheel
+#       - name: Install pymgclient
+#         run: python -m pip install --verbose -f dist --no-index pymgclient
+#         env:
+#           VERBOSE: 1
+#       - name: Run tests
+#         run: |
+#           python -m pytest -v
+#         env:
+#           MEMGRAPH_HOST: "localhost"
+#           MEMGRAPH_STARTED_WITH_SSL:
+#       - name: Save wheel package
+#         uses: actions/upload-artifact@v2
+#         with:
+#           name: pymgclient-${{ github.event.inputs.version }}-win${{ matrix.arch.mingw }}-${{ matrix.python_version }}
+#           path: dist/
+
+#   build_macos:
+#     strategy:
+#       matrix:
+#         platform: [macos-11]
+#         python_version:
+#           - '3.7'
+#           - '3.8'
+#           - '3.9'
+#           - '3.10'
+#         include:
+#           - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.10'}
+#           - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.9'}
+#           - {platform: [macOS-11.6, ARM64, self-hosted], python_version: '3.8'}
+#     runs-on: ${{ matrix.platform }}
+#     steps:
+#       - uses: actions/checkout@v2
+#         with:
+#           submodules: true
+#       - name: Install python
+#         run: |
+#           brew update
+#           brew install python@${{ matrix.python_version }}
+#       - name: Manage OpenSSL 1 on x86 machines
+#         if: ${{ !contains(matrix.platform, 'ARM64') }}
+#         run: |
+#           brew uninstall -f openssl@3
+#           brew install openssl@1.1
+#           brew upgrade openssl@1.1
+#           brew link --force --overwrite openssl@1.1
+#           openssl version -a
+#           [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_1_version }}" ]
+#       - name: Manage OpenSSL 3 on ARM machines
+#         if: ${{ contains(matrix.platform, 'ARM64') }}
+#         run: |
+#           brew install openssl@3
+#           brew upgrade openssl@3
+#           brew link --force --overwrite openssl@3
+#           openssl version -a
+#           [ `openssl version -v | cut -d ' ' -f 2` == "${{ github.event.inputs.openssl_3_version }}" ]
+#       - name: Make used python version default
+#         run: |
+#           brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
+#           python${{ matrix.python_version }} --version
+#       - name: Install pytest and pyopenssl
+#         run: python${{ matrix.python_version }} -m pip install pyopenssl pytest
+#       - name: Build pymgclient
+#         run: python${{ matrix.python_version }} setup.py bdist_wheel
+#       - name: Install pymgclient
+#         run: python${{ matrix.python_version }} -m pip install -f dist --no-index pymgclient
+#       - name: Import mgclient to validate installation
+#         run: python${{ matrix.python_version }} -c "import mgclient"
+#       - name: Save artifact name on x86 machines
+#         if: ${{ !contains(matrix.platform, 'ARM64') }}
+#         run: echo "OS_TYPE=${{ matrix.platform }}" >> $GITHUB_ENV
+#       - name: Save artifact name on ARM64 machines
+#         if: ${{ contains(matrix.platform, 'ARM64') }}
+#         # Convert macOS-11.6-ARM64 to macos-11.6-arm64 to be consistent with full lowercase naming
+#         run: echo OS_TYPE=`echo "${{ matrix.platform[0] }}-${{ matrix.platform[1] }}" | tr "[:upper:]" "[:lower:]"` >> $GITHUB_ENV
+#       - name: Save wheel package
+#         uses: actions/upload-artifact@v2
+#         with:
+#           name: pymgclient-${{ github.event.inputs.version }}-${{ env.OS_TYPE }}-${{ matrix.python_version }}
+#           path: dist/

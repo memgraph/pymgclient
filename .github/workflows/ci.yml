@@ -42,6 +42,7 @@ jobs:
       test_macintosh: true
       build_source_dist: false
       upload_artifacts: false
+    secrets: inherit
 
   pr_test:
     if: ${{ github.event_name == 'pull_request' }}
@@ -52,8 +53,19 @@ jobs:
       test_macintosh: true
       build_source_dist: true
       upload_artifacts: true
+    secrets: inherit
 
-
+  manual_test:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    uses: "./.github/workflows/reusable_buildtest.yml"
+    with:
+      test_linux: ${{ inputs.test_linux }}
+      test_windows: ${{ inputs.test_windows }}
+      test_macintosh: ${{ inputs.test_macintosh }}
+      build_source_dist: ${{ inputs.build_source_dist }}
+      upload_artifacts: ${{ inputs.upload_artifacts }}
+    secrets: inherit
+    
 # jobs:
 #   build_and_test_linux:
 #     if: ${{ github.event_name == 'bob' }}

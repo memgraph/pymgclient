@@ -56,17 +56,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           # omit ‘name’ to fetch *every* artifact uploaded earlier
-          path: ./downloaded-artifacts
-
-      - name: Move Artifacts
-        run: |
-          mkdir -p dist
-          mv -v downloaded-artifacts/*/* dist/
+          path: ./dist
 
       - name: Show contents
         run: |
           ls dist/
-
       
       - name: Publish Package to PyPI
         if: ${{ inputs.publish_pypi == true && inputs.test == false }}

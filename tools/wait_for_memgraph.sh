@@ -52,14 +52,14 @@ else
   HAVE_MGCONSOLE=1
 fi
 
-# --- wait for a port on localhost with timeout ---
+# --- wait for a port on memgraph host with timeout ---
 wait_port() {
-  local port=$1 timeout=$2 start now
+  local host=$1 port=$2 timeout=$3 start now
   start=$(date +%s)
-  until nc -z localhost "$port"; do
+  until nc -z "$host" "$port"; do
     now=$(date +%s)
     (( now - start >= timeout )) && {
-      echo "Timeout ($timeout s) waiting for localhost:$port" >&2
+      echo "Timeout ($timeout s) waiting for $host:$port" >&2
       return 1
     }
     sleep 0.1
@@ -83,8 +83,8 @@ wait_for_memgraph() {
 }
 
 # --- run checks ---
-echo "Waiting for TCP port localhost:$PORT (timeout ${TIMEOUT}s)..."
-wait_port "$PORT" "$TIMEOUT"
+echo "Waiting for TCP port $HOST:$PORT (timeout ${TIMEOUT}s)..."
+wait_port "$HOST" "$PORT" "$TIMEOUT"
 
 if (( HAVE_MGCONSOLE )); then
   echo "Waiting for memgraph console on $HOST:$PORT (timeout ${TIMEOUT}s)..."

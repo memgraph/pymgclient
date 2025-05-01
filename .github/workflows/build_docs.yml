@@ -59,12 +59,12 @@ jobs:
           rm build/html/.buildinfo
           touch build/html/.nojekyll
 
-      # - name: Deploy docs
-      #   if: ${{ github.event.inputs.publish_doc == 'true' }}
-      #   uses: peaceiris/actions-gh-pages@v3
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     publish_dir: ./docs/build/html
+      - name: Deploy docs
+        if: ${{ github.event.inputs.publish_doc == 'true' }}
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/build/html
 
       - name: Cleanup
         if: always()

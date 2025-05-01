@@ -42,7 +42,7 @@ jobs:
           - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest'}
           - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest'}
           - {platform: 'fedora-41', python_version: '3.13', mgversion: 'latest'}
-    runs-on: ["self-hosted", "X64"]
+    runs-on: [self-hosted, X64]
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
@@ -182,8 +182,8 @@ jobs:
 
   build_source_dist:
     if: ${{ inputs.build_source_dist }}
-    name: "Build Source Distribution"
-    runs-on: ["self-hosted", "X64", "Ubuntu-24.04"]
+    name: Build Source Distribution
+    runs-on: [self-hosted, X64, Ubuntu-24.04]
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4

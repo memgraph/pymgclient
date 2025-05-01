@@ -103,7 +103,6 @@ jobs:
             break_packages="--break-system-packages"
           elif [[ "${{ matrix.platform }}" == fedora* ]]; then
             # rpm distros do not ship with static lib for openssl
-            #static_ssl="--no-build-isolation --global-option=build_ext --global-option '--static-openssl=False'"
             static_ssl="build_ext --static-openssl=False"
           fi
           echo "BREAK_PACKAGES=$break_packages" >> $GITHUB_ENV

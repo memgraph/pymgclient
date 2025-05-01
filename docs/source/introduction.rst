@@ -17,18 +17,19 @@ the Python programming language.
 Installation
 #############
 
-pymgclient has prebuilt binary packages for
+pymgclient has prebuilt binary packages for `Python 
+  <https://www.python.org/downloads/>`_ 3.10 - 3.13 on
 
-* macOS BigSur (version 11) and newer on x86_64 with `Python
-  <https://www.python.org/downloads/>`_ 3.7+
+* Linux amd64
 
-* macOS Monterey (version 12) and newer on arm64 with `Python
-  <https://www.python.org/downloads/>`_ 3.8+
+* macOS 12 (Montery), 14 (Sonoma) and 15 (Sequoia) on arm64 
 
-* Windows 10 x86_64 with `Python <https://www.python.org/downloads/>`_ 3.7+
+* Windows x86_64 
 
-To intall pymgclient binaries on these platforms see `Install binaries`_ section
-or check `Install from source`_ for other platforms.
+To install pymgclient binaries on these platforms see `Install binaries`_ section. 
+A source distribution is also provided for other distributions and can be installed 
+using ``pip`` after installing `Build prerequisites`_; alternatively - 
+see `Install from source`_.
 
 Install binaries
 ################
@@ -40,7 +41,7 @@ Install binaries
     pymgclient can use the latest version of OpenSSL that is installed on your
     machine.
 
-On macOS run::
+On Linux and macOS run::
 
   $ pip3 install --user pymgclient
 
@@ -51,6 +52,10 @@ On Windows run::
 Alternatively, on Windows, if the launcher is not installed, just run::
 
   $ pip install --user pymgclient
+
+.. note::
+   Some platforms may require using the ``--break-system-packages`` flag.
+
 
 Install from source
 ###################

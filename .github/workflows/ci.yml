@@ -344,7 +344,20 @@ jobs:
         run: |
           mgversion=$(./tools/get_memgraph_version.sh)
           echo "MGVERSION=$mgversion" >> $GITHUB_ENV
-
+                
+      - name: Disable osxkeychain helper
+        run: |
+          mkdir -p ~/bin
+          cat > ~/bin/docker-credential-osxkeychain <<'EOF'
+          #!/bin/sh
+          # no-op credential helper
+          exit 0
+          EOF
+          chmod +x ~/bin/docker-credential-osxkeychain
+        # ensure our ~/bin comes first
+        env:
+          PATH: ~/bin:${{ runner.tool_cache }}/local/bin:/usr/local/bin:/usr/bin:/bin
+          
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:

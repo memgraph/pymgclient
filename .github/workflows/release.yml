@@ -56,7 +56,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           # omit ‘name’ to fetch *every* artifact uploaded earlier
-          path: ./dist
+          path: ./downloaded-artifacts
+
+      - name: Move Artifacts
+        run: |
+          mkdir -p dist
+          mv -v downloaded-artifacts/*/* dist/
 
       - name: Show contents
         run: |

@@ -124,6 +124,7 @@ DEB_DEPS=(
   g++
   libssl-dev
   netcat-traditional
+  patchelf
 )
 
 RPM_DEPS=(
@@ -182,7 +183,7 @@ esac
 
 # install python dependencies
 export PIP_BREAK_SYSTEM_PACKAGES=1
-pkgs=(networkx pytest pyopenssl sphinx setuptools wheel)
+pkgs=(networkx pytest pyopenssl sphinx setuptools wheel auditwheel)
 if [[ $force_update == true ]]; then
   "$python_binary" -m pip install --upgrade --ignore-installed ${pkgs[@]}
 else

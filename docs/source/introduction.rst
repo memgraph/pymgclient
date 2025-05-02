@@ -18,7 +18,7 @@ Installation
 #############
 
 pymgclient has prebuilt binary packages for `Python 
-  <https://www.python.org/downloads/>`_ 3.10 - 3.13 on
+<https://www.python.org/downloads/>`_ 3.10 - 3.13 on
 
 * Linux amd64
 
@@ -39,7 +39,10 @@ Install binaries
     version of OpenSSL they are using is fixed. If security is important for you,
     you should check how to build pymgclient with dynamically linked OpenSSL, so
     pymgclient can use the latest version of OpenSSL that is installed on your
-    machine.
+    machine. The source distribution may be built with the flags to dynamically 
+    link to the host machine's OpenSSL library.
+
+    ``--no-build-isolation --global-option=build_ext --global-option "--static-openssl=False"`` 
 
 On Linux and macOS run::
 

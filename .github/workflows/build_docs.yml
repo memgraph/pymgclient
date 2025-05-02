@@ -41,15 +41,35 @@ jobs:
           echo "PYTHON_VERSION=$version" >> $GITHUB_ENV
 
       - name: Download Python Artifact
+        id: download
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: pymgclient-linux-${{ env.PYTHON_VERSION }}
           path: ./dist
 
-      - name: Install Pymgclient
+      - name: Record download status
+        if: always()
+        id: record
+        run: |
+          echo "Download step outcome: ${{ steps.download.outcome }}"
+          if [[ "${{ steps.download.outcome }}" == "success" ]]; then
+            echo "DOWNLOAD_STATUS=success" >> $GITHUB_OUTPUT
+          else
+            echo "DOWNLOAD_STATUS=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install Pymgclient (Artifact)
+        if: steps.record.outputs.DOWNLOAD_STATUS == 'success'
         run: |
           source env/bin/activate
           pip install dist/*.whl
+
+      - name: Install Pymgclient (PyPI)
+        if: steps.record.outputs.DOWNLOAD_STATUS == 'failure'
+        run: |
+          source env/bin/activate
+          pip install pymgclient
 
       - name: Build docs
         run: |

@@ -44,10 +44,7 @@ the Python programming language.</p>
 <p><a class="reference internal" href="usage.html#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> only works with Python 3.</p>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
-<dl class="simple">
-<dt>pymgclient has prebuilt binary packages for <a href="#id1"><span class="problematic" id="id2">`</span></a>Python</dt><dd><p>&lt;<a class="reference external" href="https://www.python.org/downloads/">https://www.python.org/downloads/</a>&gt;`_ 3.10 - 3.13 on</p>
-</dd>
-</dl>
+<p>pymgclient has prebuilt binary packages for <a class="reference external" href="https://www.python.org/downloads/">Python</a> 3.10 - 3.13 on</p>
 <ul class="simple">
 <li><p>Linux amd64</p></li>
 <li><p>macOS 12 (Montery), 14 (Sonoma) and 15 (Sequoia) on arm64</p></li>
@@ -65,7 +62,9 @@ see <a class="reference internal" href="#install-from-source">Install from sourc
 version of OpenSSL they are using is fixed. If security is important for you,
 you should check how to build pymgclient with dynamically linked OpenSSL, so
 pymgclient can use the latest version of OpenSSL that is installed on your
-machine.</p>
+machine. The source distribution may be built with the flags to dynamically
+link to the host machine’s OpenSSL library.</p>
+<p><code class="docutils literal notranslate"><span class="pre">--no-build-isolation</span> <span class="pre">--global-option=build_ext</span> <span class="pre">--global-option</span> <span class="pre">&quot;--static-openssl=False&quot;</span></code></p>
 </div>
 <p>On Linux and macOS run:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip3 install --user pymgclient

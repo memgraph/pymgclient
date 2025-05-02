@@ -18,7 +18,7 @@ Installation
 #############
 
 pymgclient has prebuilt binary packages for `Python 
-  <https://www.python.org/downloads/>`_ 3.10 - 3.13 on
+<https://www.python.org/downloads/>`_ 3.10 - 3.13 on
 
 * Linux amd64
 

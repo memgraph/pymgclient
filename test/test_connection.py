@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import tempfile
+
 import mgclient
 import pytest
-import tempfile
 
 from common import start_memgraph, Memgraph, requires_ssl_enabled, requires_ssl_disabled
 from OpenSSL import crypto
@@ -63,6 +65,42 @@ def secure_memgraph_server():
     memgraph.terminate()
 
 
+@pytest.fixture(scope="function")
+def provide_role():
+    memgraph = start_memgraph()
+    conn = mgclient.connect(
+        host=memgraph.host,
+        port=memgraph.port,
+    )
+    conn.autocommit = True
+    cursor = conn.cursor()
+    cursor.execute("CREATE ROLE architect;")
+    memgraph.terminate()
+
+    yield None
+
+    memgraph = start_memgraph()
+    conn = mgclient.connect(
+        host=memgraph.host,
+        port=memgraph.port,
+    )
+    conn.autocommit = True
+    cursor = conn.cursor()
+    cursor.execute("DROP ROLE architect;")
+    memgraph.terminate()
+
+
+@pytest.fixture(scope="function")
+def auth_module_path():
+    yield os.path.normpath(
+        os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "auth_module",
+            "dummy_auth_module.py",
+        )
+    )
+
+
 def test_connect_args_validation():
     # bad port
     with pytest.raises(ValueError):
@@ -80,6 +118,22 @@ def test_connect_args_validation():
             sslmode=mgclient.MG_SSLMODE_REQUIRE,
             trust_callback="not callable",
         )
+
+
+def test_connect_with_custom_auth_scheme(provide_role, auth_module_path):
+    custom_scheme = "custom_scheme"
+    memgraph = start_memgraph(
+        auth_module_mappings=f"{custom_scheme}:{auth_module_path}"
+    )
+    conn = mgclient.connect(
+        host=memgraph.host,
+        port=memgraph.port,
+        scheme=custom_scheme,
+        username="andy",
+        password="dummy auth token",
+    )
+    assert conn.status == mgclient.CONN_STATUS_READY
+    memgraph.terminate()
 
 
 @requires_ssl_disabled

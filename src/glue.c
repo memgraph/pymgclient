@@ -318,7 +318,7 @@ PyObject *mg_local_date_time_to_py_datetime(const mg_local_date_time *ldt) {
   SCOPED_CLEANUP PyObject *seconds =
       PyLong_FromLong(mg_local_date_time_seconds(ldt));
   IF_PTR_IS_NULL_RETURN(seconds, NULL);
-  SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
+  SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("utcfromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
   SCOPED_CLEANUP PyObject *result = PyObject_CallMethodObjArgs(
       (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds, NULL);

@@ -22,7 +22,7 @@ pymgclient has prebuilt binary packages for `Python
 
 * Linux amd64
 
-* macOS 12 (Montery), 14 (Sonoma) and 15 (Sequoia) on arm64 
+* macOS 14 (Sonoma) and 15 (Sequoia) on arm64 
 
 * Windows x86_64 
 

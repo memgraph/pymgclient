@@ -263,3 +263,11 @@ def test_duration(memgraph_connection):
     cursor.execute("RETURN $value", {"value": datetime.timedelta(64, 7, 11, 1)})
     result = cursor.fetchall()
     assert result == [(datetime.timedelta(64, 7, 1011),)]
+
+@pytest.mark.temporal
+def test_zoneddatetime(memgraph_connection):
+    conn = memgraph_connection
+    cursor = conn.cursor()
+    cursor.execute("RETURN $value", {"value": datetime.datetime(2025, 8, 12, 10, 15, 42, 123, tzinfo=datetime.timezone(datetime.timedelta(hours=7, minutes=30)))})
+    result = cursor.fetchall()
+    assert result == [(datetime.datetime(2025, 8, 12, 10, 15, 42, 123, tzinfo=datetime.timezone(datetime.timedelta(hours=7, minutes=30))),)]

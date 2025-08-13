@@ -374,7 +374,7 @@ PyObject *mg_date_time_to_py_datetime(const mg_date_time *dt) {
   IF_PTR_IS_NULL_RETURN(timedelta_class, NULL);
 
   SCOPED_CLEANUP PyObject *offset_delta = PyObject_CallFunction(
-      timedelta_class, "i", tz_offset_minutes * 60);
+      timedelta_class, "iii", 0, tz_offset_minutes * 60, 0);
   IF_PTR_IS_NULL_RETURN(offset_delta, NULL);
 
   SCOPED_CLEANUP PyObject *tz = PyObject_CallFunction(
@@ -400,7 +400,6 @@ PyObject *mg_date_time_to_py_datetime(const mg_date_time *dt) {
 PyObject *mg_date_time_zone_id_to_py_datetime(const mg_date_time_zone_id *dt) {
   int64_t seconds = mg_date_time_zone_id_seconds(dt);
   int64_t nanoseconds = mg_date_time_zone_id_nanoseconds(dt);
-  int64_t tz_id = mg_date_time_zone_id_tz_id(dt);
 
   SCOPED_CLEANUP PyObject *timestamp = PyLong_FromLongLong(seconds);
   IF_PTR_IS_NULL_RETURN(timestamp, NULL);
@@ -686,6 +685,30 @@ mg_local_date_time *py_date_time_to_mg_local_date_time(PyObject *obj) {
   return mg_local_date_time_make(seconds_since_epoch, subseconds);
 }
 
+mg_date_time *py_date_time_to_mg_date_time(PyObject *obj) {
+  int64_t seconds_since_epoch = 0;
+  if (seconds_since_unix_epoch(obj, &seconds_since_epoch) == 0) {
+    return NULL;
+  }
+  int64_t subseconds = subseconds_as_nanoseconds(obj);
+
+  PyObject *tzinfo = PyDateTime_DATE_GET_TZINFO(obj);
+  if (tzinfo == Py_None) {
+    return NULL;
+  }
+
+  SCOPED_CLEANUP PyObject *utc_offset = PyObject_CallMethod(tzinfo, "utcoffset", "O", obj);
+  IF_PTR_IS_NULL_RETURN(utc_offset, NULL);
+
+  SCOPED_CLEANUP PyObject *total_seconds = PyObject_CallMethod(utc_offset, "total_seconds", NULL);
+  IF_PTR_IS_NULL_RETURN(total_seconds, NULL);
+
+  double offset_seconds_double = PyFloat_AsDouble(total_seconds);
+  int32_t offset_minutes = (int32_t)(offset_seconds_double / 60.0);
+
+  return mg_zoned_date_time_make(seconds_since_epoch, subseconds, offset_minutes);
+}
+
 mg_duration *py_delta_to_mg_duration(PyObject *obj) {
   int64_t days = PyDateTime_DELTA_GET_DAYS(obj);
   int64_t seconds = PyDateTime_DELTA_GET_SECONDS(obj);
@@ -743,11 +766,19 @@ mg_value *py_object_to_mg_value(PyObject *object) {
     }
     ret = mg_value_make_local_time(lt);
   } else if (PyDateTime_CheckExact(object)) {
-    mg_local_date_time *ldt = py_date_time_to_mg_local_date_time(object);
-    if (!ldt) {
-      return NULL;
+    if (PyDateTime_DATE_GET_TZINFO(object) != Py_None) {
+      mg_date_time *dt = py_date_time_to_mg_date_time(object);
+      if (!dt) {
+        return NULL;
+      }
+      ret = mg_value_make_date_time(dt);
+    } else {
+      mg_local_date_time *ldt = py_date_time_to_mg_local_date_time(object);
+      if (!ldt) {
+        return NULL;
+      }
+      ret = mg_value_make_local_date_time(ldt);
     }
-    ret = mg_value_make_local_date_time(ldt);
   } else if (PyDelta_CheckExact(object)) {
     mg_duration *dur = py_delta_to_mg_duration(object);
     if (!dur) {

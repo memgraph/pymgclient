@@ -711,7 +711,7 @@ mg_date_time *py_date_time_to_mg_date_time(PyObject *obj) {
   double offset_seconds_double = PyFloat_AsDouble(total_seconds);
   int32_t offset_minutes = (int32_t)(offset_seconds_double / 60.0);
 
-  return mg_zoned_date_time_make(seconds_since_epoch, subseconds, offset_minutes);
+  return mg_date_time_make(seconds_since_epoch, subseconds, offset_minutes);
 }
 
 mg_duration *py_delta_to_mg_duration(PyObject *obj) {

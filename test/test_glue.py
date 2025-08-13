@@ -271,3 +271,25 @@ def test_zoneddatetime(memgraph_connection):
     cursor.execute("RETURN $value", {"value": datetime.datetime(2025, 8, 12, 10, 15, 42, 123, tzinfo=datetime.timezone(datetime.timedelta(hours=7, minutes=30)))})
     result = cursor.fetchall()
     assert result == [(datetime.datetime(2025, 8, 12, 10, 15, 42, 123, tzinfo=datetime.timezone(datetime.timedelta(hours=7, minutes=30))),)]
+
+
+@pytest.mark.temporal
+def test_zoneddatetime_with_iana_timezone(memgraph_connection):
+    conn = memgraph_connection
+    cursor = conn.cursor()
+
+    cursor.execute("RETURN datetime({year: 2025, month: 8, day: 13, hour: 14, minute: 30, second: 45, timezone: 'Europe/Zagreb'})")
+    result = cursor.fetchall()
+
+    assert len(result) == 1
+
+    dt = result[0][0]
+    assert isinstance(dt, datetime.datetime)
+    assert dt.year == 2025
+    assert dt.month == 8
+    assert dt.day == 13
+    assert dt.hour == 14
+    assert dt.minute == 30
+    assert dt.second == 45
+    assert dt.tzinfo is not None
+    assert dt.tzinfo.key == 'Europe/Zagreb'

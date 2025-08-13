@@ -400,6 +400,7 @@ PyObject *mg_date_time_to_py_datetime(const mg_date_time *dt) {
 PyObject *mg_date_time_zone_id_to_py_datetime(const mg_date_time_zone_id *dt) {
   int64_t seconds = mg_date_time_zone_id_seconds(dt);
   int64_t nanoseconds = mg_date_time_zone_id_nanoseconds(dt);
+  const mg_string *timezone_name = mg_date_time_zone_id_timezone_name(dt);
 
   SCOPED_CLEANUP PyObject *timestamp = PyLong_FromLongLong(seconds);
   IF_PTR_IS_NULL_RETURN(timestamp, NULL);
@@ -418,27 +419,31 @@ PyObject *mg_date_time_zone_id_to_py_datetime(const mg_date_time_zone_id *dt) {
   SCOPED_CLEANUP PyObject *m = PyObject_GetAttrString(utc_dt, "minute");
   SCOPED_CLEANUP PyObject *s = PyObject_GetAttrString(utc_dt, "second");
 
-  SCOPED_CLEANUP PyObject *datetime_module = PyImport_ImportModule("datetime");
-  IF_PTR_IS_NULL_RETURN(datetime_module, NULL);
-
-  SCOPED_CLEANUP PyObject *timezone_class = PyObject_GetAttrString(datetime_module, "timezone");
-  IF_PTR_IS_NULL_RETURN(timezone_class, NULL);
-
-  SCOPED_CLEANUP PyObject *utc_tz = PyObject_GetAttrString(timezone_class, "utc");
-  IF_PTR_IS_NULL_RETURN(utc_tz, NULL);
-
   SCOPED_CLEANUP PyObject *naive_dt = make_py_datetime(
       PyLong_AsLong(y), PyLong_AsLong(mo), PyLong_AsLong(d),
       PyLong_AsLong(h), PyLong_AsLong(m), PyLong_AsLong(s),
       (nanoseconds / 1000));
   IF_PTR_IS_NULL_RETURN(naive_dt, NULL);
 
+  SCOPED_CLEANUP PyObject *zoneinfo_module = PyImport_ImportModule("zoneinfo");
+  IF_PTR_IS_NULL_RETURN(zoneinfo_module, NULL);
+
+  SCOPED_CLEANUP PyObject *zoneinfo_class = PyObject_GetAttrString(zoneinfo_module, "ZoneInfo");
+  IF_PTR_IS_NULL_RETURN(zoneinfo_class, NULL);
+
+  const char *tz_name_str = mg_string_data(timezone_name);
+  SCOPED_CLEANUP PyObject *tz_name_py = PyUnicode_FromStringAndSize(tz_name_str, mg_string_size(timezone_name));
+  IF_PTR_IS_NULL_RETURN(tz_name_py, NULL);
+
+  SCOPED_CLEANUP PyObject *timezone_obj = PyObject_CallFunctionObjArgs(zoneinfo_class, tz_name_py, NULL);
+  IF_PTR_IS_NULL_RETURN(timezone_obj, NULL);
+
   SCOPED_CLEANUP PyObject *replace_method = PyObject_GetAttrString(naive_dt, "replace");
   IF_PTR_IS_NULL_RETURN(replace_method, NULL);
 
   SCOPED_CLEANUP PyObject *tzinfo_kwarg = PyDict_New();
   IF_PTR_IS_NULL_RETURN(tzinfo_kwarg, NULL);
-  PyDict_SetItemString(tzinfo_kwarg, "tzinfo", utc_tz);
+  PyDict_SetItemString(tzinfo_kwarg, "tzinfo", timezone_obj);
 
   return PyObject_Call(replace_method, PyTuple_New(0), tzinfo_kwarg);
 }

@@ -20,6 +20,7 @@
 #include <datetime.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 void py_datetime_import_init() { PyDateTime_IMPORT; }
 
@@ -714,6 +715,47 @@ mg_date_time *py_date_time_to_mg_date_time(PyObject *obj) {
   return mg_date_time_make(seconds_since_epoch, subseconds, offset_minutes);
 }
 
+mg_date_time_zone_id *py_date_time_to_mg_date_time_zone_id(PyObject *obj) {
+  int64_t seconds_since_epoch = 0;
+  if (seconds_since_unix_epoch(obj, &seconds_since_epoch) == 0) {
+    return NULL;
+  }
+  int64_t subseconds = subseconds_as_nanoseconds(obj);
+
+  PyObject *tzinfo = PyDateTime_DATE_GET_TZINFO(obj);
+  if (tzinfo == Py_None) {
+    return NULL;
+  }
+
+  SCOPED_CLEANUP PyObject *tzname_str = PyObject_Str(tzinfo);
+  IF_PTR_IS_NULL_RETURN(tzname_str, NULL);
+
+  if (!PyUnicode_Check(tzname_str)) {
+    return NULL;
+  }
+
+  const char *timezone_name_str = PyUnicode_AsUTF8(tzname_str);
+  if (!timezone_name_str) {
+    return NULL;
+  }
+
+  return mg_date_time_zone_id_make(seconds_since_epoch, subseconds, timezone_name_str);
+}
+
+int is_datetime_timezone(PyObject *tzinfo) {
+  if (tzinfo == Py_None) {
+    return 0;
+  }
+
+  SCOPED_CLEANUP PyObject *datetime_module = PyImport_ImportModule("datetime");
+  IF_PTR_IS_NULL_RETURN(datetime_module, 0);
+
+  SCOPED_CLEANUP PyObject *timezone_class = PyObject_GetAttrString(datetime_module, "timezone");
+  IF_PTR_IS_NULL_RETURN(timezone_class, 0);
+
+  return PyObject_IsInstance(tzinfo, timezone_class);
+}
+
 mg_duration *py_delta_to_mg_duration(PyObject *obj) {
   int64_t days = PyDateTime_DELTA_GET_DAYS(obj);
   int64_t seconds = PyDateTime_DELTA_GET_SECONDS(obj);
@@ -771,12 +813,25 @@ mg_value *py_object_to_mg_value(PyObject *object) {
     }
     ret = mg_value_make_local_time(lt);
   } else if (PyDateTime_CheckExact(object)) {
-    if (PyDateTime_DATE_GET_TZINFO(object) != Py_None) {
-      mg_date_time *dt = py_date_time_to_mg_date_time(object);
-      if (!dt) {
-        return NULL;
+    PyObject *tzinfo = PyDateTime_DATE_GET_TZINFO(object);
+    if (tzinfo != Py_None) {
+      // The `timezone` may either be an offset based `datetime.timezone`, or
+      // some kind of instance of `tzinfo`. In the case of the former, we
+      // will use the offset; and in the case of the latter, use the `str()`
+      // name of the timezone.
+      if (is_datetime_timezone(tzinfo)) {
+        mg_date_time *dt = py_date_time_to_mg_date_time(object);
+        if (!dt) {
+          return NULL;
+        }
+        ret = mg_value_make_date_time(dt);
+      } else {
+        mg_date_time_zone_id *dt_zone_id = py_date_time_to_mg_date_time_zone_id(object);
+        if (!dt_zone_id) {
+          return NULL;
+        }
+        ret = mg_value_make_date_time_zone_id(dt_zone_id);
       }
-      ret = mg_value_make_date_time(dt);
     } else {
       mg_local_date_time *ldt = py_date_time_to_mg_local_date_time(object);
       if (!ldt) {

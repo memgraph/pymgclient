@@ -20,6 +20,7 @@ import sys
 
 import mgclient
 import pytest
+from zoneinfo import ZoneInfo
 
 from common import Memgraph, start_memgraph
 
@@ -257,6 +258,33 @@ def test_datetime(memgraph_connection):
 
 
 @pytest.mark.temporal
+def test_datetime_with_offset_timezone(memgraph_connection):
+    conn = memgraph_connection
+    cursor = conn.cursor()
+    cursor.execute("RETURN $value", {"value": datetime.datetime(2004, 7, 11, 12, 13, 14, 15, tzinfo=datetime.timezone(datetime.timedelta(hours=3)))})
+    result = cursor.fetchall()
+    assert result == [(datetime.datetime(2004, 7, 11, 12, 13, 14, 15, tzinfo=datetime.timezone(datetime.timedelta(hours=3))),)]
+
+@pytest.mark.temporal
+def test_datetime_wih_named_timezone(memgraph_connection):
+    conn = memgraph_connection
+    cursor = conn.cursor()
+    cursor.execute("RETURN $value", {"value": datetime.datetime(2024, 8, 12, 10, 15, 42, 123, tzinfo=ZoneInfo("Pacific/Pitcairn"))})
+    result = cursor.fetchall()
+    assert len(result) == 1
+    dt = result[0][0]
+    assert isinstance(dt, datetime.datetime)
+    assert dt.year == 2024
+    assert dt.month == 8
+    assert dt.day == 12
+    assert dt.hour == 10
+    assert dt.minute == 15
+    assert dt.second == 42
+    assert dt.microsecond == 123
+    assert str(dt.tzinfo) == "Pacific/Pitcairn"
+
+
+@pytest.mark.temporal
 def test_duration(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()
@@ -291,5 +319,5 @@ def test_zoneddatetime_with_iana_timezone(memgraph_connection):
     assert dt.hour == 14
     assert dt.minute == 30
     assert dt.second == 45
-    assert dt.tzinfo is not None
-    assert dt.tzinfo.key == 'Europe/Zagreb'
+    assert str(dt.tzinfo) == 'Europe/Zagreb'
+

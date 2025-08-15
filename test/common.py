@@ -92,8 +92,7 @@ def start_memgraph(cert_file="", key_file=""):
         "--telemetry-enabled=false",
         "--log-file",
         "--timezone",
-        "UTC"
-        "",
+        "UTC",
     ]
     memgraph_process = subprocess.Popen(cmd)
     wait_for_server(MEMGRAPH_PORT)

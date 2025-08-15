@@ -266,7 +266,7 @@ def test_datetime_with_offset_timezone(memgraph_connection):
     assert result == [(datetime.datetime(2004, 7, 11, 12, 13, 14, 15, tzinfo=datetime.timezone(datetime.timedelta(hours=3))),)]
 
 @pytest.mark.temporal
-def test_datetime_wih_named_timezone(memgraph_connection):
+def test_datetime_with_named_timezone(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()
     cursor.execute("RETURN $value", {"value": datetime.datetime(2024, 8, 12, 10, 15, 42, 123, tzinfo=ZoneInfo("Pacific/Pitcairn"))})

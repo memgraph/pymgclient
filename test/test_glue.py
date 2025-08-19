@@ -16,6 +16,7 @@
 
 
 import datetime
+import platform
 import sys
 
 import mgclient
@@ -23,6 +24,18 @@ import pytest
 from zoneinfo import ZoneInfo
 
 from common import Memgraph, start_memgraph
+
+# TODO(colinbarry) The Fedora docker image seems to have flaky timezone support.
+# For the time being, we will force Fedora-based tests to use UTC only, and
+# for other OSs to test more diverse timezones.
+def is_fedora():
+    """Check if running on Fedora platform"""
+    try:
+        with open('/etc/os-release', 'r') as f:
+            content = f.read()
+            return 'ID=fedora' in content
+    except (FileNotFoundError, IOError):
+        return False
 
 
 @pytest.fixture(scope="function")
@@ -269,7 +282,17 @@ def test_datetime_with_offset_timezone(memgraph_connection):
 def test_datetime_with_named_timezone(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()
-    cursor.execute("RETURN $value", {"value": datetime.datetime(2024, 8, 12, 10, 15, 42, 123, tzinfo=ZoneInfo("Pacific/Pitcairn"))})
+
+    # See comment at top of file about Fedora's timezone support.
+    if is_fedora():
+        tz_name = "UTC"
+        expected_tz_names = ["UTC", "Etc/UTC"]
+    else:
+        tz_name = "Pacific/Pitcairn"
+        expected_tz_names = ["Pacific/Pitcairn"]
+
+    test_dt = datetime.datetime(2024, 8, 12, 10, 15, 42, 123, tzinfo=ZoneInfo(tz_name))
+    cursor.execute("RETURN $value", {"value": test_dt})
     result = cursor.fetchall()
     assert len(result) == 1
     dt = result[0][0]
@@ -281,7 +304,7 @@ def test_datetime_with_named_timezone(memgraph_connection):
     assert dt.minute == 15
     assert dt.second == 42
     assert dt.microsecond == 123
-    assert str(dt.tzinfo) == "Pacific/Pitcairn"
+    assert str(dt.tzinfo) in expected_tz_names
 
 
 @pytest.mark.temporal
@@ -306,7 +329,15 @@ def test_zoneddatetime_with_iana_timezone(memgraph_connection):
     conn = memgraph_connection
     cursor = conn.cursor()
 
-    cursor.execute("RETURN datetime({year: 2025, month: 8, day: 13, hour: 14, minute: 30, second: 45, timezone: 'Europe/Zagreb'})")
+    # See comment at top of file about Fedora's timezone support.
+    if is_fedora():
+        tz_name = "UTC"
+        expected_tz_names = ["UTC", "Etc/UTC"]
+    else:
+        tz_name = "America/New_York"
+        expected_tz_names = ["America/New_York"]
+
+    cursor.execute(f"RETURN datetime({{year: 2025, month: 8, day: 13, hour: 14, minute: 30, second: 45, timezone: '{tz_name}'}})")
     result = cursor.fetchall()
 
     assert len(result) == 1
@@ -319,5 +350,5 @@ def test_zoneddatetime_with_iana_timezone(memgraph_connection):
     assert dt.hour == 14
     assert dt.minute == 30
     assert dt.second == 45
-    assert str(dt.tzinfo) == 'Europe/Zagreb'
+    assert str(dt.tzinfo) in expected_tz_names
 

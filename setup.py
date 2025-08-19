@@ -321,6 +321,7 @@ setup(
     cmdclass={"build_ext": BuildMgclientExt},
     install_requires=[
         "pyopenssl",
-        "networkx"
+        "networkx",
+        "tzdata"
     ]
 )

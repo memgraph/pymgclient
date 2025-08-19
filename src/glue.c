@@ -285,23 +285,18 @@ PyObject *mg_local_time_to_py_time(const mg_local_time *lt) {
   SCOPED_CLEANUP PyObject *seconds =
       PyLong_FromLongLong(nanos / one_sec_to_nanos);
   const int64_t leftover_nanos = nanos % one_sec_to_nanos;
-  // The reason for different implementation of getting utc time from timestamp
-  // is because we need to explicitly define utc timezone on Windows unlike on
-  // linux, but that API is only allowed in py3.7, therefore the support for
-  // Windows is only for python version >= 3.7.
-#ifdef _WIN32
   SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
-  SCOPED_CLEANUP PyObject *result = PyObject_CallMethodObjArgs(
+  SCOPED_CLEANUP PyObject *utc_result = PyObject_CallMethodObjArgs(
       (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds,
       PyDateTime_TimeZone_UTC, NULL);
-#else
-  SCOPED_CLEANUP PyObject *method_name =
-      PyUnicode_FromString("utcfromtimestamp");
-  IF_PTR_IS_NULL_RETURN(method_name, NULL);
-  SCOPED_CLEANUP PyObject *result = PyObject_CallMethodObjArgs(
-      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds, NULL);
-#endif
+  IF_PTR_IS_NULL_RETURN(utc_result, NULL);
+  SCOPED_CLEANUP PyObject *replace_method = PyObject_GetAttrString(utc_result, "replace");
+  IF_PTR_IS_NULL_RETURN(replace_method, NULL);
+  SCOPED_CLEANUP PyObject *tzinfo_kwarg = PyDict_New();
+  IF_PTR_IS_NULL_RETURN(tzinfo_kwarg, NULL);
+  PyDict_SetItemString(tzinfo_kwarg, "tzinfo", Py_None);
+  SCOPED_CLEANUP PyObject *result = PyObject_Call(replace_method, PyTuple_New(0), tzinfo_kwarg);
   IF_PTR_IS_NULL_RETURN(result, NULL);
   SCOPED_CLEANUP PyObject *h = PyObject_GetAttrString(result, "hour");
   IF_PTR_IS_NULL_RETURN(h, NULL);
@@ -319,10 +314,18 @@ PyObject *mg_local_date_time_to_py_datetime(const mg_local_date_time *ldt) {
   SCOPED_CLEANUP PyObject *seconds =
       PyLong_FromLong(mg_local_date_time_seconds(ldt));
   IF_PTR_IS_NULL_RETURN(seconds, NULL);
-  SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("utcfromtimestamp");
+  SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
-  SCOPED_CLEANUP PyObject *result = PyObject_CallMethodObjArgs(
-      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds, NULL);
+  SCOPED_CLEANUP PyObject *utc_result = PyObject_CallMethodObjArgs(
+      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds,
+      PyDateTime_TimeZone_UTC, NULL);
+  IF_PTR_IS_NULL_RETURN(utc_result, NULL);
+  SCOPED_CLEANUP PyObject *replace_method = PyObject_GetAttrString(utc_result, "replace");
+  IF_PTR_IS_NULL_RETURN(replace_method, NULL);
+  SCOPED_CLEANUP PyObject *tzinfo_kwarg = PyDict_New();
+  IF_PTR_IS_NULL_RETURN(tzinfo_kwarg, NULL);
+  PyDict_SetItemString(tzinfo_kwarg, "tzinfo", Py_None);
+  SCOPED_CLEANUP PyObject *result = PyObject_Call(replace_method, PyTuple_New(0), tzinfo_kwarg);
   IF_PTR_IS_NULL_RETURN(result, NULL);
   SCOPED_CLEANUP PyObject *y = PyObject_GetAttrString(result, "year");
   SCOPED_CLEANUP PyObject *mo = PyObject_GetAttrString(result, "month");
@@ -351,11 +354,12 @@ PyObject *mg_date_time_to_py_datetime(const mg_date_time *dt) {
   SCOPED_CLEANUP PyObject *timestamp = PyLong_FromLongLong(seconds);
   IF_PTR_IS_NULL_RETURN(timestamp, NULL);
 
-  SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("utcfromtimestamp");
+  SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
 
   SCOPED_CLEANUP PyObject *utc_dt = PyObject_CallMethodObjArgs(
-      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, timestamp, NULL);
+      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, timestamp,
+      PyDateTime_TimeZone_UTC, NULL);
   IF_PTR_IS_NULL_RETURN(utc_dt, NULL);
 
   SCOPED_CLEANUP PyObject *y = PyObject_GetAttrString(utc_dt, "year");
@@ -406,11 +410,12 @@ PyObject *mg_date_time_zone_id_to_py_datetime(const mg_date_time_zone_id *dt) {
   SCOPED_CLEANUP PyObject *timestamp = PyLong_FromLongLong(seconds);
   IF_PTR_IS_NULL_RETURN(timestamp, NULL);
 
-  SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("utcfromtimestamp");
+  SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
 
   SCOPED_CLEANUP PyObject *utc_dt = PyObject_CallMethodObjArgs(
-      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, timestamp, NULL);
+      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, timestamp,
+      PyDateTime_TimeZone_UTC, NULL);
   IF_PTR_IS_NULL_RETURN(utc_dt, NULL);
 
   SCOPED_CLEANUP PyObject *y = PyObject_GetAttrString(utc_dt, "year");

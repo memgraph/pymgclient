@@ -3,6 +3,33 @@ Changelog
 =========
 
 ######
+1.5.0
+######
+
+
+******************************
+Major Feature and Improvements
+******************************
+
+  * mgclient has been updated to 1.5.0
+  * Update minimum Python requirement to 3.9
+  * Support for zoned datetime objects with named IANA timezones or offsets
+  * Remove deprecated `datetime.utcfromtimestamp()` usage in C extension
+
+
+######
+1.4.0
+######
+
+
+******************************
+Major Feature and Improvements
+******************************
+
+  * Update CI to use newer Python versions
+  * Update release workflow and CI infrastructure
+
+######
 1.3.1
 ######
 

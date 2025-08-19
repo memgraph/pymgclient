@@ -288,7 +288,7 @@ jobs:
         shell: msys2 {0}
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python -m pip install --upgrade pip setuptools wheel pyopenssl pytest
+          python -m pip install --upgrade pip setuptools wheel pyopenssl pytest tzdata
         env:
           pythonLocation: ${{ env.pythonLocation }}
           

@@ -3,6 +3,18 @@ Changelog
 =========
 
 ######
+1.5.1
+######
+
+
+*********
+Bug Fixes
+*********
+
+  * Replace `PyDateTime_DATE_GET_TZINFO` with Python 3.9 compatible function
+
+
+######
 1.5.0
 ######
 

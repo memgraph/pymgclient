@@ -22,6 +22,24 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * TODO(colinbarry) Python 3.9 doesn't support the PyDateTime_DATE_GET_TZINFO
+ * macro. Until we require Python 3.10, this shim function does exactly the
+ * same thing whilst keeping 3.9 compatibility.
+ */
+PyObject* INTERNAL_PyDateTime_DATE_GET_TZINFO(PyObject *obj)
+{
+    PyObject *tzinfo = NULL;
+
+    if (PyDateTime_Check(obj)) {
+        tzinfo = ((PyDateTime_DateTime*)obj)->tzinfo;
+    } else if (PyTime_Check(obj)) {
+        tzinfo = ((PyDateTime_Time*)obj)->tzinfo;
+    }
+
+    return tzinfo ? tzinfo : Py_None;
+}
+
 void py_datetime_import_init() { PyDateTime_IMPORT; }
 
 PyObject *mg_list_to_py_tuple(const mg_list *list) {
@@ -703,7 +721,7 @@ mg_date_time *py_date_time_to_mg_date_time(PyObject *obj) {
   }
   int64_t subseconds = subseconds_as_nanoseconds(obj);
 
-  PyObject *tzinfo = PyDateTime_DATE_GET_TZINFO(obj);
+  PyObject *tzinfo = INTERNAL_PyDateTime_DATE_GET_TZINFO(obj);
   if (tzinfo == Py_None) {
     return NULL;
   }
@@ -727,7 +745,7 @@ mg_date_time_zone_id *py_date_time_to_mg_date_time_zone_id(PyObject *obj) {
   }
   int64_t subseconds = subseconds_as_nanoseconds(obj);
 
-  PyObject *tzinfo = PyDateTime_DATE_GET_TZINFO(obj);
+  PyObject *tzinfo = INTERNAL_PyDateTime_DATE_GET_TZINFO(obj);
   if (tzinfo == Py_None) {
     return NULL;
   }
@@ -818,7 +836,7 @@ mg_value *py_object_to_mg_value(PyObject *object) {
     }
     ret = mg_value_make_local_time(lt);
   } else if (PyDateTime_CheckExact(object)) {
-    PyObject *tzinfo = PyDateTime_DATE_GET_TZINFO(object);
+    PyObject *tzinfo = INTERNAL_PyDateTime_DATE_GET_TZINFO(object);
     if (tzinfo != Py_None) {
       // The `timezone` may either be an offset based `datetime.timezone`, or
       // some kind of instance of `tzinfo`. In the case of the former, we

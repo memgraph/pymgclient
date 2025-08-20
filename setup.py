@@ -54,7 +54,7 @@ parser.read("setup.cfg")
 
 static_openssl = parser.getboolean("build_ext", "static_openssl", fallback=False)
 
-version = os.getenv("PYMGCLIENT_OVERRIDE_VERSION", "1.5.0")
+version = os.getenv("PYMGCLIENT_OVERRIDE_VERSION", "1.5.1")
 
 
 def list_all_files_in_dir(path):

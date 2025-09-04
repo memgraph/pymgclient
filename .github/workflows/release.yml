@@ -69,14 +69,14 @@ jobs:
       
       - name: Publish Package to PyPI
         if: ${{ inputs.publish_pypi == true && inputs.test == false }}
-        uses: pypa/gh-action-pypi-publish@v1.4.2
+        uses: pypa/gh-action-pypi-publish@v1.13.0
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Publish Package to PyPI (TEST)
         if: ${{ inputs.publish_pypi == true && inputs.test }}
-        uses: pypa/gh-action-pypi-publish@v1.4.2
+        uses: pypa/gh-action-pypi-publish@v1.13.0
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}

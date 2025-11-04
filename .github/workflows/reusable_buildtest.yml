@@ -43,7 +43,7 @@ jobs:
           - {platform: 'ubuntu-24.04', python_version: '3.14', mgversion: 'latest', arch: 'x86_64'}
           - {platform: 'fedora-42', python_version: '3.13', mgversion: 'latest', arch: 'x86_64'}
           - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest', arch: 'aarch64'}
-    runs-on: [self-hosted, ${{ matrix.arch == 'x86_64' && 'X64' || 'ARM64' }}]
+    runs-on: [self-hosted, "${{ matrix.arch == 'x86_64' && 'X64' || 'ARM64' }}"]
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4

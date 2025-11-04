@@ -125,6 +125,7 @@ DEB_DEPS=(
   libssl-dev
   netcat-traditional
   patchelf
+  libatomic1
 )
 
 RPM_DEPS=(
@@ -137,6 +138,7 @@ RPM_DEPS=(
   g++
   openssl-devel
   nmap-ncat
+  libatomic
 )
 
 install_deb() {

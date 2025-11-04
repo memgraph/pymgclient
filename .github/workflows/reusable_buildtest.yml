@@ -36,13 +36,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {platform: 'ubuntu-22.04', python_version: '3.10', mgversion: 'latest'}
-          - {platform: 'ubuntu-24.04', python_version: '3.10', mgversion: 'latest'}
-          - {platform: 'ubuntu-24.04', python_version: '3.11', mgversion: 'latest'}
-          - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest'}
-          - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest'}
-          - {platform: 'fedora-41', python_version: '3.13', mgversion: 'latest'}
-    runs-on: [self-hosted, X64]
+          - {platform: 'ubuntu-24.04', python_version: '3.10', mgversion: 'latest', arch: 'x86_64'}
+          - {platform: 'ubuntu-24.04', python_version: '3.11', mgversion: 'latest', arch: 'x86_64'}
+          - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest', arch: 'x86_64'}
+          - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest', arch: 'x86_64'}
+          - {platform: 'ubuntu-24.04', python_version: '3.14', mgversion: 'latest', arch: 'x86_64'}
+          - {platform: 'fedora-42', python_version: '3.13', mgversion: 'latest', arch: 'x86_64'}
+          - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest', arch: 'aarch64'}
+    runs-on: [self-hosted, ${{ matrix.arch == 'x86_64' && 'X64' || 'ARM64' }}]
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
@@ -61,11 +62,11 @@ jobs:
 
       - name: Download Memgraph
         run: |
-          if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
-            MEMGRAPH_PACKAGE_NAME="memgraph-${{ env.MGVERSION }}_1-1.x86_64.rpm"
+          if [[ "${{ matrix.platform }}" == "fedora-42" ]]; then
+            MEMGRAPH_PACKAGE_NAME="memgraph-${{ env.MGVERSION }}_1-1.${{ matrix.arch }}.rpm"
             LOCAL_PACKAGE_NAME=memgraph.rpm
           else
-            MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}-1_amd64.deb"
+            MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}-1_${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}.deb"
             LOCAL_PACKAGE_NAME=memgraph.deb
           fi
           curl -L "https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/${{ matrix.platform }}/${MEMGRAPH_PACKAGE_NAME}" > "${LOCAL_PACKAGE_NAME}"
@@ -125,7 +126,7 @@ jobs:
               bash -c "cd /pymgclient && ./tools/install_linux_deps.sh ${{ matrix.platform }} --python-version ${{ matrix.python_version }} --force-update"
 
           # Install Memgraph package
-          if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
+          if [[ "${{ matrix.platform }}" == "fedora-42" ]]; then
             docker exec -i testcontainer \
               bash -c "dnf install -y /$LOCAL_PACKAGE_NAME"
           else
@@ -144,7 +145,7 @@ jobs:
         if: ${{ matrix.platform == 'ubuntu-24.04' }}
         run: |
           docker exec -i testcontainer \
-            bash -c "cd /pymgclient && auditwheel repair dist/*.whl --plat manylinux_2_39_x86_64 -w dist/ && rm dist/*linux_x86_64.whl"
+            bash -c "cd /pymgclient && auditwheel repair dist/*.whl --plat manylinux_2_39_${{ matrix.arch == 'x86_64' && 'x86_64' || 'aarch64' }} -w dist/ && rm dist/*linux_${{ matrix.arch == 'x86_64' && 'x86_64' || 'aarch64' }}.whl"
 
 
       - name: Install pymgclient
@@ -237,8 +238,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, windows-2025]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: [windows-2025]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - name: Checkout code
@@ -368,12 +369,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-15, macos-14]
+        platform: [macos-15]
         python_version:
           - '3.10'
           - '3.11'
           - '3.12'
           - '3.13'
+          - '3.14'
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2

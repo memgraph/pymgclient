@@ -115,7 +115,7 @@ class BuildMgclientExt(build_ext):
                     return os.path.abspath(which_cmake)
 
                 self.announce(f"{possible_cmake} is not accesible", level=log.INFO)
-            raise DistutilsExecError("Cannot found suitable cmake")
+            raise DistutilsExecError("Cannot find suitable cmake")
         else:
             self.announce(
                 f"Using the value of {cmake_env_var_name} for CMake, which is" f"{custom_cmake}", level=log.INFO

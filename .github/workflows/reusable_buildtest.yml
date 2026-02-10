@@ -148,7 +148,7 @@ jobs:
       - name: Install pymgclient
         run: |
           docker exec -i testcontainer \
-            bash -c "python${{ matrix.python_version }} -m pip install ./pymgclient/dist/pymgclient-* ${{ env.BREAK_PACKAGES }}"
+            bash -c "python${{ matrix.python_version }} -m pip install ./pymgclient/dist/pymgclient-*.whl ${{ env.BREAK_PACKAGES }}"
 
       - name: Import mgclient to validate installation
         run: |

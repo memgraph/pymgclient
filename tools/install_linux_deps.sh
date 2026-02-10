@@ -168,6 +168,9 @@ install_deb() {
 install_rpm() {
   echo "Installing RPM dependencies..."
   "${SUDO[@]}" dnf install -y ${RPM_DEPS[*]}
+
+  # install ensurepip because pip isn't always provided for the version of python
+  "$python_binary" -m ensurepip
 }
 
 case "$distro" in

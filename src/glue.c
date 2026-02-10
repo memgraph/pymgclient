@@ -240,7 +240,7 @@ exit:
   return ret;
 }
 
-void maybe_decrement_ref(PyObject **obj) { Py_XDECREF(obj); }
+void maybe_decrement_ref(PyObject **obj) { Py_XDECREF(*obj); }
 
 #define SCOPED_CLEANUP __attribute__((cleanup(maybe_decrement_ref)))
 #define IF_PTR_IS_NULL_RETURN(ptr, value) \

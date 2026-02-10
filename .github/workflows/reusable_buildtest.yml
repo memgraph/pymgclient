@@ -169,7 +169,8 @@ jobs:
 
       - name: Copy Package
         run: |
-          docker cp testcontainer:/pymgclient/dist .
+          mkdir -p dist
+          docker cp testcontainer:/pymgclient/dist/*.whl dist/
 
       - name: Save source distribution package
         if: ${{ inputs.upload_artifacts && matrix.platform == 'ubuntu-24.04' }}

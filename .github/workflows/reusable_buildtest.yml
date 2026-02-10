@@ -169,15 +169,14 @@ jobs:
 
       - name: Copy Package
         run: |
-          mkdir -p dist
-          docker cp testcontainer:/pymgclient/dist/*.whl dist/
+          docker cp testcontainer:/pymgclient/dist .
 
       - name: Save source distribution package
         if: ${{ inputs.upload_artifacts && matrix.platform == 'ubuntu-24.04' }}
         uses: actions/upload-artifact@v4
         with:
           name: pymgclient-linux-${{ matrix.python_version }}
-          path: dist/
+          path: dist/*.whl
 
       - name: Cleanup
         if: always()

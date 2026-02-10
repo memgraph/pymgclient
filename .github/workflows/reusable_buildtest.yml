@@ -41,7 +41,7 @@ jobs:
           - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest', arch: 'x86_64'}
           - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest', arch: 'x86_64'}
           - {platform: 'ubuntu-24.04', python_version: '3.14', mgversion: 'latest', arch: 'x86_64'}
-          - {platform: 'fedora-41', python_version: '3.14', mgversion: 'latest', arch: 'x86_64'}
+          - {platform: 'fedora-42', python_version: '3.14', mgversion: 'latest', arch: 'x86_64'}
           - {platform: 'ubuntu-24.04', python_version: '3.10', mgversion: 'latest', arch: 'aarch64'}
           - {platform: 'ubuntu-24.04', python_version: '3.11', mgversion: 'latest', arch: 'aarch64'}
           - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest', arch: 'aarch64'}
@@ -66,7 +66,7 @@ jobs:
 
       - name: Download Memgraph
         run: |
-          if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
+          if [[ "${{ matrix.platform }}" == "fedora-42" ]]; then
             MEMGRAPH_PACKAGE_NAME="memgraph-${{ env.MGVERSION }}_1-1.${{ matrix.arch }}.rpm"
             LOCAL_PACKAGE_NAME=memgraph.rpm
           else
@@ -106,12 +106,8 @@ jobs:
           if [[ "${{ matrix.platform }}" == "ubuntu-24.04" ]]; then
             # this option is specific to ubuntu, not fedora
             break_packages="--break-system-packages"
-          elif [[ "${{ matrix.platform }}" == fedora* ]]; then
-            # rpm distros do not ship with static lib for openssl
-            static_ssl="-C--build-option=build_ext --C--build-option=--static-openssl=False"
           fi
           echo "BREAK_PACKAGES=$break_packages" >> $GITHUB_ENV
-          echo "STATIC_SSL=$static_ssl" >> $GITHUB_ENV
 
       - name: Copy Repo Into Container
         run: |
@@ -130,7 +126,7 @@ jobs:
               bash -c "cd /pymgclient && ./tools/install_linux_deps.sh ${{ matrix.platform }} --python-version ${{ matrix.python_version }} --force-update"
 
           # Install Memgraph package
-          if [[ "${{ matrix.platform }}" == "fedora-41" ]]; then
+          if [[ "${{ matrix.platform }}" == "fedora-42" ]]; then
             docker exec -i testcontainer \
               bash -c "dnf install -y /$LOCAL_PACKAGE_NAME"
           else
@@ -142,15 +138,12 @@ jobs:
           
       - name: Build Python Wheel
         run: |
+          build_cmd="./tools/build-wheel.sh --python-version ${{ matrix.python_version }}"
+          if [[ ${{ matrix.platform }} == "ubuntu-24.04" ]]; then
+            build_cmd+=" --static-ssl --run-auditwheel"
+          fi
           docker exec -i testcontainer \
-            bash -c "cd /pymgclient && python${{ matrix.python_version }} setup.py ${{ env.STATIC_SSL }} bdist_wheel"
-
-      - name: Audit Wheel
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
-        run: |
-          docker exec -i testcontainer \
-            bash -c "cd /pymgclient && auditwheel repair dist/*.whl --plat manylinux_2_39_${{ matrix.arch == 'x86_64' && 'x86_64' || 'aarch64' }} -w dist/ && rm dist/*linux_${{ matrix.arch == 'x86_64' && 'x86_64' || 'aarch64' }}.whl"
-
+            bash -c "cd /pymgclient && $build_cmd"
 
       - name: Install pymgclient
         run: |

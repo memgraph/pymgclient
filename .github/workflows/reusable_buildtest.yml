@@ -40,8 +40,13 @@ jobs:
           - {platform: 'ubuntu-24.04', python_version: '3.11', mgversion: 'latest', arch: 'x86_64'}
           - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest', arch: 'x86_64'}
           - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest', arch: 'x86_64'}
-          - {platform: 'fedora-41', python_version: '3.13', mgversion: 'latest', arch: 'x86_64'}
+          - {platform: 'ubuntu-24.04', python_version: '3.14', mgversion: 'latest', arch: 'x86_64'}
+          - {platform: 'fedora-41', python_version: '3.14', mgversion: 'latest', arch: 'x86_64'}
+          - {platform: 'ubuntu-24.04', python_version: '3.10', mgversion: 'latest', arch: 'aarch64'}
+          - {platform: 'ubuntu-24.04', python_version: '3.11', mgversion: 'latest', arch: 'aarch64'}
           - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest', arch: 'aarch64'}
+          - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest', arch: 'aarch64'}
+          - {platform: 'ubuntu-24.04', python_version: '3.14', mgversion: 'latest', arch: 'aarch64'}
     runs-on: [self-hosted, "${{ matrix.arch == 'x86_64' && 'X64' || 'ARM64' }}"]
     steps:
       - name: Checkout repository and submodules
@@ -103,7 +108,7 @@ jobs:
             break_packages="--break-system-packages"
           elif [[ "${{ matrix.platform }}" == fedora* ]]; then
             # rpm distros do not ship with static lib for openssl
-            static_ssl="build_ext --static-openssl=False"
+            static_ssl="-C--build-option=build_ext --C--build-option=--static-openssl=False"
           fi
           echo "BREAK_PACKAGES=$break_packages" >> $GITHUB_ENV
           echo "STATIC_SSL=$static_ssl" >> $GITHUB_ENV
@@ -238,7 +243,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2022, windows-2025]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - name: Checkout code
@@ -374,6 +379,7 @@ jobs:
           - '3.11'
           - '3.12'
           - '3.13'
+          - '3.14'
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2

@@ -498,6 +498,8 @@ class TestCursorInAsyncConnection:
         cursor.execute("UNWIND [1, 2, 3, 4, 5] AS n RETURN n")
 
         fetchone_result = cursor.fetchone()
+        print(f"fetchone_result: {fetchone_result}")
+        print(f"sys.getrefcount(fetchone_result): {sys.getrefcount(fetchone_result)}")
         # Refs are the following:
         # 1. fetchone_result
         # 2. temp reference in sys.getrefcount

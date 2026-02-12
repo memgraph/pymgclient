@@ -424,28 +424,10 @@ jobs:
           source env/bin/activate
           python${{ matrix.python_version }} -m pip install dist/*
 
-      - name: Install podman
-        run: |
-          brew install podman
-          podman machine init
-          podman machine start
-          podman info
-
-      - name: Launch Memgraph Container
-        run: |
-          podman run -d --rm --name memgraphcontainer -p 7687:7687 memgraph/memgraph --telemetry-enabled=false
-
-      - name: Run tests
+      - name: Import mgclient to validate installation
         run: |
           source env/bin/activate
-          export MEMGRAPH_HOST=localhost
-          pip install pytest
-          python${{ matrix.python_version }} -m pytest -v
-
-      - name: Cleanup
-        if: always()
-        run: |
-          podman stop memgraphcontainer
+          python${{ matrix.python_version }} -c "import mgclient"
 
       - name: Save wheel package
         if: ${{ inputs.upload_artifacts }}

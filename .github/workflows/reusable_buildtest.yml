@@ -175,7 +175,7 @@ jobs:
         if: ${{ inputs.upload_artifacts && matrix.platform == 'ubuntu-24.04' }}
         uses: actions/upload-artifact@v4
         with:
-          name: pymgclient-linux-${{ matrix.python_version }}
+          name: pymgclient-linux-${{ matrix.python_version }}-${{ matrix.arch }}
           path: dist/*.whl
 
       - name: Cleanup
@@ -352,7 +352,7 @@ jobs:
         if: ${{ inputs.upload_artifacts && matrix.os == 'windows-2025' }}
         uses: actions/upload-artifact@v4
         with:
-          name: pymgclient-win-${{ matrix.python-version }}
+          name: pymgclient-win-${{ matrix.python-version }}-${{ matrix.arch }}
           path: dist/
 
 

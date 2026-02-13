@@ -81,7 +81,8 @@ jobs:
             --platform linux/${{ matrix.arch }} \
             -t pymgclient-builder:latest \
             --build-arg PYTHON_VERSIONS="3.10,3.11,3.12,3.13,3.14" \
-            -f tools/Dockerfile.ubuntu .
+            -f tools/Dockerfile.ubuntu \
+            --load .
 
       - name: Launch Docker Container
         run: |

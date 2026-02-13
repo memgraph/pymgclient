@@ -35,18 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - {platform: 'ubuntu-24.04', python_version: '3.10', mgversion: 'latest', arch: 'x86_64'}
-          - {platform: 'ubuntu-24.04', python_version: '3.11', mgversion: 'latest', arch: 'x86_64'}
-          - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest', arch: 'x86_64'}
-          - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest', arch: 'x86_64'}
-          - {platform: 'ubuntu-24.04', python_version: '3.14', mgversion: 'latest', arch: 'x86_64'}
-          - {platform: 'fedora-42', python_version: '3.14', mgversion: 'latest', arch: 'x86_64'}
-          - {platform: 'ubuntu-24.04', python_version: '3.10', mgversion: 'latest', arch: 'aarch64'}
-          - {platform: 'ubuntu-24.04', python_version: '3.11', mgversion: 'latest', arch: 'aarch64'}
-          - {platform: 'ubuntu-24.04', python_version: '3.12', mgversion: 'latest', arch: 'aarch64'}
-          - {platform: 'ubuntu-24.04', python_version: '3.13', mgversion: 'latest', arch: 'aarch64'}
-          - {platform: 'ubuntu-24.04', python_version: '3.14', mgversion: 'latest', arch: 'aarch64'}
+        arch: [x86_64, aarch64]
     runs-on: [self-hosted, "${{ matrix.arch == 'x86_64' && 'X64' || 'ARM64' }}"]
     steps:
       - name: Checkout repository and submodules
@@ -86,17 +75,21 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Build Docker Image
+        run: |
+          docker buildx build \
+            --platform linux/${{ matrix.arch }} \
+            -t pymgclient-builder:latest \
+            --build-arg PYTHON_VERSIONS="3.10,3.11,3.12,3.13,3.14" \
+            -f tools/Dockerfile.ubuntu .
+
       - name: Launch Docker Container
         run: |
-          platform="${{ matrix.platform }}"
-          tag=${platform//-/:}
           if [[ "${{ inputs.version }}" != "" ]]; then
             echo "Building version ${{ inputs.version }}"
-             docker run -d --rm \
-            -e PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }} \
-            --name testcontainer "$tag" sleep infinity     
+            docker run -d --rm -e PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }} --name testcontainer pymgclient-builder:latest sleep infinity     
           else
-            docker run -d --rm --name testcontainer "$tag" sleep infinity            
+            docker run -d --rm --name testcontainer pymgclient-builder:latest sleep infinity            
           fi
 
       - name: Set Environment Variables
@@ -121,69 +114,51 @@ jobs:
           docker exec -i testcontainer \
               bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service"  
 
-          # Install dependencies
-          docker exec -i testcontainer \
-              bash -c "cd /pymgclient && ./tools/install_linux_deps.sh ${{ matrix.platform }} --python-version ${{ matrix.python_version }} --force-update"
-
           # Install Memgraph package
-          if [[ "${{ matrix.platform }}" == "fedora-42" ]]; then
-            docker exec -i testcontainer \
-              bash -c "dnf install -y /$LOCAL_PACKAGE_NAME"
-          else
-            docker exec -i testcontainer \
-              bash -c "dpkg -i /$LOCAL_PACKAGE_NAME"
-          fi
-          rm -v $LOCAL_PACKAGE_NAME
+          docker exec -i testcontainer \
+            bash -c "dpkg -i /$LOCAL_PACKAGE_NAME"
       
-          
-      - name: Build Python Wheel
+      - name: Build Python Wheels
         run: |
-          build_cmd="./tools/build-wheel.sh --python-version ${{ matrix.python_version }}"
-          if [[ ${{ matrix.platform }} == "ubuntu-24.04" ]]; then
-            build_cmd+=" --static-ssl --run-auditwheel"
-          fi
-          docker exec -i testcontainer \
-            bash -c "cd /pymgclient && $build_cmd"
+          PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14")
+          for python_version in "${PYTHON_VERSIONS[@]}"; do
+            build_cmd="./tools/build-wheel.sh --python-version $python_version --static-ssl --run-auditwheel"
+            docker exec -i testcontainer \
+              bash -c "cd /pymgclient && $build_cmd"
+          done
 
-      - name: Install pymgclient
+      - name: Install pymgclient and run tests
         run: |
-          docker exec -i testcontainer \
-            bash -c "python${{ matrix.python_version }} -m pip install ./pymgclient/dist/pymgclient-*.whl ${{ env.BREAK_PACKAGES }}"
-
-      - name: Import mgclient to validate installation
-        run: |
-          docker exec -i testcontainer \
-            bash -c "python${{ matrix.python_version }} -c 'import mgclient'"
-
-      - name: Run tests
-        run: |
-          MEMGRAPH_PORT=10000 # what's this for?
-
-          docker exec -i testcontainer \
-            bash -c "cd /pymgclient && python${{ matrix.python_version }} -m pytest -v"
+          PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14")
+          for python_version in "${PYTHON_VERSIONS[@]}"; do
+            docker exec -i testcontainer \
+              bash -c "python$python_version -m pip install ./pymgclient/dist/pymgclient-*.whl ${{ env.BREAK_PACKAGES }}"
+              bash -c "python$python_version -c 'import mgclient'"
+              cd /pymgclient && python$python_version -m pytest -v
+          done
 
       - name: Build docs
         run: |
           docker exec -i testcontainer \
             bash -c "cd /pymgclient/docs && make html"
 
-      - name: Copy Package
+      - name: Copy Packages
         run: |
           docker cp testcontainer:/pymgclient/dist .
 
-      - name: Save source distribution package
-        if: ${{ inputs.upload_artifacts && matrix.platform == 'ubuntu-24.04' }}
+      - name: Save Packages
+        if: ${{ inputs.upload_artifacts }}
         uses: actions/upload-artifact@v4
         with:
-          name: pymgclient-linux-${{ matrix.python_version }}-${{ matrix.arch }}
-          path: dist/*.whl
+          name: pymgclient-linux-${{ matrix.arch }}
+          path: dist/*
 
       - name: Cleanup
         if: always()
         run: |
           docker stop testcontainer || echo "Container does not exist"
           docker wait testcontainer || echo "Container does not exist"
-          docker rmi ${{ env.MGVERSION }} || echo "Image does not exist"
+          docker rmi pymgclient-builder:latest || echo "Image does not exist"
 
   build_source_dist:
     if: ${{ inputs.build_source_dist }}

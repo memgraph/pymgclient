@@ -161,6 +161,7 @@ install_deb() {
   else
     DEB_DEPS+=( libcurl4 )
   fi
+  export DEBIAN_FRONTEND=noninteractive
   "${SUDO[@]}" apt-get update
   "${SUDO[@]}" apt-get install -y ${DEB_DEPS[*]}
 }

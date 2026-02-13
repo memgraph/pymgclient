@@ -1,0 +1,30 @@
+FROM ubuntu:24.04  
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Build arg: comma-separated list of python versions
+ARG PYTHON_VERSIONS="3.10,3.11,3.12,3.13,3.14"
+
+# Minimal packages so we can run bash scripts, fetch deps, etc.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    ca-certificates \
+    curl \
+    git \
+    sudo \
+ && rm -rf /var/lib/apt/lists/*
+
+# Copy current directory into /pymgclient
+WORKDIR /pymgclient
+COPY . /pymgclient
+
+# Run the install script for each version
+RUN set -euo pipefail; \
+    IFS=',' read -ra versions <<< "${PYTHON_VERSIONS}"; \
+    for v in "${versions[@]}"; do \
+      v="$(echo "$v" | xargs)"; \
+      echo "=== Installing deps for Python ${v} ==="; \
+      cd /pymgclient && ./tools/install_linux_deps.sh ubuntu-24.04 --python-version "${v}" --force-update; \
+    done
+
+ENTRYPOINT ["sleep", "infinity"]

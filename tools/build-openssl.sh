@@ -55,8 +55,14 @@ conan install   \
   --deployer=full_deploy \
   --output-folder=$OUT_DIR
 
+if [[ "$(arch)" == "aarch64" ]]; then
+  ARCH="armv8"
+else
+  ARCH="$(arch)"
+fi
+
 # move the lib, bin, include, and lib directories to the out dir
-mv -vf $OUT_DIR/full_deploy/host/openssl/$OPENSSL_VERSION/Release/$(arch)/* $OUT_DIR
+mv -vf $OUT_DIR/full_deploy/host/openssl/$OPENSSL_VERSION/Release/$ARCH/* $OUT_DIR
 # Copy zlib (merges directories), then remove source
-cp -r $OUT_DIR/full_deploy/host/zlib/$ZLIB_VERSION/Release/$(arch)/* $OUT_DIR/ && \
-rm -rf $OUT_DIR/full_deploy/host/zlib/$ZLIB_VERSION/Release/$(arch)/*
+cp -r $OUT_DIR/full_deploy/host/zlib/$ZLIB_VERSION/Release/$ARCH/* $OUT_DIR/ && \
+rm -rf $OUT_DIR/full_deploy/host/zlib/$ZLIB_VERSION/Release/$ARCH/*

@@ -118,7 +118,7 @@ jobs:
             echo "Testing Python version $python_version"
             short_python_version=$(echo $python_version | sed 's/\.//g')
             docker exec -i testcontainer \
-              bash -c "python$python_version -m pip install \$(ls ./pymgclient/dist/pymgclient*cp${short_python_version}*.whl) --break-system-packages"
+              bash -c "python$python_version -m pip install \$(ls /pymgclient/dist/pymgclient*cp${short_python_version}*.whl) --break-system-packages"
             docker exec -i testcontainer \
               bash -c "python$python_version -c 'import mgclient'"
             docker exec -i testcontainer \

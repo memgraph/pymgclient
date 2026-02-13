@@ -46,23 +46,16 @@ jobs:
 
       - name: Set Memgraph Version
         run: |
-          if [[ "${{ matrix.mgversion }}" == "latest" ]]; then
-            mgversion=$(./tools/get_memgraph_version.sh)
-          else
-            mgversion="${{ matrix.mgversion }}"
-          fi
+          mgversion=$(./tools/get_memgraph_version.sh)
+
           echo "MGVERSION=$mgversion" >> $GITHUB_ENV
 
       - name: Download Memgraph
         run: |
-          if [[ "${{ matrix.platform }}" == "fedora-42" ]]; then
-            MEMGRAPH_PACKAGE_NAME="memgraph-${{ env.MGVERSION }}_1-1.${{ matrix.arch }}.rpm"
-            LOCAL_PACKAGE_NAME=memgraph.rpm
-          else
-            MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}-1_${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}.deb"
-            LOCAL_PACKAGE_NAME=memgraph.deb
-          fi
-          curl -L "https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/${{ matrix.platform }}${{ matrix.arch == 'aarch64' && '-aarch64' || '' }}/${MEMGRAPH_PACKAGE_NAME}" > "${LOCAL_PACKAGE_NAME}"
+          MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}-1_${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}.deb"
+          LOCAL_PACKAGE_NAME=memgraph.deb
+
+          curl -L "https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/ubuntu-24.04${{ matrix.arch == 'aarch64' && '-aarch64' || '' }}/${MEMGRAPH_PACKAGE_NAME}" > "${LOCAL_PACKAGE_NAME}"
           echo "LOCAL_PACKAGE_NAME=$LOCAL_PACKAGE_NAME" >> $GITHUB_ENV
         
       - name: Set up Docker Buildx
@@ -93,16 +86,6 @@ jobs:
             docker run -d --rm --name testcontainer pymgclient-builder:latest   
           fi
 
-      - name: Set Environment Variables
-        run: |
-          break_packages=""
-          static_ssl=""
-          if [[ "${{ matrix.platform }}" == "ubuntu-24.04" ]]; then
-            # this option is specific to ubuntu, not fedora
-            break_packages="--break-system-packages"
-          fi
-          echo "BREAK_PACKAGES=$break_packages" >> $GITHUB_ENV
-
       - name: Install Memgraph
         run: |
           docker cp $LOCAL_PACKAGE_NAME testcontainer:/$LOCAL_PACKAGE_NAME
@@ -129,7 +112,7 @@ jobs:
           PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14")
           for python_version in "${PYTHON_VERSIONS[@]}"; do
             docker exec -i testcontainer \
-              bash -c "python$python_version -m pip install ./pymgclient/dist/pymgclient-*.whl ${{ env.BREAK_PACKAGES }}"
+              bash -c "python$python_version -m pip install ./pymgclient/dist/pymgclient-*.whl --break-system-packages"
               bash -c "python$python_version -c 'import mgclient'"
               cd /pymgclient && python$python_version -m pytest -v
           done

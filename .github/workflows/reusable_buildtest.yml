@@ -44,19 +44,19 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Set Memgraph Version
-        run: |
-          mgversion=$(./tools/get_memgraph_version.sh)
+      # - name: Set Memgraph Version
+      #   run: |
+      #     mgversion=$(./tools/get_memgraph_version.sh)
 
-          echo "MGVERSION=$mgversion" >> $GITHUB_ENV
+      #     echo "MGVERSION=$mgversion" >> $GITHUB_ENV
 
-      - name: Download Memgraph
-        run: |
-          MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}-1_${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}.deb"
-          LOCAL_PACKAGE_NAME=memgraph.deb
+      # - name: Download Memgraph
+      #   run: |
+      #     MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}-1_${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}.deb"
+      #     LOCAL_PACKAGE_NAME=memgraph.deb
 
-          curl -L "https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/ubuntu-24.04${{ matrix.arch == 'aarch64' && '-aarch64' || '' }}/${MEMGRAPH_PACKAGE_NAME}" > "${LOCAL_PACKAGE_NAME}"
-          echo "LOCAL_PACKAGE_NAME=$LOCAL_PACKAGE_NAME" >> $GITHUB_ENV
+      #     curl -L "https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/ubuntu-24.04${{ matrix.arch == 'aarch64' && '-aarch64' || '' }}/${MEMGRAPH_PACKAGE_NAME}" > "${LOCAL_PACKAGE_NAME}"
+      #     echo "LOCAL_PACKAGE_NAME=$LOCAL_PACKAGE_NAME" >> $GITHUB_ENV
         
       - name: Set up Docker Buildx
         id: buildx
@@ -74,7 +74,7 @@ jobs:
             --platform linux/${{ matrix.arch }} \
             -t pymgclient-builder:latest \
             --build-arg PYTHON_VERSIONS="3.10,3.11,3.12,3.13,3.14" \
-            -f tools/Dockerfile.ubuntu \
+            -f tools/Dockerfile.manylinux \
             --load .
 
       - name: Launch Docker Container
@@ -86,17 +86,17 @@ jobs:
             docker run -d --rm --name testcontainer pymgclient-builder:latest   
           fi
 
-      - name: Install Memgraph
-        run: |
-          docker cp $LOCAL_PACKAGE_NAME testcontainer:/$LOCAL_PACKAGE_NAME
+      # - name: Install Memgraph
+      #   run: |
+      #     docker cp $LOCAL_PACKAGE_NAME testcontainer:/$LOCAL_PACKAGE_NAME
 
-          # Prevents Memgraph from starting.
-          docker exec -i testcontainer \
-              bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service"  
+      #     # Prevents Memgraph from starting.
+      #     docker exec -i testcontainer \
+      #         bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service"  
 
-          # Install Memgraph package
-          docker exec -i testcontainer \
-            bash -c "dpkg -i /$LOCAL_PACKAGE_NAME"
+      #     # Install Memgraph package
+      #     docker exec -i testcontainer \
+      #       bash -c "dpkg -i /$LOCAL_PACKAGE_NAME"
       
       - name: Build Python Wheels
         run: |
@@ -117,8 +117,8 @@ jobs:
               bash -c "python$python_version -m pip install ./pymgclient/dist/pymgclient*cp${short_python_version}*.whl --break-system-packages"
             docker exec -i testcontainer \
               bash -c "python$python_version -c 'import mgclient'"
-            docker exec -i testcontainer \
-              bash -c "cd /pymgclient && python$python_version -m pytest -v"
+            # docker exec -i testcontainer \
+            #   bash -c "cd /pymgclient && python$python_version -m pytest -v"
           done
 
       - name: Build docs

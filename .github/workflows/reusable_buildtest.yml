@@ -88,9 +88,9 @@ jobs:
         run: |
           if [[ "${{ inputs.version }}" != "" ]]; then
             echo "Building version ${{ inputs.version }}"
-            docker run -d --rm -e PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }} --name testcontainer pymgclient-builder:latest sleep infinity     
+            docker run -d --rm -e PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }} --name testcontainer pymgclient-builder:latest    
           else
-            docker run -d --rm --name testcontainer pymgclient-builder:latest sleep infinity            
+            docker run -d --rm --name testcontainer pymgclient-builder:latest   
           fi
 
       - name: Set Environment Variables
@@ -103,11 +103,7 @@ jobs:
           fi
           echo "BREAK_PACKAGES=$break_packages" >> $GITHUB_ENV
 
-      - name: Copy Repo Into Container
-        run: |
-          docker cp . testcontainer:/pymgclient
-
-      - name: Install system dependencies
+      - name: Install Memgraph
         run: |
           docker cp $LOCAL_PACKAGE_NAME testcontainer:/$LOCAL_PACKAGE_NAME
 

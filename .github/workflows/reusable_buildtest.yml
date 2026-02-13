@@ -104,12 +104,12 @@ jobs:
           for python_version in "${PYTHON_VERSIONS[@]}"; do
             build_cmd="./tools/build-wheel.sh --python-version $python_version --static-ssl --run-auditwheel"
             docker exec -i testcontainer \
-              bash -c "cd /pymgclient && $build_cmd"
+              bash -c "cd /home/memgraph/pymgclient && $build_cmd"
           done
 
           # list the wheels
           docker exec -i testcontainer \
-            bash -c "ls -la /pymgclient/dist"
+            bash -c "ls -la /home/memgraph/pymgclient/dist"
 
       - name: Install pymgclient and run tests
         run: |
@@ -118,21 +118,21 @@ jobs:
             echo "Testing Python version $python_version"
             short_python_version=$(echo $python_version | sed 's/\.//g')
             docker exec -i testcontainer \
-              bash -c "python$python_version -m pip install \$(ls /pymgclient/dist/pymgclient*cp${short_python_version}*.whl) --break-system-packages"
+              bash -c "python$python_version -m pip install \$(ls /home/memgraph/pymgclient/dist/pymgclient*cp${short_python_version}*.whl) --break-system-packages"
             docker exec -i testcontainer \
               bash -c "python$python_version -c 'import mgclient'"
             # docker exec -i testcontainer \
-            #   bash -c "cd /pymgclient && python$python_version -m pytest -v"
+            #   bash -c "cd /home/memgraph/pymgclient && python$python_version -m pytest -v"
           done
 
       - name: Build docs
         run: |
           docker exec -i testcontainer \
-            bash -c "cd /pymgclient/docs && make html"
+            bash -c "cd /home/memgraph/pymgclient/docs && make html"
 
       - name: Copy Packages
         run: |
-          docker cp testcontainer:/pymgclient/dist .
+          docker cp testcontainer:/home/memgraph/pymgclient/dist .
 
       - name: Save Packages
         if: ${{ inputs.upload_artifacts }}

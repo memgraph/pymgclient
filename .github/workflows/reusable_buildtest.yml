@@ -111,10 +111,14 @@ jobs:
         run: |
           PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14")
           for python_version in "${PYTHON_VERSIONS[@]}"; do
+            echo "Testing Python version $python_version"
+            short_python_version=$(echo $python_version | sed 's/\.//g')
             docker exec -i testcontainer \
-              bash -c "python$python_version -m pip install ./pymgclient/dist/pymgclient-*.whl --break-system-packages"
+              bash -c "python$python_version -m pip install ./pymgclient/dist/pymgclient*cp${short_python_version}*.whl --break-system-packages"
+            docker exec -i testcontainer \
               bash -c "python$python_version -c 'import mgclient'"
-              cd /pymgclient && python$python_version -m pytest -v
+            docker exec -i testcontainer \
+              bash -c "cd /pymgclient && python$python_version -m pytest -v"
           done
 
       - name: Build docs

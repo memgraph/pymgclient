@@ -102,7 +102,7 @@ jobs:
         run: |
           PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14")
           for python_version in "${PYTHON_VERSIONS[@]}"; do
-            build_cmd="./tools/build-wheel.sh --python-version $python_version --static-ssl --run-auditwheel"
+            build_cmd="./tools/build-wheel-manylinux.sh --python-version $python_version --static-ssl --run-auditwheel"
             docker exec -i testcontainer \
               bash -c "cd /home/memgraph/pymgclient && $build_cmd"
           done

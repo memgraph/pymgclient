@@ -182,7 +182,7 @@ jobs:
         shell: msys2 {0}
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python -m pip install --upgrade pip setuptools wheel pyopenssl pytest tzdata
+          python -m pip install --upgrade pip setuptools wheel pyopenssl pytest tzdata build
         env:
           pythonLocation: ${{ env.pythonLocation }}
           
@@ -190,7 +190,7 @@ jobs:
         shell: msys2 {0}
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python setup.py bdist_wheel
+          python -m build
         env:
           pythonLocation: ${{ env.pythonLocation }}
 
@@ -307,18 +307,18 @@ jobs:
         run: |
           export PIP_BREAK_SYSTEM_PACKAGES=1
           source env/bin/activate
-          python${{ matrix.python_version }} -m pip install pyopenssl pytest setuptools
+          python${{ matrix.python_version }} -m pip install pyopenssl pytest setuptools build
 
       - name: Build pymgclient
         run: |
           source env/bin/activate
-          python${{ matrix.python_version }} setup.py bdist_wheel
+          python${{ matrix.python_version }} -m build
 
       - name: Install pymgclient
         run: |
           export PIP_BREAK_SYSTEM_PACKAGES=1
           source env/bin/activate
-          python${{ matrix.python_version }} -m pip install dist/*
+          python${{ matrix.python_version }} -m pip install dist/*.whl
 
       - name: Import mgclient to validate installation
         run: |
@@ -330,5 +330,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pymgclient-${{ matrix.platform[0] || matrix.platform }}-${{ matrix.python_version }}
-          path: dist/
+          path: dist/*.whl
 

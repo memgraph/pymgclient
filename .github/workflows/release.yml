@@ -33,7 +33,6 @@ jobs:
       test_linux: true
       test_windows: true
       test_macintosh: true
-      build_source_dist: true
       upload_artifacts: true
       version: ${{ inputs.version }}
     secrets: inherit

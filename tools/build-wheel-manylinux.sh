@@ -59,7 +59,8 @@ export CFLAGS="-isystem ${OPENSSL_PREFIX}/include"
 export CPPFLAGS="${CFLAGS}"
 
 # Ensure the linker can find the static archives
-export LDFLAGS="-L${OPENSSL_PREFIX}/lib"
+export LDFLAGS="-L${OPENSSL_PREFIX}/lib -Wl,--whole-archive -lz -Wl,--no-whole-archive"
+
 
 # Make CMake (mgclient) prefer your OpenSSL and use static libs
 export CMAKE_PREFIX_PATH="${OPENSSL_PREFIX}"

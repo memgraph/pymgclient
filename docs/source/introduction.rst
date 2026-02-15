@@ -20,7 +20,7 @@ Installation
 pymgclient has prebuilt binary packages for `Python 
 <https://www.python.org/downloads/>`_ 3.10 - 3.13 on
 
-* Linux amd64
+* Linux amd64 and arm64
 
 * macOS 14 (Sonoma) and 15 (Sequoia) on arm64 
 

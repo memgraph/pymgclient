@@ -16,10 +16,6 @@ on:
         type: boolean
         default: true
         description: "Run Mac OS Build" 
-      build_source_dist:
-        type: boolean
-        default: true
-        description: "Build Source Distribution"
       upload_artifacts:
         type: boolean
         default: true
@@ -44,20 +40,6 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      # - name: Set Memgraph Version
-      #   run: |
-      #     mgversion=$(./tools/get_memgraph_version.sh)
-
-      #     echo "MGVERSION=$mgversion" >> $GITHUB_ENV
-
-      # - name: Download Memgraph
-      #   run: |
-      #     MEMGRAPH_PACKAGE_NAME="memgraph_${{ env.MGVERSION }}-1_${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}.deb"
-      #     LOCAL_PACKAGE_NAME=memgraph.deb
-
-      #     curl -L "https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/ubuntu-24.04${{ matrix.arch == 'aarch64' && '-aarch64' || '' }}/${MEMGRAPH_PACKAGE_NAME}" > "${LOCAL_PACKAGE_NAME}"
-      #     echo "LOCAL_PACKAGE_NAME=$LOCAL_PACKAGE_NAME" >> $GITHUB_ENV
-        
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
@@ -67,6 +49,11 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Run Memgraph Container
+        run: |
+          docker network create pymgclient-network
+          docker run -d --rm --name memgraph --network pymgclient-network memgraph/memgraph:latest --telemetry-enabled=false
 
       - name: Build Docker Image
         run: |
@@ -81,23 +68,11 @@ jobs:
         run: |
           if [[ "${{ inputs.version }}" != "" ]]; then
             echo "Building version ${{ inputs.version }}"
-            docker run -d --rm -e PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }} --name testcontainer pymgclient-builder:latest    
+            docker run -d --rm -e PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }} --name testcontainer --network pymgclient-network pymgclient-builder:latest    
           else
-            docker run -d --rm --name testcontainer pymgclient-builder:latest   
+            docker run -d --rm --name testcontainer --network pymgclient-network pymgclient-builder:latest   
           fi
 
-      # - name: Install Memgraph
-      #   run: |
-      #     docker cp $LOCAL_PACKAGE_NAME testcontainer:/$LOCAL_PACKAGE_NAME
-
-      #     # Prevents Memgraph from starting.
-      #     docker exec -i testcontainer \
-      #         bash -c "mkdir -p /etc/systemd/system && ln -s /dev/null /etc/systemd/system/memgraph.service"  
-
-      #     # Install Memgraph package
-      #     docker exec -i testcontainer \
-      #       bash -c "dpkg -i /$LOCAL_PACKAGE_NAME"
-      
       - name: Build Python Wheels
         run: |
           PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14")
@@ -121,8 +96,8 @@ jobs:
               bash -c "python$python_version -m pip install \$(ls /home/memgraph/pymgclient/dist/pymgclient*cp${short_python_version}*.whl) --break-system-packages"
             docker exec -i testcontainer \
               bash -c "python$python_version -c 'import mgclient'"
-            # docker exec -i testcontainer \
-            #   bash -c "cd /home/memgraph/pymgclient && python$python_version -m pytest -v"
+            docker exec -i testcontainer \
+              bash -c "export MEMGRAPH_HOST=memgraph && cd /home/memgraph/pymgclient && python$python_version -m pytest -v"
           done
 
       - name: Build docs
@@ -147,48 +122,6 @@ jobs:
           docker stop testcontainer || echo "Container does not exist"
           docker wait testcontainer || echo "Container does not exist"
           docker rmi pymgclient-builder:latest || echo "Image does not exist"
-
-  build_source_dist:
-    if: ${{ inputs.build_source_dist }}
-    name: Build Source Distribution
-    runs-on: [self-hosted, X64, Ubuntu24.04]
-    steps:
-      - name: Checkout repository and submodules
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: recursive
-
-      - name: Set override version if provided
-        if: ${{ inputs.version != '' }}
-        run: |
-          echo "Building version ${{ inputs.version }}"
-          echo "PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
-
-      - name: Create Python Virtual Environment
-        run: |
-          python3 -m venv env
-          source env/bin/activate
-          pip install setuptools wheel
-          
-      - name: Build Python Source Distribution
-        run: |
-          source env/bin/activate
-          python setup.py sdist
-
-      - name: Save source distribution package
-        if: ${{ inputs.upload_artifacts }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: pymgclient-linux-sdist
-          path: dist
-
-      - name: Cleanup
-        if: always()
-        run: |
-          rm -fr env || true
-          rm -fr dist || true
-
 
           
   build_and_test_windows:

@@ -19,10 +19,6 @@ on:
         type: boolean
         default: true
         description: "Run Mac OS Build" 
-      build_source_dist:
-        type: boolean
-        default: true
-        description: "Build Source Distribution"
       upload_artifacts:
         type: boolean
         default: true
@@ -40,7 +36,6 @@ jobs:
       test_linux: true
       test_windows: true
       test_macintosh: true
-      build_source_dist: false
       upload_artifacts: false
     secrets: inherit
 
@@ -52,7 +47,6 @@ jobs:
       test_linux: true
       test_windows: true
       test_macintosh: true
-      build_source_dist: true
       upload_artifacts: false
     secrets: inherit
 
@@ -64,6 +58,5 @@ jobs:
       test_linux: ${{ inputs.test_linux }}
       test_windows: ${{ inputs.test_windows }}
       test_macintosh: ${{ inputs.test_macintosh }}
-      build_source_dist: ${{ inputs.build_source_dist }}
       upload_artifacts: ${{ inputs.upload_artifacts }}
     secrets: inherit

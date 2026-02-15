@@ -33,11 +33,6 @@ done
 
 echo "Building wheel for Python $python_version with static SSL: $static_ssl"
 
-
-
-
-
-
 PYTHON_BINARY="python$python_version"
 
 if $use_env; then

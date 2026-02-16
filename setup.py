@@ -16,7 +16,6 @@ import os
 import platform
 import shutil
 import sys
-import configparser
 from setuptools._distutils import log
 from setuptools._distutils.errors import DistutilsExecError, DistutilsPlatformError
 from pathlib import Path
@@ -49,10 +48,6 @@ sources = [str(path) for path in Path("src").glob("*.c")]
 
 headers = [str(path) for path in Path("src").glob("*.h")]
 
-parser = configparser.ConfigParser()
-parser.read("setup.cfg")
-
-static_openssl = parser.getboolean("build_ext", "static_openssl", fallback=False)
 
 version = os.getenv("PYMGCLIENT_OVERRIDE_VERSION", "1.5.1")
 
@@ -79,7 +74,7 @@ class BuildMgclientExt(build_ext):
     def initialize_options(self):
         super().initialize_options()
         # start with config default; this may get overridden by setup.cfg/CLI during finalize
-        self.static_openssl = static_openssl
+        self.static_openssl = True
 
     def finalize_options(self):
         super().finalize_options()

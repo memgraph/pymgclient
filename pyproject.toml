@@ -1,3 +1,51 @@
 [build-system]
-requires = ["setuptools>=68", "wheel", "cmake>=3.8"]
+requires = ["setuptools>=77", "wheel", "cmake>=3.8"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pymgclient"
+dynamic = ["version"]
+
+description = "Memgraph database adapter for Python language"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+readme = { file = "README.md", content-type = "text/markdown" }
+
+authors = [{ name = "Colin Barry", email = "colin.barry@memgraph.io" }]
+maintainers = [{ name = "Matt James", email = "matthew.james@memgraph.io" }]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Database",
+  "Topic :: Database :: Front-Ends",
+  "Topic :: Software Development",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: Microsoft :: Windows",
+]
+
+dependencies = [
+  "pyopenssl",
+  "networkx",
+  "tzdata",
+]
+
+[project.urls]
+Source = "https://github.com/memgraph/pymgclient"
+Documentation = "https://memgraph.github.io/pymgclient"
+
+[tool.setuptools]
+py-modules = ["pymgclient_build_meta"]
+
+[tool.setuptools.dynamic]
+version = { attr = "pymgclient_build_meta.__version__" }

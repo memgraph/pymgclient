@@ -58,7 +58,6 @@ jobs:
 
       - name: Run Memgraph Container With SSL
         run: |
-          docker network create pymgclient-network || echo "Network already exists"
           docker run -d --rm --name memgraph-ssl --network pymgclient-network memgraph/memgraph:latest \
             --telemetry-enabled=false \
             --bolt-cert-file=/etc/memgraph/ssl/cert.pem \

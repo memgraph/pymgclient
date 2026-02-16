@@ -103,24 +103,38 @@ class BuildMgclientExt(build_ext):
     def get_cmake_binary(self):
         cmake_env_var_name = "PYMGCLIENT_CMAKE"
         custom_cmake = os.getenv(cmake_env_var_name)
-        if custom_cmake is None:
-            # cmake3 is checked before cmake, because on CentOS cmake refers
-            # to CMake 2.*
-            for possible_cmake in ["cmake3", "cmake"]:
-                self.announce(f"Checking if {possible_cmake} can be used", level=log.INFO)
-
-                which_cmake = shutil.which(possible_cmake)
-                if which_cmake is not None:
-                    self.announce(f"Using {which_cmake}", level=log.INFO)
-                    return os.path.abspath(which_cmake)
-
-                self.announce(f"{possible_cmake} is not accesible", level=log.INFO)
-            raise DistutilsExecError("Cannot find suitable cmake")
-        else:
+        if custom_cmake:
             self.announce(
-                f"Using the value of {cmake_env_var_name} for CMake, which is" f"{custom_cmake}", level=log.INFO
+                f"Using the value of {cmake_env_var_name} for CMake, which is {custom_cmake}",
+                level=log.INFO,
             )
             return custom_cmake
+
+        # 1) Prefer system cmake if present
+        for possible_cmake in ["cmake3", "cmake"]:
+            self.announce(f"Checking if {possible_cmake} can be used", level=log.INFO)
+            which_cmake = shutil.which(possible_cmake)
+            if which_cmake is not None:
+                self.announce(f"Using {which_cmake}", level=log.INFO)
+                return os.path.abspath(which_cmake)
+            self.announce(f"{possible_cmake} is not accessible", level=log.INFO)
+
+        # 2) Fall back to the Python 'cmake' package if installed
+        try:
+            import cmake  # from PyPI "cmake"
+
+            cmake_bin = os.path.join(cmake.CMAKE_BIN_DIR, "cmake")
+            if IS_WINDOWS:
+                cmake_bin += ".exe"
+
+            if os.path.exists(cmake_bin):
+                self.announce(f"Using CMake from Python package: {cmake_bin}", level=log.INFO)
+                return cmake_bin
+        except Exception as e:
+            self.announce(f"Python 'cmake' package not usable: {e}", level=log.INFO)
+
+        raise DistutilsExecError("Cannot find suitable cmake (system cmake or Python 'cmake' package)")
+
 
     def get_openssl_root_dir(self):
         if not IS_APPLE:

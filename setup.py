@@ -77,8 +77,20 @@ class BuildMgclientExt(build_ext):
     boolean_options.append(("static-openssl"))
 
     def initialize_options(self):
-        build_ext.initialize_options(self)
+        super().initialize_options()
+        # start with config default; this may get overridden by setup.cfg/CLI during finalize
         self.static_openssl = static_openssl
+
+    def finalize_options(self):
+        super().finalize_options()
+
+        static_ssl_env = os.getenv("PYMGCLIENT_STATIC_OPENSSL")
+        if static_ssl_env is not None:
+            self.announce(
+                f"Using static OpenSSL from environment variable: {static_ssl_env}",
+                level=log.INFO,
+            )
+            self.static_openssl = static_ssl_env.strip().lower() in {"1", "true", "yes", "on"}
 
     def run(self):
         """

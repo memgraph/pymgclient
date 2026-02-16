@@ -146,7 +146,6 @@ class BuildMgclientExt(build_ext):
 
         raise DistutilsExecError("Cannot find suitable cmake (system cmake or Python 'cmake' package)")
 
-
     def get_openssl_root_dir(self):
         if not IS_APPLE:
             return None
@@ -295,6 +294,7 @@ class BuildMgclientExt(build_ext):
         if finalize is not None:
             finalize(extension)
 
+
 if sys.platform == "win32":
     extra_link_args = [
         "-l:libssl.a",
@@ -304,7 +304,7 @@ if sys.platform == "win32":
     ]
 else:
     extra_link_args = None
-    
+
 setup(
     ext_modules=[
         Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_link_args=extra_link_args)

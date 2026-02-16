@@ -32,10 +32,6 @@ if IS_WINDOWS:
 
     cygwinccompiler.get_msvcr = lambda: []
 
-with open("README.md", "r") as fh:
-    readme = fh.read()
-    long_description = "\n".join(readme.split("\n")[2:]).lstrip()
-
 # Throughout this file "mgclient" can mean two different things:
 # 1. The mgclient library which is the official Memgraph client library.
 # 2. The mgclient python extension module which is a wrapper around the
@@ -53,6 +49,19 @@ def list_all_files_in_dir(path):
         result.extend(os.path.join(root, f) for f in files)
 
     return result
+
+
+def _generate_trimmed_readme():
+    src = Path("README.md")
+    dst = Path("README_PYPI.md")
+
+    text = src.read_text(encoding="utf-8")
+    trimmed = "\n".join(text.splitlines()[2:]).lstrip()
+    dst.write_text(trimmed, encoding="utf-8")
+    return dst
+
+
+readme_path = _generate_trimmed_readme()
 
 
 class BuildMgclientExt(build_ext):
@@ -82,39 +91,25 @@ class BuildMgclientExt(build_ext):
             )
             self.static_openssl = static_ssl_env.strip().lower() in {"1", "true", "yes", "on"}
 
-    def _generate_trimmed_readme(self):
-        src = Path("README.md")
-        dst = Path("README_PYPI.md")
-
-        text = src.read_text(encoding="utf-8")
-        trimmed = "\n".join(text.splitlines()[2:]).lstrip()
-        dst.write_text(trimmed, encoding="utf-8")
-        return dst
-
     def run(self):
         """
         Perform build_cmake before doing the 'normal' stuff
         """
-        try:
-            readme_path = self._generate_trimmed_readme()
-            self.announce(f"Using static OpenSSL: {bool(self.static_openssl)}", level=log.INFO)
+        self.announce(f"Using static OpenSSL: {bool(self.static_openssl)}", level=log.INFO)
 
-            for extension in self.extensions:
-                if extension.name == EXTENSION_NAME:
-                    self.build_mgclient_for(extension)
+        for extension in self.extensions:
+            if extension.name == EXTENSION_NAME:
+                self.build_mgclient_for(extension)
 
-            if IS_WINDOWS:
-                if self.compiler is None:
-                    self.compiler = "mingw32"
-                elif self.compiler != "mingw32":
-                    raise DistutilsPlatformError(
-                        f"The specified compiler {self.compiler} is not supported on windows, only mingw32 is supported."
-                    )
+        if IS_WINDOWS:
+            if self.compiler is None:
+                self.compiler = "mingw32"
+            elif self.compiler != "mingw32":
+                raise DistutilsPlatformError(
+                    f"The specified compiler {self.compiler} is not supported on windows, only mingw32 is supported."
+                )
 
-            super().run()
-        finally:
-            if readme_path.exists():
-                readme_path.unlink()
+        super().run()
 
     def get_cmake_binary(self):
         cmake_env_var_name = "PYMGCLIENT_CMAKE"
@@ -311,10 +306,11 @@ else:
     extra_link_args = None
     
 setup(
-    long_description=long_description,
-    long_description_content_type="text/markdown",
     ext_modules=[
         Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_link_args=extra_link_args)
     ],
     cmdclass={"build_ext": BuildMgclientExt},
 )
+
+if readme_path.exists():
+    readme_path.unlink()

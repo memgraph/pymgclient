@@ -60,7 +60,7 @@ jobs:
       - name: Move Artifacts
         run: |
           mkdir -p dist
-          mv -v downloaded-artifacts/*/* dist/
+          mv -fv downloaded-artifacts/*/* dist/
 
       - name: Show contents
         run: |

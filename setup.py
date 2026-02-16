@@ -17,8 +17,8 @@ import platform
 import shutil
 import sys
 import configparser
-from distutils import log
-from distutils.errors import DistutilsExecError, DistutilsPlatformError
+from setuptools._distutils import log
+from setuptools._distutils.errors import DistutilsExecError, DistutilsPlatformError
 from pathlib import Path
 from typing import List
 
@@ -31,9 +31,9 @@ IS_X64 = platform.architecture()[0] == "64bit"
 
 if IS_WINDOWS:
     # https://stackoverflow.com/a/57109148/6639989
-    import distutils.cygwinccompiler
+    import setuptools._distutils.cygwinccompiler as cygwinccompiler
 
-    distutils.cygwinccompiler.get_msvcr = lambda: []
+    cygwinccompiler.get_msvcr = lambda: []
 
 with open("README.md", "r") as fh:
     readme = fh.read()

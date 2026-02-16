@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-import platform
 import shutil
 import sys
 from setuptools._distutils import log
@@ -26,7 +25,6 @@ from setuptools.command.build_ext import build_ext
 
 IS_WINDOWS = sys.platform == "win32"
 IS_APPLE = sys.platform == "darwin"
-IS_X64 = platform.architecture()[0] == "64bit"
 
 if IS_WINDOWS:
     # https://stackoverflow.com/a/57109148/6639989
@@ -49,9 +47,6 @@ sources = [str(path) for path in Path("src").glob("*.c")]
 headers = [str(path) for path in Path("src").glob("*.h")]
 
 
-version = os.getenv("PYMGCLIENT_OVERRIDE_VERSION", "1.5.1")
-
-
 def list_all_files_in_dir(path):
     result = []
     for root, _dirs, files in os.walk(path):
@@ -66,7 +61,7 @@ class BuildMgclientExt(build_ext):
     """
 
     user_options = build_ext.user_options[:]
-    user_options.append(("static-openssl=", None, "Compile with statically linked OpenSSL."))
+    user_options.append(("static-openssl", None, "Compile with statically linked OpenSSL."))
 
     boolean_options = build_ext.boolean_options[:]
     boolean_options.append(("static-openssl"))
@@ -87,25 +82,39 @@ class BuildMgclientExt(build_ext):
             )
             self.static_openssl = static_ssl_env.strip().lower() in {"1", "true", "yes", "on"}
 
+    def _generate_trimmed_readme(self):
+        src = Path("README.md")
+        dst = Path("README_PYPI.md")
+
+        text = src.read_text(encoding="utf-8")
+        trimmed = "\n".join(text.splitlines()[2:]).lstrip()
+        dst.write_text(trimmed, encoding="utf-8")
+        return dst
+
     def run(self):
         """
         Perform build_cmake before doing the 'normal' stuff
         """
-        self.announce(f"Using static OpenSSL: {bool(self.static_openssl)}", level=log.INFO)
+        try:
+            readme_path = self._generate_trimmed_readme()
+            self.announce(f"Using static OpenSSL: {bool(self.static_openssl)}", level=log.INFO)
 
-        for extension in self.extensions:
-            if extension.name == EXTENSION_NAME:
-                self.build_mgclient_for(extension)
+            for extension in self.extensions:
+                if extension.name == EXTENSION_NAME:
+                    self.build_mgclient_for(extension)
 
-        if IS_WINDOWS:
-            if self.compiler is None:
-                self.compiler = "mingw32"
-            elif self.compiler != "mingw32":
-                raise DistutilsPlatformError(
-                    f"The specified compiler {self.compiler} is not supported on windows, only mingw32 is supported."
-                )
+            if IS_WINDOWS:
+                if self.compiler is None:
+                    self.compiler = "mingw32"
+                elif self.compiler != "mingw32":
+                    raise DistutilsPlatformError(
+                        f"The specified compiler {self.compiler} is not supported on windows, only mingw32 is supported."
+                    )
 
-        super().run()
+            super().run()
+        finally:
+            if readme_path.exists():
+                readme_path.unlink()
 
     def get_cmake_binary(self):
         cmake_env_var_name = "PYMGCLIENT_CMAKE"
@@ -302,6 +311,8 @@ else:
     extra_link_args = None
     
 setup(
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     ext_modules=[
         Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_link_args=extra_link_args)
     ],

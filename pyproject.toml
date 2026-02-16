@@ -10,7 +10,7 @@ description = "Memgraph database adapter for Python language"
 requires-python = ">=3.9"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-readme = { file = "README.md", content-type = "text/markdown" }
+readme = { file = "README_PYPI.md", content-type = "text/markdown" }
 
 authors = [{ name = "Colin Barry", email = "colin.barry@memgraph.io" }]
 maintainers = [{ name = "Matt James", email = "matthew.james@memgraph.io" }]

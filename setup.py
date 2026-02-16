@@ -302,48 +302,8 @@ else:
     extra_link_args = None
     
 setup(
-    name="pymgclient",
-    version=version,
-    maintainer="Matt James",
-    maintainer_email="matthew.james@memgraph.io",
-    author="Colin Barry",
-    author_email="colin.barry@memgraph.io",
-    license="Apache-2.0",
-    license_file="LICENSE",
-    python_requires=">=3.9",
-    description="Memgraph database adapter for Python language",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/memgraph/pymgclient",
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: Developers",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
-        "Programming Language :: Python :: 3.14",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Topic :: Database",
-        "Topic :: Database :: Front-Ends",
-        "Topic :: Software Development",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Operating System :: POSIX :: Linux",
-        "Operating System :: MacOS :: MacOS X",
-        "Operating System :: Microsoft :: Windows",
-    ],
     ext_modules=[
         Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_link_args=extra_link_args)
     ],
-    project_urls={
-        "Source": "https://github.com/memgraph/pymgclient",
-        "Documentation": "https://memgraph.github.io/pymgclient",
-    },
     cmdclass={"build_ext": BuildMgclientExt},
-    install_requires=[
-        "pyopenssl",
-        "networkx",
-        "tzdata"
-    ]
 )

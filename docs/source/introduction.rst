@@ -44,14 +44,16 @@ Install binaries
 
     .. code-block:: bash
 
-        # set the environment variable to dynamically link to the host machine's OpenSSL library
+        # set the environment variable to dynamically link
+        # to the host machine's OpenSSL library
         export PYMGCLIENT_STATIC_OPENSSL=0
 
-        # some distributions may also need help locating the OpenSSL library
+        # some distributions may also need help locating 
+        # the OpenSSL library
         export OPENSSL_ROOT_DIR=/
         export OPENSSL_CRYPTO_LIBRARY=/lib64/libcrypto.so
         
-        # with pip install (force source dist build from PyPI)
+        # with pip install (force source distribution build from PyPI)
         pip install --no-binary pymgclient pymgclient
 
         # or from this repo
@@ -125,7 +127,8 @@ After the prerequisites are installed pymgclient can be installed via pip::
 If you want to dynamically link OpenSSL for better security, you can use the
 following command::
 
-  $ PYMGCLIENT_STATIC_OPENSSL=0 pip install --no-binary pymgclient pymgclient
+  $ PYMGCLIENT_STATIC_OPENSSL=0 \
+      pip install --no-binary pymgclient pymgclient
 
 Alternatively, pymgclient can be installed by this repository::
 
@@ -160,7 +163,8 @@ This will download the source package of pymgclient and build the binary package
 before installing it. If you want to dynamically link OpenSSL for better
 security, you can use the following command::
 
-  $ PYMGCLIENT_STATIC_OPENSSL=0 pip3 install --user --no-binary pymgclient pymgclient
+  $ PYMGCLIENT_STATIC_OPENSSL=0 \
+      pip3 install --user --no-binary pymgclient pymgclient
 
 Alternatively, pymgclient can be installed by this repository::
 
@@ -214,7 +218,8 @@ pymgclient can be installed via pip::
 If you want to dynamically link OpenSSL for better security, you can use the
 following command::
 
-  $ PYMGCLIENT_STATIC_OPENSSL=0 pip install --user --no-binary pymgclient pymgclient
+  $ PYMGCLIENT_STATIC_OPENSSL=0 \
+      pip install --user --no-binary pymgclient pymgclient
 
 Alternatively, pymgclient can be installed by this repository::
 

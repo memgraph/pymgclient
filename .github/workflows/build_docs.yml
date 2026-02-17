@@ -19,7 +19,7 @@ on:
 jobs:
   build_docs:
     name: Build Documentation
-    runs-on: [self-hosted, Linux, Ubuntu24.04]
+    runs-on: [self-hosted, Linux, Ubuntu24.04, X64]
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
@@ -39,14 +39,17 @@ jobs:
           version="$(( python3 --version 2>&1 || echo ) | grep -Po '(?<=Python )\d+\.\d+' || true)"
           echo "Found version $version"
           echo "PYTHON_VERSION=$version" >> $GITHUB_ENV
+          # Convert Python version to wheel tag format (e.g., 3.10 -> cp310)
+          major_minor=$(echo "$version" | sed 's/\.//')
+          echo "PYTHON_TAG=cp${major_minor}" >> $GITHUB_ENV
 
       - name: Download Python Artifact
         id: download
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
-          name: pymgclient-linux-${{ env.PYTHON_VERSION }}
-          path: ./dist
+          name: pymgclient-linux-x86_64
+          path: ./downloaded-artifacts
 
       - name: Record download status
         if: always()
@@ -63,7 +66,17 @@ jobs:
         if: steps.record.outputs.DOWNLOAD_STATUS == 'success'
         run: |
           source env/bin/activate
-          pip install dist/*.whl
+          # Find the wheel matching the Python version
+          wheel=$(find downloaded-artifacts -name "*${PYTHON_TAG}*.whl" | head -n 1)
+          if [ -n "$wheel" ]; then
+            echo "Installing wheel: $wheel"
+            pip install "$wheel"
+          else
+            echo "No matching wheel found for Python ${PYTHON_VERSION} (tag: ${PYTHON_TAG})"
+            echo "Available wheels:"
+            find downloaded-artifacts -name "*.whl" || true
+            exit 1
+          fi
 
       - name: Install Pymgclient (PyPI)
         if: steps.record.outputs.DOWNLOAD_STATUS == 'failure'

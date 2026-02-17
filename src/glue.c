@@ -829,25 +829,7 @@ int is_datetime_timezone(PyObject *tzinfo) {
   SCOPED_CLEANUP PyObject *timezone_class = PyObject_GetAttrString(datetime_module, "timezone");
   IF_PTR_IS_NULL_RETURN(timezone_class, 0);
 
-  // Use Python-level isinstance() instead of PyObject_IsInstance for Python 3.14 compatibility
-  SCOPED_CLEANUP PyObject *builtins = PyImport_ImportModule("builtins");
-  IF_PTR_IS_NULL_RETURN(builtins, 0);
-
-  SCOPED_CLEANUP PyObject *isinstance_func = PyObject_GetAttrString(builtins, "isinstance");
-  IF_PTR_IS_NULL_RETURN(isinstance_func, 0);
-
-  SCOPED_CLEANUP PyObject *result = PyObject_CallFunction(isinstance_func, "OO", tzinfo, timezone_class);
-  if (!result) {
-    PyErr_Clear();  // Clear any error and return 0
-    return 0;
-  }
-
-  int is_instance = PyObject_IsTrue(result);
-  if (is_instance < 0) {
-    PyErr_Clear();  // Clear any error and return 0
-    return 0;
-  }
-  return is_instance;
+  return PyObject_IsInstance(tzinfo, timezone_class);
 }
 
 mg_duration *py_delta_to_mg_duration(PyObject *obj) {

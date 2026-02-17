@@ -20,7 +20,7 @@ Installation
 pymgclient has prebuilt binary packages for `Python 
 <https://www.python.org/downloads/>`_ 3.10 - 3.13 on
 
-* Linux amd64
+* Linux amd64 and arm64 (libc >= 2.34)
 
 * macOS 14 (Sonoma) and 15 (Sequoia) on arm64 
 
@@ -39,10 +39,29 @@ Install binaries
     version of OpenSSL they are using is fixed. If security is important for you,
     you should check how to build pymgclient with dynamically linked OpenSSL, so
     pymgclient can use the latest version of OpenSSL that is installed on your
-    machine. The source distribution may be built with the flags to dynamically 
-    link to the host machine's OpenSSL library.
+    machine. The source distribution may be built with the following environment 
+    variables to dynamically link to the host machine's OpenSSL library.
 
-    ``--no-build-isolation --global-option=build_ext --global-option "--static-openssl=False"`` 
+    .. code-block:: bash
+
+        # set the environment variable to dynamically link
+        # to the host machine's OpenSSL library
+        export PYMGCLIENT_STATIC_OPENSSL=0
+
+        # some distributions may also need help locating 
+        # the OpenSSL library
+        export OPENSSL_ROOT_DIR=/
+        export OPENSSL_CRYPTO_LIBRARY=/lib64/libcrypto.so
+        
+        # with pip install (force source distribution build from PyPI)
+        pip install --no-binary pymgclient pymgclient
+
+        # or from this repo
+        pip install -e .
+
+        # or after building the source distribution
+        python3 -m build --sdist
+        pip install dist/*.tar.gz
 
 On Linux and macOS run::
 
@@ -68,20 +87,19 @@ pymgclient can be installed from source on:
 * all platforms that have prebuilt binaries
 * on various Linux distributions, including:
 
-  * Ubuntu 22.04+
-  * Debian 11+
+  * Ubuntu 21.10+
+  * Debian 12+
   * Centos 9+
-  * Fedora 41+
+  * Fedora 35+
 
 *******************
 Build prerequisites
 *******************
 
 pymgclient is a C wrapper around the `mgclient`_ Memgraph client library. To
-build it from you will need:
+build it from source you will need:
 
-* Python 3.7 (3.9 for Mac OS) or newer
-* Python 3.7 (3.9 for Mac OS) or newer header files
+* Python 3.9 or newer and matching header files
 * A C compiler supporting C11 standard
 * A C++ compiler (it is not used directly, but necessary for CMake to work)
 * Preqrequisites of `mgclient`_:
@@ -103,21 +121,22 @@ First install the prerequisites:
 
 After the prerequisites are installed pymgclient can be installed via pip::
 
-  $ pip3 install --user pymgclient
+  $ pip install --no-binary pymgclient pymgclient
 
 If you want to dynamically link OpenSSL for better security, you can use the
 following command::
 
-  $ pip3 install --user \
-                 --global-option=build_ext \
-                 --global-option="--static-openssl=false" \
-                 pymgclient
+  $ PYMGCLIENT_STATIC_OPENSSL=0 \
+      pip install --no-binary pymgclient pymgclient
 
-This will download the source package of pymgclient and build the binary package
-before installing it. Alternatively, pymgclient can be installed by using
-:file:`setup.py`::
+Alternatively, pymgclient can be installed by this repository::
 
-  $ python3 setup.py install
+  $ pip install -e .
+
+Or after building the source distribution::
+
+  $ python3 -m build --sdist
+  $ pip install dist/*.tar.gz
 
 Building on macOS
 *****************
@@ -137,21 +156,23 @@ in the technical notes below.
 
 After the prerequisites are installed pymgclient can be installed via pip::
 
-  $ pip3 install --user pymgclient --no-binary :all:
+  $ pip3 install --user --no-binary pymgclient pymgclient
 
 This will download the source package of pymgclient and build the binary package
 before installing it. If you want to dynamically link OpenSSL for better
 security, you can use the following command::
 
-  $ pip3 install --user \
-                 --global-option=build_ext \
-                 --global-option="--static-openssl=false" \
-                 pymgclient \
-                 --no-binary :all:
+  $ PYMGCLIENT_STATIC_OPENSSL=0 \
+      pip3 install --user --no-binary pymgclient pymgclient
 
-Alternatively, pymgclient can be installed by using :file:`setup.py`::
+Alternatively, pymgclient can be installed by this repository::
 
-  $ python3 setup.py install
+  $ pip install -e .
+
+Or after building the source distribution::
+
+  $ python3 -m build --sdist
+  $ pip install dist/*.tar.gz
 
 Technical note for arm64 machines
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -191,20 +212,22 @@ applications are available, e.g. checking the version of gcc::
 When the environment is done, start the Windows command prompt and install
 pymgclient can be installed via pip::
 
-  $ pip install --user pymgclient --no-binary :all:
+  $ pip install --user --no-binary pymgclient pymgclient
 
 If you want to dynamically link OpenSSL for better security, you can use the
 following command::
 
-  $ pip install --user \
-                --global-option=build_ext \
-                --global-option="--static-openssl=false" \
-                pymgclient \
-                --no-binary :all:
+  $ PYMGCLIENT_STATIC_OPENSSL=0 \
+      pip install --user --no-binary pymgclient pymgclient
 
-Alternatively, pymgclient can be installed by using :file:`setup.py`::
+Alternatively, pymgclient can be installed by this repository::
 
-  $ python setup.py install
+  $ pip install -e .
+
+Or after building the source distribution::
+
+  $ python3 -m build --sdist
+  $ pip install dist/*.tar.gz
 
 ######################
 Running the test suite

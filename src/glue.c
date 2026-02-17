@@ -26,15 +26,68 @@
  * TODO(colinbarry) Python 3.9 doesn't support the PyDateTime_DATE_GET_TZINFO
  * macro. Until we require Python 3.10, this shim function does exactly the
  * same thing whilst keeping 3.9 compatibility.
+ * 
+ * Updated for Python 3.14 compatibility: In Python 3.14, the datetime struct
+ * includes a hastzinfo field that must be checked before accessing tzinfo.
+ * The macro PyDateTime_DATE_GET_TZINFO handles this correctly in Python 3.10+.
  */
 PyObject* INTERNAL_PyDateTime_DATE_GET_TZINFO(PyObject *obj)
 {
-    PyObject *tzinfo = NULL;
+#if PY_VERSION_HEX >= 0x030A0000
+    // Python 3.10+ has the macro available, use it
+    #ifdef PyDateTime_DATE_GET_TZINFO
+        if (PyDateTime_Check(obj)) {
+            return PyDateTime_DATE_GET_TZINFO(obj);
+        } else if (PyTime_Check(obj)) {
+            return PyDateTime_TIME_GET_TZINFO(obj);
+        }
+    #endif
+#endif
 
+    // Fallback for Python 3.9 or if macro not available
+    // For Python 3.9, we can safely access tzinfo directly
+    // For Python 3.10+, if macro wasn't available, check hastzinfo if possible
+    PyObject *tzinfo = NULL;
+    
     if (PyDateTime_Check(obj)) {
-        tzinfo = ((PyDateTime_DateTime*)obj)->tzinfo;
+        #if PY_VERSION_HEX >= 0x030E0000
+            // Python 3.14+ requires checking hastzinfo before accessing tzinfo
+            // Use the internal _PyDateTime_HAS_TZINFO check if available
+            if (((_PyDateTime_BaseTZInfo *)obj)->hastzinfo) {
+                tzinfo = ((PyDateTime_DateTime*)obj)->tzinfo;
+            } else {
+                return Py_None;
+            }
+        #elif PY_VERSION_HEX >= 0x030A0000
+            // Python 3.10-3.13: check hastzinfo if struct has it
+            if (((_PyDateTime_BaseTZInfo *)obj)->hastzinfo) {
+                tzinfo = ((PyDateTime_DateTime*)obj)->tzinfo;
+            } else {
+                return Py_None;
+            }
+        #else
+            // Python 3.9 - direct access (struct doesn't have hastzinfo)
+            tzinfo = ((PyDateTime_DateTime*)obj)->tzinfo;
+        #endif
     } else if (PyTime_Check(obj)) {
-        tzinfo = ((PyDateTime_Time*)obj)->tzinfo;
+        #if PY_VERSION_HEX >= 0x030E0000
+            // Python 3.14+ requires checking hastzinfo before accessing tzinfo
+            if (((_PyDateTime_BaseTZInfo *)obj)->hastzinfo) {
+                tzinfo = ((PyDateTime_Time*)obj)->tzinfo;
+            } else {
+                return Py_None;
+            }
+        #elif PY_VERSION_HEX >= 0x030A0000
+            // Python 3.10-3.13: check hastzinfo if struct has it
+            if (((_PyDateTime_BaseTZInfo *)obj)->hastzinfo) {
+                tzinfo = ((PyDateTime_Time*)obj)->tzinfo;
+            } else {
+                return Py_None;
+            }
+        #else
+            // Python 3.9 - direct access (struct doesn't have hastzinfo)
+            tzinfo = ((PyDateTime_Time*)obj)->tzinfo;
+        #endif
     }
 
     return tzinfo ? tzinfo : Py_None;
@@ -240,7 +293,7 @@ exit:
   return ret;
 }
 
-void maybe_decrement_ref(PyObject **obj) { Py_XDECREF(obj); }
+void maybe_decrement_ref(PyObject **obj) { Py_XDECREF(*obj); }
 
 #define SCOPED_CLEANUP __attribute__((cleanup(maybe_decrement_ref)))
 #define IF_PTR_IS_NULL_RETURN(ptr, value) \

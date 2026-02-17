@@ -161,6 +161,7 @@ install_deb() {
   else
     DEB_DEPS+=( libcurl4 )
   fi
+  export DEBIAN_FRONTEND=noninteractive
   "${SUDO[@]}" apt-get update
   "${SUDO[@]}" apt-get install -y ${DEB_DEPS[*]}
 }
@@ -168,6 +169,9 @@ install_deb() {
 install_rpm() {
   echo "Installing RPM dependencies..."
   "${SUDO[@]}" dnf install -y ${RPM_DEPS[*]}
+
+  # install ensurepip because pip isn't always provided for the version of python
+  "$python_binary" -m ensurepip
 }
 
 case "$distro" in
@@ -185,7 +189,7 @@ esac
 
 # install python dependencies
 export PIP_BREAK_SYSTEM_PACKAGES=1
-pkgs=(networkx pytest pyopenssl sphinx setuptools wheel auditwheel tzdata)
+pkgs=(networkx pytest pyopenssl sphinx setuptools wheel auditwheel tzdata build)
 if [[ $force_update == true ]]; then
   "$python_binary" -m pip install --upgrade --ignore-installed ${pkgs[@]}
 else

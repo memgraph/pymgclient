@@ -1,0 +1,53 @@
+from quay.io/pypa/manylinux_2_34:latest
+
+ARG OPENSSL_VERSION="3.5.4"
+ARG ZLIB_VERSION="1.3.1"
+ARG PYTHON_VERSIONS="3.10,3.11,3.12,3.13,3.14"
+ARG MG_VERSION="3.8.0"
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN dnf -y install \
+    perl \
+    perl-FindBin \
+    && dnf -y clean all
+
+
+# add normal user memgraph
+RUN useradd -m memgraph
+
+RUN mkdir -p /opt/openssl && chown -R memgraph:memgraph /opt/openssl
+
+USER memgraph
+
+# Install ensurepip for each python version
+RUN set -euo pipefail; \
+    IFS=',' read -ra versions <<< "${PYTHON_VERSIONS}"; \
+    for v in "${versions[@]}"; do \
+      v="$(echo "$v" | xargs)"; \
+      echo "=== Installing ensurepip for Python ${v} ==="; \
+      python${v} -m ensurepip; \
+    done
+
+ENV PATH="/home/memgraph/.local/bin:$PATH"
+
+# build our custom static openssl and zlib (AlmaLinux does not provide static libs)
+COPY --chown=memgraph:memgraph  --chmod=755 tools/build-openssl.sh /build-openssl.sh 
+RUN /build-openssl.sh --openssl-version $OPENSSL_VERSION --zlib-version $ZLIB_VERSION --out-dir /opt/openssl --python-version 3.12
+
+# set the working directory to /home/memgraph
+WORKDIR /home/memgraph
+
+# install dependencies for each python version
+RUN set -euo pipefail; \
+    IFS=',' read -ra versions <<< "${PYTHON_VERSIONS}"; \
+    for v in "${versions[@]}"; do \
+      v="$(echo "$v" | xargs)"; \
+      echo "=== Installing dependencies for Python ${v} ==="; \
+      python${v} -m pip install --upgrade --ignore-installed networkx pytest pyopenssl sphinx setuptools wheel auditwheel tzdata build; \
+    done
+
+# copy the source code
+COPY --chown=memgraph:memgraph . /home/memgraph/pymgclient
+
+ENTRYPOINT ["sleep", "infinity"]

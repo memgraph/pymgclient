@@ -26,6 +26,12 @@ MEMGRAPH_HOST = os.getenv("MEMGRAPH_HOST", None)
 MEMGRAPH_STARTED_WITH_SSL = os.getenv("MEMGRAPH_STARTED_WITH_SSL", None)
 DURABILITY_DIR = tempfile.TemporaryDirectory()
 
+PYTHON_VERSION = sys.version_info[:2]
+# See https://docs.python.org/3.14/whatsnew/3.14.html#whatsnew314-refcount
+# Python 3.14 reduces the refcount where possible.
+# We probably should avoid using the refcount altogether.
+REF_COUNT_DECREMENT = 1 if PYTHON_VERSION >= (3, 14) else 0
+
 
 def wait_for_server(port):
     cmd = ["nc", "-z", "-w", "1", "127.0.0.1", str(port)]

@@ -13,12 +13,10 @@
 # limitations under the License.
 
 import os
-import platform
 import shutil
 import sys
-import configparser
-from distutils import log
-from distutils.errors import DistutilsExecError, DistutilsPlatformError
+from setuptools._distutils import log
+from setuptools._distutils.errors import DistutilsExecError, DistutilsPlatformError
 from pathlib import Path
 from typing import List
 
@@ -27,17 +25,12 @@ from setuptools.command.build_ext import build_ext
 
 IS_WINDOWS = sys.platform == "win32"
 IS_APPLE = sys.platform == "darwin"
-IS_X64 = platform.architecture()[0] == "64bit"
 
 if IS_WINDOWS:
     # https://stackoverflow.com/a/57109148/6639989
-    import distutils.cygwinccompiler
+    import setuptools._distutils.cygwinccompiler as cygwinccompiler
 
-    distutils.cygwinccompiler.get_msvcr = lambda: []
-
-with open("README.md", "r") as fh:
-    readme = fh.read()
-    long_description = "\n".join(readme.split("\n")[2:]).lstrip()
+    cygwinccompiler.get_msvcr = lambda: []
 
 # Throughout this file "mgclient" can mean two different things:
 # 1. The mgclient library which is the official Memgraph client library.
@@ -49,13 +42,6 @@ sources = [str(path) for path in Path("src").glob("*.c")]
 
 headers = [str(path) for path in Path("src").glob("*.h")]
 
-parser = configparser.ConfigParser()
-parser.read("setup.cfg")
-
-static_openssl = parser.getboolean("build_ext", "static_openssl", fallback=False)
-
-version = os.getenv("PYMGCLIENT_OVERRIDE_VERSION", "1.5.1")
-
 
 def list_all_files_in_dir(path):
     result = []
@@ -65,20 +51,45 @@ def list_all_files_in_dir(path):
     return result
 
 
+def _generate_trimmed_readme():
+    src = Path("README.md")
+    dst = Path("README_PYPI.md")
+
+    text = src.read_text(encoding="utf-8")
+    trimmed = "\n".join(text.splitlines()[2:]).lstrip()
+    dst.write_text(trimmed, encoding="utf-8")
+    return dst
+
+
+readme_path = _generate_trimmed_readme()
+
+
 class BuildMgclientExt(build_ext):
     """
     Builds using cmake instead of the python setuptools implicit build
     """
 
     user_options = build_ext.user_options[:]
-    user_options.append(("static-openssl=", None, "Compile with statically linked OpenSSL."))
+    user_options.append(("static-openssl", None, "Compile with statically linked OpenSSL."))
 
     boolean_options = build_ext.boolean_options[:]
     boolean_options.append(("static-openssl"))
 
     def initialize_options(self):
-        build_ext.initialize_options(self)
-        self.static_openssl = static_openssl
+        super().initialize_options()
+        # start with config default; this may get overridden by setup.cfg/CLI during finalize
+        self.static_openssl = True
+
+    def finalize_options(self):
+        super().finalize_options()
+
+        static_ssl_env = os.getenv("PYMGCLIENT_STATIC_OPENSSL")
+        if static_ssl_env is not None:
+            self.announce(
+                f"Using static OpenSSL from environment variable: {static_ssl_env}",
+                level=log.INFO,
+            )
+            self.static_openssl = static_ssl_env.strip().lower() in {"1", "true", "yes", "on"}
 
     def run(self):
         """
@@ -103,24 +114,37 @@ class BuildMgclientExt(build_ext):
     def get_cmake_binary(self):
         cmake_env_var_name = "PYMGCLIENT_CMAKE"
         custom_cmake = os.getenv(cmake_env_var_name)
-        if custom_cmake is None:
-            # cmake3 is checked before cmake, because on CentOS cmake refers
-            # to CMake 2.*
-            for possible_cmake in ["cmake3", "cmake"]:
-                self.announce(f"Checking if {possible_cmake} can be used", level=log.INFO)
-
-                which_cmake = shutil.which(possible_cmake)
-                if which_cmake is not None:
-                    self.announce(f"Using {which_cmake}", level=log.INFO)
-                    return os.path.abspath(which_cmake)
-
-                self.announce(f"{possible_cmake} is not accesible", level=log.INFO)
-            raise DistutilsExecError("Cannot find suitable cmake")
-        else:
+        if custom_cmake:
             self.announce(
-                f"Using the value of {cmake_env_var_name} for CMake, which is" f"{custom_cmake}", level=log.INFO
+                f"Using the value of {cmake_env_var_name} for CMake, which is {custom_cmake}",
+                level=log.INFO,
             )
             return custom_cmake
+
+        # 1) Prefer system cmake if present
+        for possible_cmake in ["cmake3", "cmake"]:
+            self.announce(f"Checking if {possible_cmake} can be used", level=log.INFO)
+            which_cmake = shutil.which(possible_cmake)
+            if which_cmake is not None:
+                self.announce(f"Using {which_cmake}", level=log.INFO)
+                return os.path.abspath(which_cmake)
+            self.announce(f"{possible_cmake} is not accessible", level=log.INFO)
+
+        # 2) Fall back to the Python 'cmake' package if installed
+        try:
+            import cmake  # from PyPI "cmake"
+
+            cmake_bin = os.path.join(cmake.CMAKE_BIN_DIR, "cmake")
+            if IS_WINDOWS:
+                cmake_bin += ".exe"
+
+            if os.path.exists(cmake_bin):
+                self.announce(f"Using CMake from Python package: {cmake_bin}", level=log.INFO)
+                return cmake_bin
+        except Exception as e:
+            self.announce(f"Python 'cmake' package not usable: {e}", level=log.INFO)
+
+        raise DistutilsExecError("Cannot find suitable cmake (system cmake or Python 'cmake' package)")
 
     def get_openssl_root_dir(self):
         if not IS_APPLE:
@@ -270,6 +294,7 @@ class BuildMgclientExt(build_ext):
         if finalize is not None:
             finalize(extension)
 
+
 if sys.platform == "win32":
     extra_link_args = [
         "-l:libssl.a",
@@ -279,49 +304,13 @@ if sys.platform == "win32":
     ]
 else:
     extra_link_args = None
-    
+
 setup(
-    name="pymgclient",
-    version=version,
-    maintainer="Matt James",
-    maintainer_email="matthew.james@memgraph.io",
-    author="Colin Barry",
-    author_email="colin.barry@memgraph.io",
-    license="Apache2",
-    python_requires=">=3.9",
-    description="Memgraph database adapter for Python language",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/memgraph/pymgclient",
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Topic :: Database",
-        "Topic :: Database :: Front-Ends",
-        "Topic :: Software Development",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Operating System :: POSIX :: Linux",
-        "Operating System :: MacOS :: MacOS X",
-        "Operating System :: Microsoft :: Windows",
-    ],
     ext_modules=[
         Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_link_args=extra_link_args)
     ],
-    project_urls={
-        "Source": "https://github.com/memgraph/pymgclient",
-        "Documentation": "https://memgraph.github.io/pymgclient",
-    },
     cmdclass={"build_ext": BuildMgclientExt},
-    install_requires=[
-        "pyopenssl",
-        "networkx",
-        "tzdata"
-    ]
 )
+
+if readme_path.exists():
+    readme_path.unlink()

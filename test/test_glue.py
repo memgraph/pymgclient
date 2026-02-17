@@ -23,7 +23,7 @@ import mgclient
 import pytest
 from zoneinfo import ZoneInfo
 
-from common import Memgraph, start_memgraph
+from common import Memgraph, start_memgraph, REF_COUNT_DECREMENT
 
 # TODO(colinbarry) The Fedora docker image seems to have flaky timezone support.
 # For the time being, we will force Fedora-based tests to use UTC only, and
@@ -122,7 +122,7 @@ def test_list(memgraph_connection):
     #  * one reference because of value_from_result
     #  * one temporary reference because sys.getrefcount increases the ref
     #    count
-    assert sys.getrefcount(value_from_result) == 3
+    assert sys.getrefcount(value_from_result) == 3 - REF_COUNT_DECREMENT
 
 
 def test_map(memgraph_connection):
@@ -156,7 +156,7 @@ def test_map(memgraph_connection):
     #  * one reference because of value_in_a_map_from_result
     #  * one temporary reference because sys.getrefcount increases the ref
     #    count
-    assert sys.getrefcount(value_in_a_map_from_result) == 3
+    assert sys.getrefcount(value_in_a_map_from_result) == 3 - REF_COUNT_DECREMENT
     # This checks if the reference number of the keys in a mg_map are correct.
     # Ref count should be 3, because:
     #  * one reference because the string is referenced in result
@@ -164,7 +164,7 @@ def test_map(memgraph_connection):
     #    globally counted)
     #  * one temporary reference because sys.getrefcount increases the ref
     #    count
-    assert sys.getrefcount(key_in_a_map) == 3
+    assert sys.getrefcount(key_in_a_map) == 3 - REF_COUNT_DECREMENT
 
 
 def test_node(memgraph_connection):
@@ -240,7 +240,7 @@ def test_tuple(memgraph_connection):
         #  * one reference because of value_in_tuple
         #  * one temporary reference because sys.getrefcount increases the ref
         #    count
-        assert sys.getrefcount(value_in_tuple) == 3
+        assert sys.getrefcount(value_in_tuple) == 3 - REF_COUNT_DECREMENT
 
 
 @pytest.mark.temporal

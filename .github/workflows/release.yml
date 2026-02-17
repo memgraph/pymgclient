@@ -33,7 +33,6 @@ jobs:
       test_linux: true
       test_windows: true
       test_macintosh: true
-      build_source_dist: true
       upload_artifacts: true
       version: ${{ inputs.version }}
     secrets: inherit
@@ -61,7 +60,13 @@ jobs:
       - name: Move Artifacts
         run: |
           mkdir -p dist
-          mv -v downloaded-artifacts/*/* dist/
+          # Move all wheel files (unique per platform)
+          find downloaded-artifacts -name "*.whl" -exec mv -fv {} dist/ \;
+          # Move one tar.gz file (source distribution is identical across platforms)
+          tar_gz=$(find downloaded-artifacts -name "*.tar.gz" | head -n 1)
+          if [ -n "$tar_gz" ]; then
+            mv -fv "$tar_gz" dist/
+          fi
 
       - name: Show contents
         run: |

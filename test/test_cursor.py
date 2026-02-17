@@ -16,7 +16,7 @@ import sys
 import mgclient
 import pytest
 
-from common import start_memgraph, Memgraph
+from common import start_memgraph, Memgraph, REF_COUNT_DECREMENT
 
 
 @pytest.fixture(scope="function")
@@ -239,39 +239,39 @@ class TestCursorInRegularConnection:
         fetchone_result = cursor.fetchone()
         # Refs are the following:
         # 1. fetchone_result
-        # 2. temp reference in sys.getrefcount
+        # 2. temp reference in sys.getrefcount (unless Python 3.14)
         # 3. cursor->rows
-        assert sys.getrefcount(fetchone_result) == 3
+        assert sys.getrefcount(fetchone_result) == 3 - REF_COUNT_DECREMENT
 
         fetchmany_result = cursor.fetchmany(2)
         # Refs are the following:
         # 1. fetchmany_result
-        # 2. temp reference in sys.getrefcount
-        assert sys.getrefcount(fetchmany_result) == 2
+        # 2. temp reference in sys.getrefcount (unless Python 3.14)
+        assert sys.getrefcount(fetchmany_result) == 2 - REF_COUNT_DECREMENT
         row1 = fetchmany_result[0]
         row2 = fetchmany_result[1]
         del fetchmany_result
         # Refs are the following:
         # 1. row{1,2}
-        # 2. temp reference in sys.getrefcount
+        # 2. temp reference in sys.getrefcount (unless Python 3.14)
         # 3. cursor->rows
-        assert sys.getrefcount(row1) == 3
-        assert sys.getrefcount(row2) == 3
+        assert sys.getrefcount(row1) == 3 - REF_COUNT_DECREMENT
+        assert sys.getrefcount(row2) == 3 - REF_COUNT_DECREMENT
 
         fetchall_result = cursor.fetchall()
         # Refs are the following:
         # 1. fetchall_result
-        # 2. temp reference in sys.getrefcount
-        assert sys.getrefcount(fetchall_result) == 2
+        # 2. temp reference in sys.getrefcount (unless Python 3.14)
+        assert sys.getrefcount(fetchall_result) == 2 - REF_COUNT_DECREMENT
         row1 = fetchall_result[0]
         row2 = fetchall_result[1]
         del fetchall_result
         # Refs are the following:
         # 1. row{1,2}
-        # 2. temp reference in sys.getrefcount
+        # 2. temp reference in sys.getrefcount (unless Python 3.14)
         # 3. cursor->rows
-        assert sys.getrefcount(row1) == 3
-        assert sys.getrefcount(row2) == 3
+        assert sys.getrefcount(row1) == 3 - REF_COUNT_DECREMENT
+        assert sys.getrefcount(row2) == 3 - REF_COUNT_DECREMENT
 
 
 class TestCursorInAsyncConnection:
@@ -498,35 +498,37 @@ class TestCursorInAsyncConnection:
         cursor.execute("UNWIND [1, 2, 3, 4, 5] AS n RETURN n")
 
         fetchone_result = cursor.fetchone()
+        print(f"fetchone_result: {fetchone_result}")
+        print(f"sys.getrefcount(fetchone_result): {sys.getrefcount(fetchone_result)}")
         # Refs are the following:
         # 1. fetchone_result
-        # 2. temp reference in sys.getrefcount
-        assert sys.getrefcount(fetchone_result) == 2
+        # 2. temp reference in sys.getrefcount (unless Python 3.14)
+        assert sys.getrefcount(fetchone_result) == 2 - REF_COUNT_DECREMENT
 
         fetchmany_result = cursor.fetchmany(2)
         # Refs are the following:
         # 1. fetchmany_result
-        # 2. temp reference in sys.getrefcount
-        assert sys.getrefcount(fetchmany_result) == 2
+        # 2. temp reference in sys.getrefcount (unless Python 3.14)
+        assert sys.getrefcount(fetchmany_result) == 2 - REF_COUNT_DECREMENT
         row1 = fetchmany_result[0]
         row2 = fetchmany_result[1]
         del fetchmany_result
         # Refs are the following:
         # 1. row{1,2}
-        # 2. temp reference in sys.getrefcount
-        assert sys.getrefcount(row1) == 2
-        assert sys.getrefcount(row2) == 2
+        # 2. temp reference in sys.getrefcount (unless Python 3.14)
+        assert sys.getrefcount(row1) == 2 - REF_COUNT_DECREMENT
+        assert sys.getrefcount(row2) == 2 - REF_COUNT_DECREMENT
 
         fetchall_result = cursor.fetchall()
         # Refs are the following:
         # 1. fetchall_result
-        # 2. temp reference in sys.getrefcount
-        assert sys.getrefcount(fetchall_result) == 2
+        # 2. temp reference in sys.getrefcount (unless Python 3.14)
+        assert sys.getrefcount(fetchall_result) == 2 - REF_COUNT_DECREMENT
         row1 = fetchall_result[0]
         row2 = fetchall_result[1]
         del fetchall_result
         # Refs are the following:
         # 1. row{1,2}
-        # 2. temp reference in sys.getrefcount
-        assert sys.getrefcount(row1) == 2
-        assert sys.getrefcount(row2) == 2
+        # 2. temp reference in sys.getrefcount (unless Python 3.14)
+        assert sys.getrefcount(row1) == 2 - REF_COUNT_DECREMENT
+        assert sys.getrefcount(row2) == 2 - REF_COUNT_DECREMENT

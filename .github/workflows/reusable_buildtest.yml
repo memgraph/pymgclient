@@ -263,7 +263,7 @@ jobs:
         if: ${{ inputs.upload_artifacts && matrix.os == 'windows-2025' }}
         uses: actions/upload-artifact@v4
         with:
-          name: pymgclient-win-${{ matrix.python-version }}-${{ matrix.arch }}
+          name: pymgclient-win-${{ matrix.python-version }}
           path: dist/
 
 

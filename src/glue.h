@@ -25,6 +25,8 @@ PyObject *mg_list_to_py_list(const mg_list *list);
 
 PyObject *mg_value_to_py_object(const mg_value *value);
 
+PyObject *mg_map_to_py_dict(const mg_map *map);
+
 mg_map *py_dict_to_mg_map(PyObject *dict);
 
 mg_value *py_object_to_mg_value(PyObject *object);

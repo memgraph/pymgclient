@@ -83,6 +83,30 @@ def test_connect_args_validation():
 
 
 @requires_ssl_disabled
+def test_get_routing_table_args_validation(memgraph_server):
+    host, port, sslmode, _ = memgraph_server
+    conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
+
+    # routing_context must be a dict
+    with pytest.raises(TypeError):
+        conn.get_routing_table(routing_context=["not", "a", "dict"])
+
+    # extra must be a dict
+    with pytest.raises(TypeError):
+        conn.get_routing_table(extra=42)
+
+    # bookmarks must be an iterable of str
+    with pytest.raises(TypeError):
+        conn.get_routing_table(bookmarks=[1, 2, 3])
+
+
+def test_get_routing_table_closed_connection():
+    conn = mgclient.Connection.__new__(mgclient.Connection)
+    with pytest.raises(mgclient.InterfaceError):
+        conn.get_routing_table()
+
+
+@requires_ssl_disabled
 def test_connect_insecure_success(memgraph_server):
     host, port, sslmode, _ = memgraph_server
     assert sslmode == mgclient.MG_SSLMODE_DISABLE

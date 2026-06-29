@@ -100,8 +100,12 @@ def test_get_routing_table_args_validation(memgraph_server):
         conn.get_routing_table(bookmarks=[1, 2, 3])
 
 
-def test_get_routing_table_closed_connection():
-    conn = mgclient.Connection.__new__(mgclient.Connection)
+@requires_ssl_disabled
+def test_get_routing_table_closed_connection(memgraph_server):
+    host, port, sslmode, _ = memgraph_server
+    conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
+    conn.close()
+
     with pytest.raises(mgclient.InterfaceError):
         conn.get_routing_table()
 

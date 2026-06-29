@@ -444,6 +444,11 @@ static PyObject *connection_get_routing_table(ConnectionObject *conn,
       goto cleanup_error;
     }
     Py_ssize_t size = PySequence_Fast_GET_SIZE(seq);
+    if (size > UINT32_MAX) {
+      Py_DECREF(seq);
+      PyErr_SetString(PyExc_ValueError, "bookmarks size exceeded");
+      goto cleanup_error;
+    }
     mg_bookmarks = mg_list_make_empty((uint32_t)size);
     if (!mg_bookmarks) {
       Py_DECREF(seq);
@@ -474,11 +479,8 @@ static PyObject *connection_get_routing_table(ConnectionObject *conn,
   }
 
   mg_map *routing_table = NULL;
-  int status;
-  Py_BEGIN_ALLOW_THREADS;
-  status = mg_session_route(conn->session, mg_routing, mg_bookmarks, mg_extra,
-                            &routing_table);
-  Py_END_ALLOW_THREADS;
+  int status = mg_session_route(conn->session, mg_routing, mg_bookmarks,
+                                mg_extra, &routing_table);
 
   mg_map_destroy(mg_routing);
   mg_map_destroy(mg_extra);

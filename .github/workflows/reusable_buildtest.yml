@@ -139,6 +139,16 @@ jobs:
           docker exec -i testcontainer \
             bash -c "ls -la /home/memgraph/pymgclient/dist"
 
+      - name: Diagnose HA cluster
+        run: |
+          docker ps -a
+          for name in mg-coord1 mg-coord2 mg-coord3 mg-data1 mg-data2; do
+            echo "=== $name ==="
+            docker inspect -f 'running={{.State.Running}} status={{.State.Status}} restarts={{.RestartCount}}' "$name" 2>/dev/null || echo "missing"
+          done
+          echo "=== mg-coord1 logs (tail) ==="
+          docker logs --tail 80 mg-coord1 2>&1 || true
+
       - name: Install pymgclient and run tests
         run: |
           PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14")

@@ -24,6 +24,11 @@ MEMGRAPH_PATH = os.getenv("MEMGRAPH_PATH", "/usr/lib/memgraph/memgraph")
 MEMGRAPH_PORT = int(os.getenv("MEMGRAPH_PORT", 7687))
 MEMGRAPH_HOST = os.getenv("MEMGRAPH_HOST", None)
 MEMGRAPH_STARTED_WITH_SSL = os.getenv("MEMGRAPH_STARTED_WITH_SSL", None)
+
+# Host/port of a coordinator in a Memgraph high-availability cluster. When set,
+# the HA routing tests run against it; otherwise they are skipped.
+MEMGRAPH_HA_COORDINATOR_HOST = os.getenv("MEMGRAPH_HA_COORDINATOR_HOST", None)
+MEMGRAPH_HA_COORDINATOR_PORT = int(os.getenv("MEMGRAPH_HA_COORDINATOR_PORT", 7687))
 DURABILITY_DIR = tempfile.TemporaryDirectory()
 
 PYTHON_VERSION = sys.version_info[:2]
@@ -52,6 +57,11 @@ requires_ssl_enabled = pytest.mark.skipif(
 requires_ssl_disabled = pytest.mark.skipif(
     MEMGRAPH_HOST is not None and MEMGRAPH_STARTED_WITH_SSL is not None,
     reason="requires insecure connection",
+)
+
+requires_ha_cluster = pytest.mark.skipif(
+    MEMGRAPH_HA_COORDINATOR_HOST is None,
+    reason="requires a Memgraph HA cluster (set MEMGRAPH_HA_COORDINATOR_HOST)",
 )
 
 

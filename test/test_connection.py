@@ -108,6 +108,12 @@ def test_get_routing_table_args_validation(memgraph_server):
     with pytest.raises(TypeError):
         conn.get_routing_table(bookmarks=[1, 2, 3])
 
+    # a single str/bytes must be rejected rather than iterated char by char
+    with pytest.raises(TypeError):
+        conn.get_routing_table(bookmarks="single-bookmark")
+    with pytest.raises(TypeError):
+        conn.get_routing_table(bookmarks=b"single-bookmark")
+
 
 @requires_ssl_disabled
 def test_get_routing_table_closed_connection(memgraph_server):

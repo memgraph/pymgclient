@@ -68,6 +68,14 @@ jobs:
           MEMGRAPH_ENTERPRISE_LICENSE: ${{ secrets.MEMGRAPH_ENTERPRISE_LICENSE }}
           MEMGRAPH_ORGANIZATION_NAME: ${{ secrets.MEMGRAPH_ORGANIZATION_NAME }}
         run: |
+          # High availability is a Memgraph Enterprise feature. The license
+          # secrets are unavailable on PRs from forks, so skip the cluster (and
+          # the HA test) with a warning rather than failing the whole build.
+          if [ -z "$MEMGRAPH_ENTERPRISE_LICENSE" ] || [ -z "$MEMGRAPH_ORGANIZATION_NAME" ]; then
+            echo "::warning::Memgraph enterprise license secrets are not set; skipping the HA cluster and the get_routing_table HA test."
+            exit 0
+          fi
+
           # Two data instances...
           for name in mg-data1 mg-data2; do
             docker run -d --rm --name "$name" --network pymgclient-network \
@@ -151,8 +159,12 @@ jobs:
               bash -c "export MEMGRAPH_HOST=memgraph && cd /home/memgraph/pymgclient && python$python_version -m pytest -v"
             docker exec -i testcontainer \
               bash -c "export MEMGRAPH_STARTED_WITH_SSL=true && export MEMGRAPH_HOST=memgraph-ssl && cd /home/memgraph/pymgclient && python$python_version -m pytest -v"
-            docker exec -i testcontainer \
-              bash -c "export MEMGRAPH_HA_COORDINATOR_HOST=mg-coord1 && cd /home/memgraph/pymgclient && python$python_version -m pytest -v test/test_connection.py -k get_routing_table_ha"
+            # Run the HA routing test only when the cluster is up (it is skipped
+            # when the enterprise license secrets are unavailable, e.g. forks).
+            if [ "$(docker inspect -f '{{.State.Running}}' mg-coord1 2>/dev/null)" = "true" ]; then
+              docker exec -i testcontainer \
+                bash -c "export MEMGRAPH_HA_COORDINATOR_HOST=mg-coord1 && cd /home/memgraph/pymgclient && python$python_version -m pytest -v test/test_connection.py -k get_routing_table_ha"
+            fi
           done
 
       - name: Build docs

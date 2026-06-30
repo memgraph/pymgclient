@@ -438,6 +438,14 @@ static PyObject *connection_get_routing_table(ConnectionObject *conn,
   }
 
   if (bookmarks && bookmarks != Py_None) {
+    // A str/bytes is itself a sequence, so without this check it would be
+    // silently iterated into single-character bookmarks.
+    if (PyUnicode_Check(bookmarks) || PyBytes_Check(bookmarks)) {
+      PyErr_SetString(PyExc_TypeError,
+                      "bookmarks must be an iterable of str, not a single "
+                      "str or bytes");
+      goto cleanup_error;
+    }
     PyObject *seq =
         PySequence_Fast(bookmarks, "bookmarks must be an iterable of str");
     if (!seq) {

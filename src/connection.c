@@ -18,6 +18,7 @@
 
 #include "cursor.h"
 #include "exceptions.h"
+#include "glue.h"
 
 static void connection_dealloc(ConnectionObject *conn) {
   mg_session_destroy(conn->session);
@@ -338,6 +339,177 @@ int connection_autocommit_set(ConnectionObject *conn, PyObject *value,
   return 0;
 }
 
+// clang-format off
+PyDoc_STRVAR(connection_get_routing_table_doc,
+"get_routing_table(routing_context=None, bookmarks=None, extra=None)\n\
+--\n\
+\n\
+Fetch the client-side routing table from a Memgraph coordinator.\n\
+\n\
+Sends a Bolt ``ROUTE`` message to the server this connection is attached to\n\
+(which must be a coordinator of a high-availability cluster) and returns the\n\
+current cluster topology. This is a low-level primitive intended for building\n\
+client-side routing on top of pymgclient: it only retrieves the table and does\n\
+not open any further connections or dispatch queries.\n\
+\n\
+The negotiated Bolt protocol version must be at least 4.3, and the connection\n\
+must be idle (no query in progress and no open transaction).\n\
+\n\
+   * :obj:`routing_context`\n\
+\n\
+        Optional :class:`dict` with routing context (for example the address\n\
+        used to contact the coordinator). Defaults to an empty map.\n\
+\n\
+   * :obj:`bookmarks`\n\
+\n\
+        Optional iterable of bookmark strings, or :obj:`None` for none.\n\
+\n\
+   * :obj:`extra`\n\
+\n\
+        Optional :class:`dict` with extra information. On Bolt 4.4 it is sent\n\
+        verbatim; on Bolt 4.3 only its ``\"db\"`` string entry (if present) is\n\
+        used to populate the database-name field.\n\
+\n\
+Returns a :class:`dict` of the form::\n\
+\n\
+    {\n\
+        \"ttl\": <int seconds>,\n\
+        \"servers\": [\n\
+            {\"addresses\": [\"host:port\", ...], \"role\": \"READ\"|\"WRITE\"|\"ROUTE\"},\n\
+            ...\n\
+        ]\n\
+    }");
+// clang-format on
+
+static PyObject *connection_get_routing_table(ConnectionObject *conn,
+                                              PyObject *args,
+                                              PyObject *kwargs) {
+  static char *kwlist[] = {"routing_context", "bookmarks", "extra", NULL};
+  PyObject *routing_context = NULL;
+  PyObject *bookmarks = NULL;
+  PyObject *extra = NULL;
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOO", kwlist,
+                                   &routing_context, &bookmarks, &extra)) {
+    return NULL;
+  }
+
+  if (connection_raise_if_bad_status(conn) < 0) {
+    return NULL;
+  }
+
+  if (conn->status != CONN_STATUS_READY) {
+    PyErr_SetString(InterfaceError,
+                    "cannot get routing table while a query is in progress or "
+                    "a transaction is open");
+    return NULL;
+  }
+
+  mg_map *mg_routing = NULL;
+  mg_map *mg_extra = NULL;
+  mg_list *mg_bookmarks = NULL;
+
+  if (routing_context && routing_context != Py_None) {
+    if (!PyDict_Check(routing_context)) {
+      PyErr_SetString(PyExc_TypeError, "routing_context must be a dict");
+      return NULL;
+    }
+    mg_routing = py_dict_to_mg_map(routing_context);
+    if (!mg_routing) {
+      return NULL;
+    }
+  } else {
+    mg_routing = mg_map_make_empty(0);
+    if (!mg_routing) {
+      PyErr_SetString(PyExc_RuntimeError, "couldn't allocate routing map");
+      return NULL;
+    }
+  }
+
+  if (extra && extra != Py_None) {
+    if (!PyDict_Check(extra)) {
+      PyErr_SetString(PyExc_TypeError, "extra must be a dict");
+      goto cleanup_error;
+    }
+    mg_extra = py_dict_to_mg_map(extra);
+    if (!mg_extra) {
+      goto cleanup_error;
+    }
+  }
+
+  if (bookmarks && bookmarks != Py_None) {
+    // A str/bytes is itself a sequence, so without this check it would be
+    // silently iterated into single-character bookmarks.
+    if (PyUnicode_Check(bookmarks) || PyBytes_Check(bookmarks)) {
+      PyErr_SetString(PyExc_TypeError,
+                      "bookmarks must be an iterable of str, not a single "
+                      "str or bytes");
+      goto cleanup_error;
+    }
+    PyObject *seq =
+        PySequence_Fast(bookmarks, "bookmarks must be an iterable of str");
+    if (!seq) {
+      goto cleanup_error;
+    }
+    Py_ssize_t size = PySequence_Fast_GET_SIZE(seq);
+    if (size > UINT32_MAX) {
+      Py_DECREF(seq);
+      PyErr_SetString(PyExc_ValueError, "bookmarks size exceeded");
+      goto cleanup_error;
+    }
+    mg_bookmarks = mg_list_make_empty((uint32_t)size);
+    if (!mg_bookmarks) {
+      Py_DECREF(seq);
+      PyErr_SetString(PyExc_RuntimeError, "couldn't allocate bookmarks list");
+      goto cleanup_error;
+    }
+    for (Py_ssize_t i = 0; i < size; ++i) {
+      PyObject *item = PySequence_Fast_GET_ITEM(seq, i);  // borrowed reference
+      if (!PyUnicode_Check(item)) {
+        Py_DECREF(seq);
+        PyErr_SetString(PyExc_TypeError, "bookmarks must be str");
+        goto cleanup_error;
+      }
+      const char *bookmark = PyUnicode_AsUTF8(item);
+      if (!bookmark) {
+        Py_DECREF(seq);
+        goto cleanup_error;
+      }
+      mg_value *value = mg_value_make_string(bookmark);
+      if (!value || mg_list_append(mg_bookmarks, value) != 0) {
+        mg_value_destroy(value);
+        Py_DECREF(seq);
+        PyErr_SetString(PyExc_RuntimeError, "couldn't build bookmarks list");
+        goto cleanup_error;
+      }
+    }
+    Py_DECREF(seq);
+  }
+
+  mg_map *routing_table = NULL;
+  int status = mg_session_route(conn->session, mg_routing, mg_bookmarks,
+                                mg_extra, &routing_table);
+
+  mg_map_destroy(mg_routing);
+  mg_map_destroy(mg_extra);
+  mg_list_destroy(mg_bookmarks);
+
+  if (status != 0) {
+    connection_handle_error(conn, status);
+    return NULL;
+  }
+
+  PyObject *result = mg_map_to_py_dict(routing_table);
+  mg_map_destroy(routing_table);
+  return result;
+
+cleanup_error:
+  mg_map_destroy(mg_routing);
+  mg_map_destroy(mg_extra);
+  mg_list_destroy(mg_bookmarks);
+  return NULL;
+}
+
 static PyMethodDef connection_methods[] = {
     {"close", (PyCFunction)connection_close, METH_NOARGS, connection_close_doc},
     {"commit", (PyCFunction)connection_commit, METH_NOARGS,
@@ -346,6 +518,8 @@ static PyMethodDef connection_methods[] = {
      connection_rollback_doc},
     {"cursor", (PyCFunction)connection_cursor, METH_NOARGS,
      connection_cursor_doc},
+    {"get_routing_table", (PyCFunction)connection_get_routing_table,
+     METH_VARARGS | METH_KEYWORDS, connection_get_routing_table_doc},
     {NULL, NULL, 0, NULL}};
 
 // clang-format off

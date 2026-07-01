@@ -24,6 +24,7 @@ import pytest
 
 from common import requires_ha_cluster
 from conftest import resolve_ha_address
+from mgclient.routing import Router, RoutingTable
 
 
 def _replication_role(conn):
@@ -145,3 +146,166 @@ def test_connect_routing_all_candidates_unreachable(ha_cluster):
         mgclient.connect(
             host=host, port=port, routing=True, access_mode="WRITE", resolver=resolver
         )
+
+
+# ---------------------------------------------------------------------------
+# Router: cached routing table, load balancing and failover (no cluster needed
+# for the pure-logic tests below).
+# ---------------------------------------------------------------------------
+
+
+def test_routing_table_parse_groups_addresses_by_role():
+    raw = {
+        "ttl": 120,
+        "servers": [
+            {"role": "WRITE", "addresses": ["m:7687"]},
+            {"role": "READ", "addresses": ["r1:7687", "r2:7687"]},
+            {"role": "ROUTE", "addresses": ["c1:7687", "c2:7687"]},
+            {"role": "SOMETHING_ELSE", "addresses": ["x:7687"]},
+        ],
+    }
+    table = RoutingTable.parse(raw)
+
+    assert table.write == ["m:7687"]
+    assert table.read == ["r1:7687", "r2:7687"]
+    assert table.route == ["c1:7687", "c2:7687"]
+    assert table.ttl == 120
+
+
+def _router_with_cached_table(table):
+    # Router.__init__ opens no connection; we inject a table and a far-future
+    # expiry to exercise selection logic without a cluster.
+    router = Router(host="unused", port=7687)
+    router._table = table
+    router._expires_at = float("inf")
+    return router
+
+
+def test_read_targets_round_robin_across_replicas():
+    table = RoutingTable(["m:7687"], ["r1:7687", "r2:7687", "r3:7687"], ["c:7687"], 300)
+    router = _router_with_cached_table(table)
+
+    firsts = [router._ordered_targets("READ")[0] for _ in range(6)]
+
+    # Each READ selection starts at the next replica, cycling through them all.
+    assert firsts == [
+        "r1:7687",
+        "r2:7687",
+        "r3:7687",
+        "r1:7687",
+        "r2:7687",
+        "r3:7687",
+    ]
+    # Every replica remains a failover candidate regardless of starting point.
+    assert set(router._ordered_targets("READ")) == {"r1:7687", "r2:7687", "r3:7687"}
+
+
+def test_write_targets_do_not_rotate():
+    table = RoutingTable(["m:7687"], ["r1:7687", "r2:7687"], ["c:7687"], 300)
+    router = _router_with_cached_table(table)
+
+    assert router._ordered_targets("WRITE") == ["m:7687"]
+    assert router._ordered_targets("WRITE") == ["m:7687"]
+
+
+@requires_ha_cluster
+def test_router_connect_reaches_correct_instances(ha_cluster, ha_resolver):
+    host, port = ha_cluster
+    router = Router(host=host, port=port, resolver=ha_resolver)
+
+    writer = router.connect(access_mode="WRITE")
+    assert _replication_role(writer) == "main"
+    writer.close()
+
+    reader = router.connect(access_mode="READ")
+    assert _replication_role(reader) == "replica"
+    reader.close()
+
+
+@requires_ha_cluster
+def test_router_caches_routing_table(ha_cluster, ha_resolver):
+    host, port = ha_cluster
+    router = Router(host=host, port=port, resolver=ha_resolver)
+
+    router.connect(access_mode="WRITE").close()
+    assert router._refresh_count == 1
+
+    # Subsequent connects within the TTL are served from the cached table, with
+    # no further ROUTE round-trips to a coordinator.
+    router.connect(access_mode="READ").close()
+    router.connect(access_mode="WRITE").close()
+    assert router._refresh_count == 1
+
+
+@requires_ha_cluster
+def test_router_refresh_forces_new_lookup(ha_cluster, ha_resolver):
+    host, port = ha_cluster
+    router = Router(host=host, port=port, resolver=ha_resolver)
+
+    router.connect(access_mode="WRITE").close()
+    before = router._refresh_count
+
+    router.refresh()
+    assert router._refresh_count == before + 1
+
+
+@requires_ha_cluster
+def test_router_expired_table_is_refreshed(ha_cluster, ha_resolver):
+    host, port = ha_cluster
+    router = Router(host=host, port=port, resolver=ha_resolver)
+
+    router.connect(access_mode="WRITE").close()
+    before = router._refresh_count
+
+    # Simulate the TTL having elapsed.
+    router._expires_at = 0.0
+    router.connect(access_mode="WRITE").close()
+    assert router._refresh_count == before + 1
+
+
+@requires_ha_cluster
+def test_router_survives_seed_coordinator_failure(ha_cluster, ha_resolver):
+    # After the first refresh the table lists every coordinator. If the seed
+    # coordinator later becomes unreachable, a refresh must fall back to a
+    # ROUTE-role server from the cached table.
+    host, port = ha_cluster
+    router = Router(host=host, port=port, resolver=ha_resolver)
+
+    router.connect(access_mode="WRITE").close()
+
+    # Break the seed; refresh should still succeed via a cached coordinator.
+    router._seed_host, router._seed_port = "127.0.0.1", 1
+    router.refresh()
+
+    writer = router.connect(access_mode="WRITE")
+    assert _replication_role(writer) == "main"
+    writer.close()
+
+
+@requires_ha_cluster
+def test_router_refreshes_when_targets_unreachable(ha_cluster):
+    host, port = ha_cluster
+
+    # The coordinator (seed) is reachable, but the data instances are not, so
+    # routing should refresh and retry before giving up.
+    def resolver(address):
+        return ["127.0.0.1:1"]
+
+    router = Router(host=host, port=port, resolver=resolver)
+
+    with pytest.raises(mgclient.OperationalError):
+        router.connect(access_mode="WRITE")
+
+    assert router._refresh_count >= 2
+
+
+@requires_ha_cluster
+def test_router_routing_table_property(ha_cluster, ha_resolver):
+    host, port = ha_cluster
+    router = Router(host=host, port=port, resolver=ha_resolver)
+
+    table = router.routing_table
+    assert table["write"]
+    assert table["read"]
+    assert table["route"]
+    assert isinstance(table["ttl"], int)

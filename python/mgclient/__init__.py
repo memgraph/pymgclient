@@ -33,5 +33,6 @@ from mgclient._mgclient import *  # noqa: F401,F403
 from mgclient.routing import (  # noqa: F401,E402
     ACCESS_MODE_READ,
     ACCESS_MODE_WRITE,
+    Router,
     connect,
 )

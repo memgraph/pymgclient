@@ -35,6 +35,14 @@ If the addresses a cluster advertises are not directly reachable by the client
 pass a ``resolver`` callable that maps an advertised ``"host:port"`` address to
 an iterable of ``"host:port"`` targets to try.
 
+``connect(routing=True, ...)`` performs a fresh routing lookup on every call.
+For a long-lived router that caches the routing table (honouring its TTL),
+balances reads across replicas and fails over across coordinators, use the
+:class:`Router` class:
+
+.. autoclass:: mgclient.Router
+   :members: connect, refresh, routing_table
+
 For lower-level access to the routing table itself, see
 :meth:`Connection.get_routing_table`.
 

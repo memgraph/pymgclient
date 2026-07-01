@@ -181,11 +181,13 @@ def ha_cluster():
 
     _ha_admin(conn, f"SET INSTANCE {HA_MAIN} TO MAIN")
 
-    # Wait for the cluster to converge and advertise a WRITE server.
+    # Wait for the cluster to converge and advertise all roles: the main
+    # (WRITE), the replica (READ) and the coordinators (ROUTE).
     timeout = 60
     for _ in range(timeout):
         table = conn.get_routing_table()
-        if any(server["role"] == "WRITE" for server in table["servers"]):
+        roles = {server["role"] for server in table["servers"]}
+        if {"READ", "WRITE", "ROUTE"} <= roles:
             break
         time.sleep(1)
     else:
@@ -207,11 +209,12 @@ def test_get_routing_table_ha(ha_cluster):
     assert isinstance(table["ttl"], int)
     assert table["servers"]
 
+    # The cluster has a main (WRITE), a replica (READ) and coordinators (ROUTE),
+    # so all three roles must be present.
     roles = {server["role"] for server in table["servers"]}
-    assert "WRITE" in roles  # the elected main
+    assert roles == {"READ", "WRITE", "ROUTE"}
 
     for server in table["servers"]:
-        assert server["role"] in ("READ", "WRITE", "ROUTE")
         assert isinstance(server["addresses"], list)
         assert server["addresses"]
 

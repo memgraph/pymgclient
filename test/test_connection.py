@@ -15,7 +15,6 @@
 import mgclient
 import pytest
 import tempfile
-import time
 
 from common import (
     start_memgraph,
@@ -23,8 +22,6 @@ from common import (
     requires_ssl_enabled,
     requires_ssl_disabled,
     requires_ha_cluster,
-    MEMGRAPH_HA_COORDINATOR_HOST,
-    MEMGRAPH_HA_COORDINATOR_PORT,
 )
 from OpenSSL import crypto
 
@@ -125,78 +122,8 @@ def test_get_routing_table_closed_connection(memgraph_server):
         conn.get_routing_table()
 
 
-# Topology created by the "Run Memgraph HA Cluster" CI step. The fixture below
-# must agree with the container names and ports used there.
-HA_COORDINATORS = ["mg-coord1", "mg-coord2", "mg-coord3"]
-HA_DATA_INSTANCES = [("instance_1", "mg-data1"), ("instance_2", "mg-data2")]
-HA_MAIN = "instance_1"
-HA_BOLT_PORT = 7687
-HA_COORDINATOR_PORT = 12121
-HA_MANAGEMENT_PORT = 13011
-HA_REPLICATION_PORT = 10000
-
-
-def _ha_admin(conn, query):
-    """Run a coordinator admin query, tolerating idempotent re-runs."""
-    cursor = conn.cursor()
-    try:
-        cursor.execute(query)
-        try:
-            cursor.fetchall()
-        except mgclient.Error:
-            pass
-    except mgclient.DatabaseError as exc:
-        # Re-running setup against an already-configured cluster is fine.
-        print(f"HA setup query ignored error: {exc}")
-
-
-@pytest.fixture(scope="module")
-def ha_cluster():
-    host = MEMGRAPH_HA_COORDINATOR_HOST
-    port = MEMGRAPH_HA_COORDINATOR_PORT
-
-    conn = mgclient.connect(host=host, port=port)
-    conn.autocommit = True
-
-    # mg-coord1 is the bootstrap coordinator; add the remaining ones.
-    for cid, name in enumerate(HA_COORDINATORS, start=1):
-        if cid == 1:
-            continue
-        _ha_admin(
-            conn,
-            f'ADD COORDINATOR {cid} WITH CONFIG '
-            f'{{"bolt_server": "{name}:{HA_BOLT_PORT}", '
-            f'"coordinator_server": "{name}:{HA_COORDINATOR_PORT}", '
-            f'"management_server": "{name}:{HA_MANAGEMENT_PORT}"}}',
-        )
-
-    for name, data_host in HA_DATA_INSTANCES:
-        _ha_admin(
-            conn,
-            f'REGISTER INSTANCE {name} WITH CONFIG '
-            f'{{"bolt_server": "{data_host}:{HA_BOLT_PORT}", '
-            f'"management_server": "{data_host}:{HA_MANAGEMENT_PORT}", '
-            f'"replication_server": "{data_host}:{HA_REPLICATION_PORT}"}}',
-        )
-
-    _ha_admin(conn, f"SET INSTANCE {HA_MAIN} TO MAIN")
-
-    # Wait for the cluster to converge and advertise all roles: the main
-    # (WRITE), the replica (READ) and the coordinators (ROUTE).
-    timeout = 60
-    for _ in range(timeout):
-        table = conn.get_routing_table()
-        roles = {server["role"] for server in table["servers"]}
-        if {"READ", "WRITE", "ROUTE"} <= roles:
-            break
-        time.sleep(1)
-    else:
-        conn.close()
-        raise RuntimeError(f"HA cluster did not converge: {table}")
-
-    yield host, port
-
-    conn.close()
+# The ``ha_cluster`` fixture lives in conftest.py so it can be shared with the
+# client-side routing tests in test_routing.py.
 
 
 @requires_ha_cluster
@@ -226,6 +153,21 @@ def test_connect_insecure_success(memgraph_server):
     conn = mgclient.connect(host=host, port=port, sslmode=sslmode)
 
     assert conn.status == mgclient.CONN_STATUS_READY
+
+
+@requires_ssl_disabled
+def test_connect_routing_false_is_plain_connection(memgraph_server):
+    # routing=False must be indistinguishable from a plain connection: it goes
+    # straight to the given host/port with no ROUTE round-trip.
+    host, port, sslmode, _ = memgraph_server
+    conn = mgclient.connect(host=host, port=port, sslmode=sslmode, routing=False)
+
+    assert conn.status == mgclient.CONN_STATUS_READY
+
+    cursor = conn.cursor()
+    cursor.execute("RETURN 1")
+    assert cursor.fetchall() == [(1,)]
+    conn.close()
 
 
 @requires_ssl_disabled

@@ -11,6 +11,33 @@ The module interface respects the DB-API 2.0 standard defined in :pep:`249`.
 See :ref:`lazy-connections` section to learn about
 advantages and limitations of using the ``lazy`` parameter.
 
+#####################
+Client-side routing
+#####################
+
+When connecting to a Memgraph high-availability cluster, passing
+``routing=True`` to :func:`connect` makes the connection routing-aware: the
+given ``host``/``port`` must point at a cluster coordinator, from which the
+current cluster topology is fetched (via a Bolt ``ROUTE`` message) and a data
+instance matching the requested ``access_mode`` is selected and connected to.
+
+.. data:: mgclient.ACCESS_MODE_WRITE
+
+   ``access_mode`` value selecting a server that accepts writes (the cluster
+   main). This is the default.
+
+.. data:: mgclient.ACCESS_MODE_READ
+
+   ``access_mode`` value selecting a server that serves reads (a replica).
+
+If the addresses a cluster advertises are not directly reachable by the client
+(for example when the cluster is reached through a proxy or a port-forward),
+pass a ``resolver`` callable that maps an advertised ``"host:port"`` address to
+an iterable of ``"host:port"`` targets to try.
+
+For lower-level access to the routing table itself, see
+:meth:`Connection.get_routing_table`.
+
 ################
 Module constants
 ################

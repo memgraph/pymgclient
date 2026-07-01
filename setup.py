@@ -36,7 +36,12 @@ if IS_WINDOWS:
 # 1. The mgclient library which is the official Memgraph client library.
 # 2. The mgclient python extension module which is a wrapper around the
 #    client library.
-EXTENSION_NAME = "mgclient"
+#
+# The compiled extension is installed as ``mgclient._mgclient`` and the
+# pure-Python ``mgclient`` package (see python/mgclient) re-exports it so that
+# ``import mgclient`` keeps working exactly as before, while adding the
+# client-side routing helpers on top.
+EXTENSION_NAME = "mgclient._mgclient"
 
 sources = [str(path) for path in Path("src").glob("*.c")]
 

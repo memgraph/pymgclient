@@ -429,6 +429,23 @@ def test_execute_write_treats_committed_on_main_as_success(monkeypatch):
     assert calls["n"] == 1
 
 
+def test_execute_write_warns_when_committed_on_main(monkeypatch, caplog):
+    class CommitFails(_FakeConnection):
+        commit_error = mgclient.DatabaseError(_COMMITTED_ON_MAIN_MESSAGE)
+
+    router = _router_with_stubbed_connect(monkeypatch, CommitFails)
+
+    # Behaviour is unchanged (still returns the result), but the weakened
+    # durability guarantee must be surfaced as a warning rather than hidden.
+    with caplog.at_level("WARNING", logger="mgclient.routing"):
+        assert router.execute_write(lambda cursor: "created") == "created"
+
+    assert any(
+        "committed on the main" in record.getMessage().lower()
+        for record in caplog.records
+    )
+
+
 def test_execute_write_raises_non_transient_immediately(monkeypatch):
     router = _router_with_stubbed_connect(monkeypatch, _FakeConnection)
 

@@ -25,11 +25,14 @@ coordinators when refreshing.  :func:`connect` with ``routing=True`` is a
 one-shot convenience built on top of it.
 """
 
+import logging
 import threading
 import time
 
 from mgclient._mgclient import connect as _base_connect
 from mgclient._mgclient import Error, OperationalError
+
+_logger = logging.getLogger(__name__)
 
 #: Route the connection to a server that accepts writes (the cluster main).
 ACCESS_MODE_WRITE = "WRITE"
@@ -427,8 +430,17 @@ class Router:
                 last_exc = exc
                 # A write that committed on the main but couldn't reach a SYNC
                 # replica is durable -- treat it as success rather than retrying
-                # (a retry would duplicate the write).
+                # (a retry would duplicate the write). The synchronous
+                # replication guarantee was not met, though, so surface that as
+                # a warning rather than hiding it.
                 if writing and is_committed_on_main_error(exc):
+                    _logger.warning(
+                        "write committed on the main but a SYNC replica was "
+                        "unreachable; treating as success. The write is durable "
+                        "on the main, but the synchronous-replication guarantee "
+                        "was not met: %s",
+                        exc,
+                    )
                     return result
                 if attempt == self._max_retries or not is_transient_error(exc):
                     raise
@@ -469,7 +481,8 @@ class Router:
         backoff between attempts).  The one exception is a write that committed
         on the main but could not reach a SYNC replica: that write is durable,
         so it is treated as success and *not* retried (retrying would duplicate
-        it).
+        it).  Because the synchronous-replication guarantee was not met in that
+        case, a warning is logged on the ``mgclient.routing`` logger.
 
         ``work`` may be called more than once, so it should be free of side
         effects other than the database operations themselves.

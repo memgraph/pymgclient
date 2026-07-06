@@ -61,14 +61,11 @@ _TRANSIENT_MESSAGE_FRAGMENTS = (
     "please retry the query",      # Memgraph's explicit "retry later" during failover
     "database shutdown",           # instance being restarted mid-transaction
     "asked to abort",              # transaction aborted by a shutting-down instance
-    "defunct connection",          # connection dropped underneath the driver
-    "failed to read from",         # partial/dropped Bolt read
     "failed to receive chunk",     # connection reset mid-Bolt-stream
     "connection reset",            # peer went away
     "broken pipe",
     "couldn't connect",            # candidate instance not accepting connections yet
     "connection refused",
-    "routing information",         # unable to retrieve routing info during a failover
     # Raised by Router itself while the cluster has no server for a role yet.
     "no write server",
     "no read server",

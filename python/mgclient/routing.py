@@ -29,7 +29,7 @@ import threading
 import time
 
 from mgclient._mgclient import connect as _base_connect
-from mgclient._mgclient import OperationalError
+from mgclient._mgclient import Error, OperationalError
 
 #: Route the connection to a server that accepts writes (the cluster main).
 ACCESS_MODE_WRITE = "WRITE"
@@ -37,6 +37,63 @@ ACCESS_MODE_WRITE = "WRITE"
 ACCESS_MODE_READ = "READ"
 
 _ACCESS_MODES = (ACCESS_MODE_WRITE, ACCESS_MODE_READ)
+
+# Default retry budget for managed transactions (see Router.execute_read /
+# execute_write). Retries are generous because a cluster stays available as a
+# whole while individual instances flap during a failover, but the backoff is
+# capped so total time is bounded.
+_DEFAULT_MAX_RETRIES = 8
+_DEFAULT_RETRY_BACKOFF = 1.0
+_DEFAULT_RETRY_BACKOFF_CAP = 15.0
+
+# Substrings that mark a transient cluster condition worth retrying: a failover
+# in progress, a replica catching up, or an instance dropped/killed mid-request.
+# They clear once the cluster settles. Matched case-insensitively against the
+# exception message. Adapted from hard-won experience running the neo4j driver
+# against a Memgraph HA cluster under chaos.
+_TRANSIENT_MESSAGE_FRAGMENTS = (
+    "replication exception",       # SYNC replica lagging/unreachable
+    "forbidden on the",            # write forbidden on a replica or the main mid-election
+    "setting up a new main",       # coordinator electing a new main; no writer yet
+    "please retry the query",      # Memgraph's explicit "retry later" during failover
+    "database shutdown",           # instance being restarted mid-transaction
+    "asked to abort",              # transaction aborted by a shutting-down instance
+    "defunct connection",          # connection dropped underneath the driver
+    "failed to read from",         # partial/dropped Bolt read
+    "failed to receive chunk",     # connection reset mid-Bolt-stream
+    "connection reset",            # peer went away
+    "broken pipe",
+    "couldn't connect",            # candidate instance not accepting connections yet
+    "connection refused",
+    "routing information",         # unable to retrieve routing info during a failover
+    # Raised by Router itself while the cluster has no server for a role yet.
+    "no write server",
+    "no read server",
+    "could not connect to any",
+    "could not fetch routing table",
+)
+
+
+def is_transient_error(exc):
+    """True for a transient HA condition worth retrying after a short backoff.
+
+    These arise during a failover, while a replica catches up, or when an
+    instance is dropped mid-request; they clear once the cluster reconverges.
+    """
+    message = str(getattr(exc, "message", "") or exc).lower()
+    return any(fragment in message for fragment in _TRANSIENT_MESSAGE_FRAGMENTS)
+
+
+def is_committed_on_main_error(exc):
+    """True only when a write committed on the main but a SYNC replica was down.
+
+    Narrower than :func:`is_transient_error`: this is the one case where the
+    write is already durable (Memgraph says so in the message), so it is safe to
+    treat as success.  Retrying it instead would duplicate the write, so managed
+    writes must check this *before* the generic transient check.
+    """
+    message = str(getattr(exc, "message", "") or exc).lower()
+    return "replication exception" in message and "committed on the main" in message
 
 
 def _default_resolver(address):
@@ -152,6 +209,9 @@ class Router:
         port=None,
         resolver=None,
         routing_context=None,
+        max_retries=_DEFAULT_MAX_RETRIES,
+        retry_backoff=_DEFAULT_RETRY_BACKOFF,
+        retry_backoff_cap=_DEFAULT_RETRY_BACKOFF_CAP,
         **connect_kwargs,
     ):
         # The seed coordinator address.  "address" (a numeric IP) and "host" are
@@ -163,6 +223,11 @@ class Router:
         self._routing_context = (
             routing_context if routing_context is not None else {}
         )
+
+        # Managed-transaction retry budget (see execute_read / execute_write).
+        self._max_retries = max_retries
+        self._retry_backoff = retry_backoff
+        self._retry_backoff_cap = retry_backoff_cap
 
         # Parameters reused for the data-instance connection (honours "lazy")
         # and for the coordinator connection (ROUTE needs an idle, non-lazy
@@ -319,6 +384,97 @@ class Router:
         raise OperationalError(
             f"could not connect to any {access_mode} server: {last_error}"
         )
+
+    # -- managed transactions ------------------------------------------------
+
+    def _retry_delay(self, attempt):
+        """Capped exponential backoff: base, 2*base, 4*base, ... up to the cap."""
+        return min(
+            self._retry_backoff * (2 ** (attempt - 1)),
+            self._retry_backoff_cap,
+        )
+
+    def _refresh_quietly(self):
+        """Refresh the routing table, ignoring failures (a coordinator may be
+        briefly unreachable mid-failover; the next attempt tries again)."""
+        try:
+            self.refresh()
+        except Error:
+            pass
+
+    def _run_managed(self, access_mode, work):
+        writing = access_mode == ACCESS_MODE_WRITE
+        last_exc = None
+
+        for attempt in range(1, self._max_retries + 1):
+            connection = None
+            result = None
+            try:
+                connection = self.connect(access_mode=access_mode)
+                cursor = connection.cursor()
+                if writing:
+                    # Explicit transaction so the whole unit of work is atomic
+                    # and any SYNC-replication error surfaces at commit (after
+                    # ``work`` has produced its result).
+                    connection.autocommit = False
+                    result = work(cursor)
+                    connection.commit()
+                else:
+                    connection.autocommit = True
+                    result = work(cursor)
+                return result
+            except Error as exc:
+                last_exc = exc
+                # A write that committed on the main but couldn't reach a SYNC
+                # replica is durable -- treat it as success rather than retrying
+                # (a retry would duplicate the write).
+                if writing and is_committed_on_main_error(exc):
+                    return result
+                if attempt == self._max_retries or not is_transient_error(exc):
+                    raise
+            finally:
+                if connection is not None:
+                    connection.close()
+
+            # Transient failure: refresh routing (so a retry re-routes to the
+            # new main) and back off before trying again.
+            self._refresh_quietly()
+            time.sleep(self._retry_delay(attempt))
+
+        # Unreachable in practice (the loop either returns or raises), but keep
+        # a definite fallback.
+        raise last_exc
+
+    def execute_read(self, work):
+        """Run ``work(cursor)`` as a managed read against a replica.
+
+        ``work`` receives a :class:`Cursor` from a freshly routed READ
+        connection and returns whatever the caller wants; its return value is
+        returned from :meth:`execute_read`.  On a transient cluster condition
+        (see :func:`is_transient_error`) the routing table is refreshed and the
+        work is retried with capped exponential backoff, up to ``max_retries``.
+
+        ``work`` may be called more than once, so it should be free of side
+        effects other than the database operations themselves.
+        """
+        return self._run_managed(ACCESS_MODE_READ, work)
+
+    def execute_write(self, work):
+        """Run ``work(cursor)`` as a managed write against the main.
+
+        Like :meth:`execute_read`, but the work runs inside an explicit
+        transaction that is committed for you, and it is routed to the main.
+
+        Transient failover conditions are retried (with a routing refresh and
+        backoff between attempts).  The one exception is a write that committed
+        on the main but could not reach a SYNC replica: that write is durable,
+        so it is treated as success and *not* retried (retrying would duplicate
+        it).
+
+        ``work`` may be called more than once, so it should be free of side
+        effects other than the database operations themselves.
+        """
+        return self._run_managed(ACCESS_MODE_WRITE, work)
 
 
 def connect(

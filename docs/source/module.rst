@@ -41,7 +41,22 @@ balances reads across replicas and fails over across coordinators, use the
 :class:`Router` class:
 
 .. autoclass:: mgclient.Router
-   :members: connect, refresh, routing_table
+   :members: connect, execute_read, execute_write, refresh, routing_table
+
+:meth:`Router.execute_read` and :meth:`Router.execute_write` are *managed
+transactions*: they run your unit of work against the right instance and
+automatically retry transient failover conditions (a new main being elected, a
+replica catching up, an instance dropping mid-request) with a routing refresh
+and capped exponential backoff. A write that committed on the main but could
+not reach a synchronous replica is treated as success rather than retried
+(retrying would duplicate it).
+
+The classification used for retries is also exposed for building your own retry
+loops:
+
+.. autofunction:: mgclient.is_transient_error
+
+.. autofunction:: mgclient.is_committed_on_main_error
 
 For lower-level access to the routing table itself, see
 :meth:`Connection.get_routing_table`.

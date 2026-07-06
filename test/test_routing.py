@@ -24,7 +24,13 @@ import pytest
 
 from common import requires_ha_cluster
 from conftest import resolve_ha_address
-from mgclient.routing import Router, RoutingTable
+import mgclient.routing as routing
+from mgclient.routing import (
+    Router,
+    RoutingTable,
+    is_committed_on_main_error,
+    is_transient_error,
+)
 
 
 def _replication_role(conn):
@@ -309,3 +315,184 @@ def test_router_routing_table_property(ha_cluster, ha_resolver):
     assert table["read"]
     assert table["route"]
     assert isinstance(table["ttl"], int)
+
+
+# ---------------------------------------------------------------------------
+# Managed retry / transaction functions (no cluster needed for these).
+# ---------------------------------------------------------------------------
+
+# Real failover messages observed against a chaos cluster.
+_FAILOVER_MESSAGES = [
+    "Write queries currently forbidden on the main instance. The cluster is in "
+    "the process of setting up a new main instance, please retry the query "
+    "later on.",
+    "could not connect to any WRITE server: no WRITE server in the routing table",
+    "memgraph-data-0:7687: couldn't connect to host: Connection refused",
+    "failed to receive chunk size",
+]
+
+_COMMITTED_ON_MAIN_MESSAGE = (
+    "Replication Exception: Failed to replicate to SYNC replica 'instance_1': "
+    "replica is not reachable or not in sync with the main. Replica will be "
+    "recovered automatically. Transaction is still committed on the main "
+    "instance and other alive replicas."
+)
+
+
+@pytest.mark.parametrize("message", _FAILOVER_MESSAGES)
+def test_is_transient_error_matches_failover_conditions(message):
+    assert is_transient_error(mgclient.DatabaseError(message))
+
+
+def test_is_transient_error_false_for_query_errors():
+    assert not is_transient_error(mgclient.DatabaseError("Syntax error near 'FOO'"))
+
+
+def test_committed_on_main_error_needs_both_markers():
+    assert is_committed_on_main_error(mgclient.DatabaseError(_COMMITTED_ON_MAIN_MESSAGE))
+    # A replication error without the durability note is not committed-on-main.
+    assert not is_committed_on_main_error(
+        mgclient.DatabaseError("Replication Exception: something unrelated")
+    )
+    assert not is_committed_on_main_error(mgclient.DatabaseError("Syntax error"))
+
+
+class _FakeCursor:
+    def execute(self, *args, **kwargs):
+        pass
+
+    def fetchall(self):
+        return []
+
+
+class _FakeConnection:
+    """A stand-in connection so the retry loop can be tested without a server."""
+
+    commit_error = None
+
+    def __init__(self):
+        self.autocommit = False
+
+    def cursor(self):
+        return _FakeCursor()
+
+    def commit(self):
+        if self.commit_error is not None:
+            raise self.commit_error
+
+    def close(self):
+        pass
+
+
+def _router_with_stubbed_connect(monkeypatch, connection_factory):
+    router = Router(host="unused", port=7687)
+    monkeypatch.setattr(
+        router, "connect", lambda access_mode=routing.ACCESS_MODE_WRITE: connection_factory()
+    )
+    monkeypatch.setattr(router, "refresh", lambda: None)
+    monkeypatch.setattr(routing.time, "sleep", lambda _seconds: None)
+    return router
+
+
+def test_execute_write_retries_transient_then_succeeds(monkeypatch):
+    router = _router_with_stubbed_connect(monkeypatch, _FakeConnection)
+
+    calls = {"n": 0}
+
+    def work(cursor):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise mgclient.DatabaseError(
+                "setting up a new main, please retry the query later on"
+            )
+        return "done"
+
+    assert router.execute_write(work) == "done"
+    assert calls["n"] == 3
+
+
+def test_execute_write_treats_committed_on_main_as_success(monkeypatch):
+    class CommitFails(_FakeConnection):
+        commit_error = mgclient.DatabaseError(_COMMITTED_ON_MAIN_MESSAGE)
+
+    router = _router_with_stubbed_connect(monkeypatch, CommitFails)
+
+    calls = {"n": 0}
+
+    def work(cursor):
+        calls["n"] += 1
+        return "created"
+
+    # The write is durable on the main, so it counts as success and must NOT be
+    # retried (retrying would duplicate the write).
+    assert router.execute_write(work) == "created"
+    assert calls["n"] == 1
+
+
+def test_execute_write_raises_non_transient_immediately(monkeypatch):
+    router = _router_with_stubbed_connect(monkeypatch, _FakeConnection)
+
+    calls = {"n": 0}
+
+    def work(cursor):
+        calls["n"] += 1
+        raise mgclient.DatabaseError("Syntax error near 'FOO'")
+
+    with pytest.raises(mgclient.DatabaseError):
+        router.execute_write(work)
+    assert calls["n"] == 1
+
+
+def test_execute_write_gives_up_after_max_retries(monkeypatch):
+    router = _router_with_stubbed_connect(monkeypatch, _FakeConnection)
+
+    calls = {"n": 0}
+
+    def work(cursor):
+        calls["n"] += 1
+        raise mgclient.DatabaseError("please retry the query later on")
+
+    with pytest.raises(mgclient.DatabaseError):
+        router.execute_write(work)
+    assert calls["n"] == router._max_retries
+
+
+def test_execute_read_retries_transient_then_succeeds(monkeypatch):
+    router = _router_with_stubbed_connect(monkeypatch, _FakeConnection)
+
+    calls = {"n": 0}
+
+    def work(cursor):
+        calls["n"] += 1
+        if calls["n"] < 2:
+            raise mgclient.OperationalError(
+                "could not connect to any READ server: no READ server in the routing table"
+            )
+        return 7
+
+    assert router.execute_read(work) == 7
+    assert calls["n"] == 2
+
+
+@requires_ha_cluster
+def test_execute_write_and_read_roundtrip(ha_cluster, ha_resolver):
+    host, port = ha_cluster
+    router = Router(host=host, port=port, resolver=ha_resolver)
+
+    def create(cursor):
+        cursor.execute(
+            "CREATE (n:MgExecTest {tag: $tag}) RETURN n.tag", {"tag": "exec"}
+        )
+        return cursor.fetchall()[0][0]
+
+    assert router.execute_write(create) == "exec"
+
+    def count(cursor):
+        cursor.execute("MATCH (n:MgExecTest {tag: 'exec'}) RETURN count(n)")
+        return cursor.fetchall()[0][0]
+
+    assert router.execute_read(count) >= 1
+
+    router.execute_write(
+        lambda cursor: cursor.execute("MATCH (n:MgExecTest) DETACH DELETE n")
+    )

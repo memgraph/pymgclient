@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2020 Memgraph Ltd. [https://memgraph.com]
+# Copyright (c) 2016-2026 Memgraph Ltd. [https://memgraph.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -423,8 +423,6 @@ def test_execute_write_treats_committed_on_main_as_success(monkeypatch):
         calls["n"] += 1
         return "created"
 
-    # The write is durable on the main, so it counts as success and must NOT be
-    # retried (retrying would duplicate the write).
     assert router.execute_write(work) == "created"
     assert calls["n"] == 1
 
@@ -435,8 +433,7 @@ def test_execute_write_warns_when_committed_on_main(monkeypatch, caplog):
 
     router = _router_with_stubbed_connect(monkeypatch, CommitFails)
 
-    # Behaviour is unchanged (still returns the result), but the weakened
-    # durability guarantee must be surfaced as a warning rather than hidden.
+    # Warn if committed on main, but sync error (still return result successfully)
     with caplog.at_level("WARNING", logger="mgclient.routing"):
         assert router.execute_write(lambda cursor: "created") == "created"
 

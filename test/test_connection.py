@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2020 Memgraph Ltd. [https://memgraph.com]
+# Copyright (c) 2016-2026 Memgraph Ltd. [https://memgraph.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -120,10 +120,6 @@ def test_get_routing_table_closed_connection(memgraph_server):
 
     with pytest.raises(mgclient.InterfaceError):
         conn.get_routing_table()
-
-
-# The ``ha_cluster`` fixture lives in conftest.py so it can be shared with the
-# client-side routing tests in test_routing.py.
 
 
 @requires_ha_cluster

@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2020 Memgraph Ltd. [https://memgraph.com]
+# Copyright (c) 2016-2026 Memgraph Ltd. [https://memgraph.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,11 +36,6 @@ if IS_WINDOWS:
 # 1. The mgclient library which is the official Memgraph client library.
 # 2. The mgclient python extension module which is a wrapper around the
 #    client library.
-#
-# The compiled extension is installed as ``mgclient._mgclient`` and the
-# pure-Python ``mgclient`` package (see python/mgclient) re-exports it so that
-# ``import mgclient`` keeps working exactly as before, while adding the
-# client-side routing helpers on top.
 EXTENSION_NAME = "mgclient._mgclient"
 
 sources = [str(path) for path in Path("src").glob("*.c")]

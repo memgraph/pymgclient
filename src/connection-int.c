@@ -36,7 +36,9 @@ void connection_handle_error(ConnectionObject *conn, int error) {
              error == MG_ERROR_CLIENT_ERROR) {
     conn->status = CONN_STATUS_READY;
   }
-  PyErr_SetString(DatabaseError, mg_session_error(conn->session));
+  PyObject *exc =
+      (error == MG_ERROR_TRANSIENT_ERROR) ? TransientError : DatabaseError;
+  PyErr_SetString(exc, mg_session_error(conn->session));
 }
 
 int connection_run_without_results(ConnectionObject *conn, const char *query) {

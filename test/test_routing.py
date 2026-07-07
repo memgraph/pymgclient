@@ -148,7 +148,9 @@ def test_connect_routing_all_candidates_unreachable(ha_cluster):
     def resolver(address):
         return ["127.0.0.1:1"]
 
-    with pytest.raises(mgclient.OperationalError):
+    # Being unable to reach any server is a transient cluster condition, so the
+    # Router raises TransientError (a subclass of OperationalError).
+    with pytest.raises(mgclient.TransientError):
         mgclient.connect(
             host=host, port=port, routing=True, access_mode="WRITE", resolver=resolver
         )
@@ -299,7 +301,7 @@ def test_router_refreshes_when_targets_unreachable(ha_cluster):
 
     router = Router(host=host, port=port, resolver=resolver)
 
-    with pytest.raises(mgclient.OperationalError):
+    with pytest.raises(mgclient.TransientError):
         router.connect(access_mode="WRITE")
 
     assert router._refresh_count >= 2
@@ -321,12 +323,13 @@ def test_router_routing_table_property(ha_cluster, ha_resolver):
 # Managed retry / transaction functions (no cluster needed for these).
 # ---------------------------------------------------------------------------
 
-# Real failover messages observed against a chaos cluster.
+# Real failover messages that the TransientError category does NOT cover, so
+# they must still be recognised by message: Memgraph errors misclassified as
+# ClientError, and low-level transport drops (no Bolt code at all).
 _FAILOVER_MESSAGES = [
     "Write queries currently forbidden on the main instance. The cluster is in "
     "the process of setting up a new main instance, please retry the query "
     "later on.",
-    "could not connect to any WRITE server: no WRITE server in the routing table",
     "memgraph-data-0:7687: couldn't connect to host: Connection refused",
     "failed to receive chunk size",
 ]
@@ -346,6 +349,12 @@ def test_is_transient_error_matches_failover_conditions(message):
 
 def test_is_transient_error_false_for_query_errors():
     assert not is_transient_error(mgclient.DatabaseError("Syntax error near 'FOO'"))
+
+
+def test_is_transient_error_recognizes_transient_error_type():
+    assert is_transient_error(
+        mgclient.TransientError("a server transient error with no matching fragment")
+    )
 
 
 def test_committed_on_main_error_needs_both_markers():
@@ -479,9 +488,9 @@ def test_execute_read_retries_transient_then_succeeds(monkeypatch):
     def work(cursor):
         calls["n"] += 1
         if calls["n"] < 2:
-            raise mgclient.OperationalError(
-                "could not connect to any READ server: no READ server in the routing table"
-            )
+            # A transient failover condition is now surfaced as TransientError
+            # (recognised by type, not message).
+            raise mgclient.TransientError("no READ server in the routing table")
         return 7
 
     assert router.execute_read(work) == 7

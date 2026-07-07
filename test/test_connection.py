@@ -88,6 +88,14 @@ def test_connect_args_validation():
         )
 
 
+def test_transient_error_hierarchy():
+    # TransientError is a distinct type, but a subclass of OperationalError so `except DatabaseError` should still catch it.
+    assert issubclass(mgclient.TransientError, mgclient.OperationalError)
+    assert issubclass(mgclient.TransientError, mgclient.DatabaseError)
+    assert issubclass(mgclient.TransientError, mgclient.Error)
+    assert mgclient.TransientError is not mgclient.OperationalError
+
+
 @requires_ssl_disabled
 def test_get_routing_table_args_validation(memgraph_server):
     host, port, sslmode, _ = memgraph_server

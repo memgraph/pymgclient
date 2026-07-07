@@ -21,6 +21,7 @@ extern PyObject *InterfaceError;
 extern PyObject *DatabaseError;
 extern PyObject *DataError;
 extern PyObject *OperationalError;
+extern PyObject *TransientError;
 extern PyObject *IntegrityError;
 extern PyObject *InternalError;
 extern PyObject *ProgrammingError;

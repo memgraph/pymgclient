@@ -113,9 +113,9 @@ static int connection_init(ConnectionObject *conn, PyObject *args,
     int status = mg_connect(params, &session);
     mg_session_params_destroy(params);
     if (status != 0) {
-      // TODO(mtomic): maybe convert MG_ERROR_* codes to different kinds of
-      // Python exceptions
-      PyErr_SetString(OperationalError, mg_session_error(session));
+      PyObject *exc =
+          (status == MG_ERROR_TRANSIENT_ERROR) ? TransientError : OperationalError;
+      PyErr_SetString(exc, mg_session_error(session));
       mg_session_destroy(session);
       return -1;
     }

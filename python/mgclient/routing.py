@@ -30,7 +30,7 @@ import threading
 import time
 
 from mgclient._mgclient import connect as _base_connect
-from mgclient._mgclient import Error, OperationalError
+from mgclient._mgclient import Error, OperationalError, TransientError
 
 _logger = logging.getLogger(__name__)
 
@@ -49,29 +49,20 @@ _DEFAULT_MAX_RETRIES = 8
 _DEFAULT_RETRY_BACKOFF = 1.0
 _DEFAULT_RETRY_BACKOFF_CAP = 15.0
 
-# Substrings that mark a transient cluster condition worth retrying: a failover
-# in progress, a replica catching up, or an instance dropped/killed mid-request.
-# They clear once the cluster settles. Matched case-insensitively against the
-# exception message. Adapted from hard-won experience running the neo4j driver
-# against a Memgraph HA cluster under chaos.
+# Best-effort message fallback for transient conditions the TransientError
+# category does not (yet) capture.
+# TODO(matt): remove top three fragments if `WriteQueryOnMainException` becomes a `TransientError` in Memgraph, as it currently provides `ClientError`.
 _TRANSIENT_MESSAGE_FRAGMENTS = (
-    "replication exception",       # SYNC replica lagging/unreachable
-    "forbidden on the",            # write forbidden on a replica or the main mid-election
-    "setting up a new main",       # coordinator electing a new main; no writer yet
-    "please retry the query",      # Memgraph's explicit "retry later" during failover
-    "database shutdown",           # instance being restarted mid-transaction
-    "asked to abort",              # transaction aborted by a shutting-down instance
-    "failed to receive chunk",     # connection reset mid-Bolt-stream
-    "connection reset",            # peer went away
-    "broken pipe",
-    "couldn't connect",            # candidate instance not accepting connections yet
+    "forbidden on the",        # write forbidden on the main mid-failover
+    "setting up a new main",   # older Memgraph wording of the same condition
+    "please retry the query",  # Memgraph's explicit "retry later" during failover
+    # Low-level transport drops: these are not Bolt FAILUREs, so they never
+    # carry an error code/category at all.
+    "failed to receive chunk",  # connection reset mid-Bolt-stream
+    "couldn't connect",         # instance not accepting connections yet
     "connection refused",
-    # Raised by Router itself while the cluster has no server for a role yet.
-    "no write server",
-    "no read server",
-    "could not connect to any",
-    "could not fetch routing table",
 )
+
 
 
 def is_transient_error(exc):
@@ -79,7 +70,15 @@ def is_transient_error(exc):
 
     These arise during a failover, while a replica catches up, or when an
     instance is dropped mid-request; they clear once the cluster reconverges.
+
+    The server's error category is authoritative: an :exc:`mgclient.TransientError`
+    (Memgraph's ``TransientError`` Bolt code) is always transient. The message
+    fragments below are a best-effort fallback for conditions the category does
+    not (yet) capture -- notably Memgraph errors that are misclassified as
+    ``ClientError`` and low-level transport drops that never carry a Bolt code.
     """
+    if isinstance(exc, TransientError):
+        return True
     message = str(getattr(exc, "message", "") or exc).lower()
     return any(fragment in message for fragment in _TRANSIENT_MESSAGE_FRAGMENTS)
 
@@ -284,7 +283,7 @@ class Router:
             self._refresh_count += 1
             return
 
-        raise OperationalError(
+        raise TransientError(
             "could not fetch routing table from any coordinator: "
             + "; ".join(errors)
         )
@@ -357,8 +356,9 @@ class Router:
         """Open a connection to a data instance serving ``access_mode``.
 
         Returns an ordinary :class:`Connection`.  Raises
-        :exc:`OperationalError` if no server for the requested access mode can
-        be reached, even after refreshing the routing table.
+        :exc:`TransientError` if no server for the requested access mode can
+        be reached, even after refreshing the routing table (this is a
+        transient cluster condition, e.g. a failover in progress).
         """
         access_mode = _normalize_access_mode(access_mode)
 
@@ -381,7 +381,7 @@ class Router:
                 # discard the cached table and retry with a fresh one.
                 self.refresh()
 
-        raise OperationalError(
+        raise TransientError(
             f"could not connect to any {access_mode} server: {last_error}"
         )
 
@@ -569,7 +569,7 @@ def connect(
 
        * A normal connection is then opened to that server and returned.  If a
          selected server cannot be reached, the remaining candidates are tried
-         in turn; an :exc:`OperationalError` is raised only if none succeed.
+         in turn; a :exc:`TransientError` is raised only if none succeed.
 
     This is a one-shot convenience: it performs a fresh ``ROUTE`` lookup on
     every call.  For a long-lived, caching, load-balancing router, use

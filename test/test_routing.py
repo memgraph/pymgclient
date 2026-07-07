@@ -323,15 +323,13 @@ def test_router_routing_table_property(ha_cluster, ha_resolver):
 # Managed retry / transaction functions (no cluster needed for these).
 # ---------------------------------------------------------------------------
 
-# Real failover messages that the TransientError category does NOT cover, so
-# they must still be recognised by message: Memgraph errors misclassified as
-# ClientError, and low-level transport drops (no Bolt code at all).
+# The only transient condition still recognised by message rather than type:
+# WriteQueryOnMainException, which Memgraph misclassifies as ClientError.
+# (Transport drops are now surfaced as TransientError and covered by type.)
 _FAILOVER_MESSAGES = [
     "Write queries currently forbidden on the main instance. The cluster is in "
     "the process of setting up a new main instance, please retry the query "
     "later on.",
-    "memgraph-data-0:7687: couldn't connect to host: Connection refused",
-    "failed to receive chunk size",
 ]
 
 _COMMITTED_ON_MAIN_MESSAGE = (

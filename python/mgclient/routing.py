@@ -41,26 +41,17 @@ ACCESS_MODE_READ = "READ"
 
 _ACCESS_MODES = (ACCESS_MODE_WRITE, ACCESS_MODE_READ)
 
-# Default retry budget for managed transactions (see Router.execute_read /
-# execute_write). Retries are generous because a cluster stays available as a
-# whole while individual instances flap during a failover, but the backoff is
-# capped so total time is bounded.
 _DEFAULT_MAX_RETRIES = 8
 _DEFAULT_RETRY_BACKOFF = 1.0
 _DEFAULT_RETRY_BACKOFF_CAP = 15.0
 
-# Best-effort message fallback for transient conditions the TransientError
-# category does not (yet) capture.
-# TODO(matt): remove top three fragments if `WriteQueryOnMainException` becomes a `TransientError` in Memgraph, as it currently provides `ClientError`.
+ # Best-effort message fallback for transient conditions the TransientError
+ # category does not (yet) capture.
+ # TODO(matt): remove these if `WriteQueryOnMainException` becomes a `TransientError` in Memgraph, as it currently provides `ClientError`.
 _TRANSIENT_MESSAGE_FRAGMENTS = (
     "forbidden on the",        # write forbidden on the main mid-failover
     "setting up a new main",   # older Memgraph wording of the same condition
     "please retry the query",  # Memgraph's explicit "retry later" during failover
-    # Low-level transport drops: these are not Bolt FAILUREs, so they never
-    # carry an error code/category at all.
-    "failed to receive chunk",  # connection reset mid-Bolt-stream
-    "couldn't connect",         # instance not accepting connections yet
-    "connection refused",
 )
 
 
@@ -71,11 +62,11 @@ def is_transient_error(exc):
     These arise during a failover, while a replica catches up, or when an
     instance is dropped mid-request; they clear once the cluster reconverges.
 
-    The server's error category is authoritative: an :exc:`mgclient.TransientError`
-    (Memgraph's ``TransientError`` Bolt code) is always transient. The message
-    fragments below are a best-effort fallback for conditions the category does
-    not (yet) capture -- notably Memgraph errors that are misclassified as
-    ``ClientError`` and low-level transport drops that never carry a Bolt code.
+    The exception type is authoritative: an :exc:`mgclient.TransientError`
+    (Memgraph's ``TransientError`` Bolt code, or a low-level transport/connection
+    failure) is always transient. The message fragments are only a fallback for
+    :class:`WriteQueryOnMainException`, which Memgraph currently misclassifies as
+    ``ClientError`` -- see :data:`_TRANSIENT_MESSAGE_FRAGMENTS`.
     """
     if isinstance(exc, TransientError):
         return True

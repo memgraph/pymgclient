@@ -88,6 +88,15 @@ def test_connect_args_validation():
         )
 
 
+def test_connection_refused_is_transient():
+    # A connection that can't be established is a low-level transport failure
+    # (no Bolt code); it is surfaced as TransientError (a subclass of
+    # OperationalError), since it is retryable in an HA cluster. Port 1 has
+    # nothing listening, so the connect is refused.
+    with pytest.raises(mgclient.TransientError):
+        mgclient.connect(host="127.0.0.1", port=1)
+
+
 def test_transient_error_hierarchy():
     # TransientError is a distinct type, but a subclass of OperationalError so `except DatabaseError` should still catch it.
     assert issubclass(mgclient.TransientError, mgclient.OperationalError)

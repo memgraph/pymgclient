@@ -28,6 +28,19 @@ int connection_raise_if_bad_status(const ConnectionObject *conn) {
   return 0;
 }
 
+int connection_error_is_transient(int error) {
+  switch (error) {
+    case MG_ERROR_TRANSIENT_ERROR:
+    case MG_ERROR_SEND_FAILED:
+    case MG_ERROR_RECV_FAILED:
+    case MG_ERROR_NETWORK_FAILURE:
+    case MG_ERROR_SOCKET:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
 void connection_handle_error(ConnectionObject *conn, int error) {
   if (mg_session_status(conn->session) == MG_SESSION_BAD) {
     conn->status = CONN_STATUS_BAD;
@@ -37,7 +50,7 @@ void connection_handle_error(ConnectionObject *conn, int error) {
     conn->status = CONN_STATUS_READY;
   }
   PyObject *exc =
-      (error == MG_ERROR_TRANSIENT_ERROR) ? TransientError : DatabaseError;
+      connection_error_is_transient(error) ? TransientError : DatabaseError;
   PyErr_SetString(exc, mg_session_error(conn->session));
 }
 

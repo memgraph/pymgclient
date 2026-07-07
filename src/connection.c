@@ -114,7 +114,7 @@ static int connection_init(ConnectionObject *conn, PyObject *args,
     mg_session_params_destroy(params);
     if (status != 0) {
       PyObject *exc =
-          (status == MG_ERROR_TRANSIENT_ERROR) ? TransientError : OperationalError;
+          connection_error_is_transient(status) ? TransientError : OperationalError;
       PyErr_SetString(exc, mg_session_error(session));
       mg_session_destroy(session);
       return -1;

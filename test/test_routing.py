@@ -323,15 +323,6 @@ def test_router_routing_table_property(ha_cluster, ha_resolver):
 # Managed retry / transaction functions (no cluster needed for these).
 # ---------------------------------------------------------------------------
 
-# The only transient condition still recognised by message rather than type:
-# WriteQueryOnMainException, which Memgraph misclassifies as ClientError.
-# (Transport drops are now surfaced as TransientError and covered by type.)
-_FAILOVER_MESSAGES = [
-    "Write queries currently forbidden on the main instance. The cluster is in "
-    "the process of setting up a new main instance, please retry the query "
-    "later on.",
-]
-
 _COMMITTED_ON_MAIN_MESSAGE = (
     "Replication Exception: Failed to replicate to SYNC replica 'instance_1': "
     "replica is not reachable or not in sync with the main. Replica will be "
@@ -339,20 +330,16 @@ _COMMITTED_ON_MAIN_MESSAGE = (
     "instance and other alive replicas."
 )
 
-
-@pytest.mark.parametrize("message", _FAILOVER_MESSAGES)
-def test_is_transient_error_matches_failover_conditions(message):
-    assert is_transient_error(mgclient.DatabaseError(message))
-
-
-def test_is_transient_error_false_for_query_errors():
-    assert not is_transient_error(mgclient.DatabaseError("Syntax error near 'FOO'"))
-
-
 def test_is_transient_error_recognizes_transient_error_type():
     assert is_transient_error(
-        mgclient.TransientError("a server transient error with no matching fragment")
+        mgclient.TransientError("a server transient error, any message")
     )
+
+
+def test_is_transient_error_false_for_non_transient_types():
+    # Matches TransientError only -- not its parent types
+    assert not is_transient_error(mgclient.DatabaseError("Syntax error near 'FOO'"))
+    assert not is_transient_error(mgclient.OperationalError("unexpected disconnect"))
 
 
 def test_committed_on_main_error_needs_both_markers():
@@ -409,9 +396,7 @@ def test_execute_write_retries_transient_then_succeeds(monkeypatch):
     def work(cursor):
         calls["n"] += 1
         if calls["n"] < 3:
-            raise mgclient.DatabaseError(
-                "setting up a new main, please retry the query later on"
-            )
+            raise mgclient.TransientError("transient failover condition")
         return "done"
 
     assert router.execute_write(work) == "done"
@@ -471,9 +456,9 @@ def test_execute_write_gives_up_after_max_retries(monkeypatch):
 
     def work(cursor):
         calls["n"] += 1
-        raise mgclient.DatabaseError("please retry the query later on")
+        raise mgclient.TransientError("persistent transient condition")
 
-    with pytest.raises(mgclient.DatabaseError):
+    with pytest.raises(mgclient.TransientError):
         router.execute_write(work)
     assert calls["n"] == router._max_retries
 

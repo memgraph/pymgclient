@@ -45,16 +45,6 @@ _DEFAULT_MAX_RETRIES = 8
 _DEFAULT_RETRY_BACKOFF = 1.0
 _DEFAULT_RETRY_BACKOFF_CAP = 15.0
 
- # Best-effort message fallback for transient conditions the TransientError
- # category does not (yet) capture.
- # TODO(matt): remove these if `WriteQueryOnMainException` becomes a `TransientError` in Memgraph, as it currently provides `ClientError`.
-_TRANSIENT_MESSAGE_FRAGMENTS = (
-    "forbidden on the",        # write forbidden on the main mid-failover
-    "setting up a new main",   # older Memgraph wording of the same condition
-    "please retry the query",  # Memgraph's explicit "retry later" during failover
-)
-
-
 
 def is_transient_error(exc):
     """True for a transient HA condition worth retrying after a short backoff.
@@ -62,16 +52,14 @@ def is_transient_error(exc):
     These arise during a failover, while a replica catches up, or when an
     instance is dropped mid-request; they clear once the cluster reconverges.
 
-    The exception type is authoritative: an :exc:`mgclient.TransientError`
-    (Memgraph's ``TransientError`` Bolt code, or a low-level transport/connection
-    failure) is always transient. The message fragments are only a fallback for
-    :class:`WriteQueryOnMainException`, which Memgraph currently misclassifies as
-    ``ClientError`` -- see :data:`_TRANSIENT_MESSAGE_FRAGMENTS`.
+    Classification is purely by type: the driver surfaces every transient
+    condition as :exc:`mgclient.TransientError` (Memgraph's ``TransientError``
+    Bolt code, or a low-level transport/connection failure). Errors Memgraph
+    reports as ``ClientError`` -- including a write briefly forbidden while a new
+    main is being elected -- are treated as non-transient, like any other
+    client error.
     """
-    if isinstance(exc, TransientError):
-        return True
-    message = str(getattr(exc, "message", "") or exc).lower()
-    return any(fragment in message for fragment in _TRANSIENT_MESSAGE_FRAGMENTS)
+    return isinstance(exc, TransientError)
 
 
 def is_committed_on_main_error(exc):

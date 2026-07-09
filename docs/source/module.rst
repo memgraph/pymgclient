@@ -104,6 +104,8 @@ through these exceptions or subclasses thereof:
 
 .. autoexception:: mgclient.OperationalError
 
+.. autoexception:: mgclient.TransientError
+
 .. autoexception:: mgclient.IntegrityError
 
 .. autoexception:: mgclient.InternalError
@@ -114,8 +116,10 @@ through these exceptions or subclasses thereof:
 
 .. NOTE::
 
-   In the current state, :exc:`OperationalError` is raised for all errors
-   obtained from the database. This will probably be improved in the future.
+   Most database errors are surfaced as :exc:`OperationalError`. The one
+   refinement is :exc:`TransientError` (a subclass of :exc:`OperationalError`),
+   raised for retryable conditions such as a high-availability failover; see
+   :func:`is_transient_error`.
 
 ##################
 Graph type objects

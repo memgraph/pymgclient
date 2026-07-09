@@ -11,6 +11,56 @@ The module interface respects the DB-API 2.0 standard defined in :pep:`249`.
 See :ref:`lazy-connections` section to learn about
 advantages and limitations of using the ``lazy`` parameter.
 
+#####################
+Client-side routing
+#####################
+
+When connecting to a Memgraph high-availability cluster, passing
+``routing=True`` to :func:`connect` makes the connection routing-aware: the
+given ``host``/``port`` must point at a cluster coordinator, from which the
+current cluster topology is fetched (via a Bolt ``ROUTE`` message) and a data
+instance matching the requested ``access_mode`` is selected and connected to.
+
+.. data:: mgclient.ACCESS_MODE_WRITE
+
+   ``access_mode`` value selecting a server that accepts writes (the cluster
+   main). This is the default.
+
+.. data:: mgclient.ACCESS_MODE_READ
+
+   ``access_mode`` value selecting a server that serves reads (a replica).
+
+If the addresses a cluster advertises are not directly reachable by the client
+(for example when the cluster is reached through a proxy or a port-forward),
+pass a ``resolver`` callable that maps an advertised ``"host:port"`` address to
+an iterable of ``"host:port"`` targets to try.
+
+``connect(routing=True, ...)`` performs a fresh routing lookup on every call.
+For a long-lived router that caches the routing table (honouring its TTL),
+balances reads across replicas and fails over across coordinators, use the
+:class:`Router` class:
+
+.. autoclass:: mgclient.Router
+   :members: connect, execute_read, execute_write, refresh, routing_table
+
+:meth:`Router.execute_read` and :meth:`Router.execute_write` are *managed
+transactions*: they run your unit of work against the right instance and
+automatically retry transient failover conditions (a new main being elected, a
+replica catching up, an instance dropping mid-request) with a routing refresh
+and capped exponential backoff. A write that committed on the main but could
+not reach a synchronous replica is treated as success rather than retried
+(retrying would duplicate it).
+
+The classification used for retries is also exposed for building your own retry
+loops:
+
+.. autofunction:: mgclient.is_transient_error
+
+.. autofunction:: mgclient.is_committed_on_main_error
+
+For lower-level access to the routing table itself, see
+:meth:`Connection.get_routing_table`.
+
 ################
 Module constants
 ################

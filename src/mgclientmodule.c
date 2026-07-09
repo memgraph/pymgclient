@@ -26,6 +26,7 @@
 #include "connection.h"
 #include "cursor.h"
 #include "glue.h"
+#include "router.h"
 #include "types.h"
 
 PyObject *Warning;
@@ -179,6 +180,7 @@ static struct {
                   {"Node", &NodeType},
                   {"Relationship", &RelationshipType},
                   {"Path", &PathType},
+                  {"_Router", &RouterType},
                   {NULL, NULL}};
 
 static int add_module_types(PyObject *module) {

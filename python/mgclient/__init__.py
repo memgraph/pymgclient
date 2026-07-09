@@ -17,3 +17,14 @@ specification described by :pep:`249`.
 """
 
 from mgclient._mgclient import *  # noqa: F401,F403
+
+# The routing-aware ``connect`` wrapper replaces the C ``connect`` imported
+# above; with routing disabled (the default) it delegates straight to it.
+from mgclient.routing import (  # noqa: F401,E402
+    ACCESS_MODE_READ,
+    ACCESS_MODE_WRITE,
+    Router,
+    connect,
+    is_committed_on_main_error,
+    is_transient_error,
+)

@@ -40,7 +40,7 @@ void connection_handle_error(ConnectionObject *conn, int error) {
 }
 
 int connection_run_without_results(ConnectionObject *conn, const char *query) {
-  int status = mg_session_run(conn->session, query, NULL, NULL, NULL, NULL);
+  int status = mg_session_run(conn->session, query, NULL, conn->extras, NULL, NULL);
   if (status != 0) {
     connection_handle_error(conn, status);
     return -1;
@@ -91,7 +91,7 @@ int connection_run(ConnectionObject *conn, const char *query, PyObject *params,
 
   const mg_list *mg_columns;
   int status =
-      mg_session_run(conn->session, query, mg_params, NULL, &mg_columns, NULL);
+      mg_session_run(conn->session, query, mg_params, conn->extras, &mg_columns, NULL);
   mg_map_destroy(mg_params);
 
   if (status != 0) {

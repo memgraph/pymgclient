@@ -35,6 +35,7 @@ typedef struct ConnectionObject {
   int status;
   int autocommit;
   int lazy;
+  mg_map *extras;
 } ConnectionObject;
 // clang-format on
 

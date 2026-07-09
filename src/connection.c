@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2020 Memgraph Ltd. [https://memgraph.com]
+// Copyright (c) 2016-2026 Memgraph Ltd. [https://memgraph.com]
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -113,9 +113,12 @@ static int connection_init(ConnectionObject *conn, PyObject *args,
     int status = mg_connect(params, &session);
     mg_session_params_destroy(params);
     if (status != 0) {
-      // TODO(mtomic): maybe convert MG_ERROR_* codes to different kinds of
-      // Python exceptions
-      PyErr_SetString(OperationalError, mg_session_error(session));
+      // A connection that failed for a transient reason (e.g. an instance was
+      // briefly unreachable during a failover) surfaces as TransientError so
+      // callers can retry it; mgclient owns the classification.
+      PyObject *exc =
+          mg_error_is_transient(status) ? TransientError : OperationalError;
+      PyErr_SetString(exc, mg_session_error(session));
       mg_session_destroy(session);
       return -1;
     }

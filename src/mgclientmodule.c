@@ -34,6 +34,7 @@ PyObject *InterfaceError;
 PyObject *DatabaseError;
 PyObject *DataError;
 PyObject *OperationalError;
+PyObject *TransientError;
 PyObject *IntegrityError;
 PyObject *InternalError;
 PyObject *ProgrammingError;
@@ -56,6 +57,11 @@ PyDoc_STRVAR(
     "Exception raised for errors related to the database's operation, not "
     "necessarily under the control of the programmer (e.g. unexpected "
     "disconnect, failed allocation).");
+PyDoc_STRVAR(
+    TransientError_doc,
+    "Exception raised for transient errors that may succeed if the operation "
+    "is retried (e.g. during a high-availability failover). A subclass of "
+    ":exc:`OperationalError`.");
 PyDoc_STRVAR(
     IntegrityError_doc,
     "Exception raised when the relational integrity of the database is "
@@ -86,6 +92,8 @@ int add_module_exceptions(PyObject *module) {
       {"mgclient.DataError", &DataError, &DatabaseError, DataError_doc},
       {"mgclient.OperationalError", &OperationalError, &DatabaseError,
        OperationalError_doc},
+      {"mgclient.TransientError", &TransientError, &OperationalError,
+       TransientError_doc},
       {"mgclient.IntegrityError", &IntegrityError, &DatabaseError,
        IntegrityError_doc},
       {"mgclient.InternalError", &InternalError, &DatabaseError,

@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2020 Memgraph Ltd. [https://memgraph.com]
+# Copyright (c) 2016-2026 Memgraph Ltd. [https://memgraph.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -455,3 +455,21 @@ def test_autocommit_failure(memgraph_server):
     assert conn.status == mgclient.CONN_STATUS_READY
     cursor.execute("RETURN 5")
     assert conn.status == mgclient.CONN_STATUS_IN_TRANSACTION
+
+
+def test_connection_refused_is_transient():
+    # A connection that can't be established is a low-level transport failure
+    # (no Bolt code); it is surfaced as TransientError (a subclass of
+    # OperationalError), since it is retryable in an HA cluster. Port 1 has
+    # nothing listening, so the connect is refused.
+    with pytest.raises(mgclient.TransientError):
+        mgclient.connect(host="127.0.0.1", port=1)
+
+
+def test_transient_error_hierarchy():
+    # TransientError is a distinct type, but a subclass of OperationalError so
+    # `except DatabaseError` should still catch it.
+    assert issubclass(mgclient.TransientError, mgclient.OperationalError)
+    assert issubclass(mgclient.TransientError, mgclient.DatabaseError)
+    assert issubclass(mgclient.TransientError, mgclient.Error)
+    assert mgclient.TransientError is not mgclient.OperationalError

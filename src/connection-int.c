@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2020 Memgraph Ltd. [https://memgraph.com]
+// Copyright (c) 2016-2026 Memgraph Ltd. [https://memgraph.com]
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,12 @@ void connection_handle_error(ConnectionObject *conn, int error) {
              error == MG_ERROR_CLIENT_ERROR) {
     conn->status = CONN_STATUS_READY;
   }
-  PyErr_SetString(DatabaseError, mg_session_error(conn->session));
+  // A transient failure (a server-signalled TransientError, or a low-level
+  // transport failure worth retrying) surfaces as TransientError so callers can
+  // retry it; mgclient owns the classification (see mg_error_is_transient).
+  PyObject *exc =
+      mg_error_is_transient(error) ? TransientError : DatabaseError;
+  PyErr_SetString(exc, mg_session_error(conn->session));
 }
 
 int connection_run_without_results(ConnectionObject *conn, const char *query) {

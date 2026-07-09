@@ -21,8 +21,25 @@
 #include "glue.h"
 
 static void connection_dealloc(ConnectionObject *conn) {
-  mg_session_destroy(conn->session);
+  if (conn->owns_session) {
+    mg_session_destroy(conn->session);
+  }
   Py_TYPE(conn)->tp_free(conn);
+}
+
+PyObject *connection_wrap_session(mg_session *session, int owns_session,
+                                  int autocommit) {
+  ConnectionObject *conn =
+      (ConnectionObject *)ConnectionType.tp_alloc(&ConnectionType, 0);
+  if (!conn) {
+    return NULL;
+  }
+  conn->session = session;
+  conn->status = CONN_STATUS_READY;
+  conn->autocommit = autocommit ? 1 : 0;
+  conn->lazy = 0;
+  conn->owns_session = owns_session ? 1 : 0;
+  return (PyObject *)conn;
 }
 
 static int execute_trust_callback(const char *hostname, const char *ip_address,
@@ -128,6 +145,7 @@ static int connection_init(ConnectionObject *conn, PyObject *args,
   conn->status = CONN_STATUS_READY;
   conn->lazy = 0;
   conn->autocommit = 0;
+  conn->owns_session = 1;
 
   if (lazy) {
     conn->lazy = 1;
@@ -181,8 +199,11 @@ static PyObject *connection_close(ConnectionObject *conn, PyObject *args) {
   }
 
   // No need to rollback, closing the connection will automatically
-  // rollback any open transactions.
-  mg_session_destroy(conn->session);
+  // rollback any open transactions. A borrowed session is left intact for its
+  // owner (the router); we only detach from it here.
+  if (conn->owns_session) {
+    mg_session_destroy(conn->session);
+  }
   conn->session = NULL;
   conn->status = CONN_STATUS_CLOSED;
 

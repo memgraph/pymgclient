@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2020 Memgraph Ltd. [https://memgraph.com]
+// Copyright (c) 2016-2026 Memgraph Ltd. [https://memgraph.com]
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,10 +35,20 @@ typedef struct ConnectionObject {
   int status;
   int autocommit;
   int lazy;
+  // Whether closing/deallocating this connection destroys `session`. A routed
+  // managed transaction hands its work callback a *borrowed* connection over a
+  // session owned by the router, which must outlive the wrapper.
+  int owns_session;
 } ConnectionObject;
 // clang-format on
 
 extern PyTypeObject ConnectionType;
+
+// Wraps an already-established `session` in a new Connection object. When
+// `owns_session` is false the session is left untouched on close/dealloc (the
+// caller keeps ownership). `autocommit` seeds the connection's autocommit mode.
+PyObject *connection_wrap_session(mg_session *session, int owns_session,
+                                  int autocommit);
 
 int connection_raise_if_bad_status(const ConnectionObject *conn);
 

@@ -31,7 +31,6 @@ from common import requires_ha_cluster
 from conftest import resolve_ha_address
 from mgclient.routing import (
     Router,
-    is_committed_on_main_error,
     is_transient_error,
 )
 
@@ -256,15 +255,8 @@ def test_execute_write_and_read_roundtrip(ha_cluster, ha_resolver):
 
 
 # ---------------------------------------------------------------------------
-# Error-classification helpers (no cluster needed).
+# Error-classification helper (no cluster needed).
 # ---------------------------------------------------------------------------
-
-_COMMITTED_ON_MAIN_MESSAGE = (
-    "Replication Exception: Failed to replicate to SYNC replica 'instance_1': "
-    "replica is not reachable or not in sync with the main. Replica will be "
-    "recovered automatically. Transaction is still committed on the main "
-    "instance and other alive replicas."
-)
 
 
 def test_is_transient_error_recognizes_transient_error_type():
@@ -277,12 +269,3 @@ def test_is_transient_error_false_for_non_transient_types():
     # Matches TransientError only -- not its parent types.
     assert not is_transient_error(mgclient.DatabaseError("Syntax error near 'FOO'"))
     assert not is_transient_error(mgclient.OperationalError("unexpected disconnect"))
-
-
-def test_committed_on_main_error_needs_both_markers():
-    assert is_committed_on_main_error(mgclient.DatabaseError(_COMMITTED_ON_MAIN_MESSAGE))
-    # A replication error without the durability note is not committed-on-main.
-    assert not is_committed_on_main_error(
-        mgclient.DatabaseError("Replication Exception: something unrelated")
-    )
-    assert not is_committed_on_main_error(mgclient.DatabaseError("Syntax error"))

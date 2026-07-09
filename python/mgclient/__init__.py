@@ -25,6 +25,5 @@ from mgclient.routing import (  # noqa: F401,E402
     ACCESS_MODE_WRITE,
     Router,
     connect,
-    is_committed_on_main_error,
     is_transient_error,
 )

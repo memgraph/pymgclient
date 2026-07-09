@@ -54,18 +54,6 @@ def is_transient_error(exc):
     return isinstance(exc, TransientError)
 
 
-def is_committed_on_main_error(exc):
-    """True only when a write committed on the main but a SYNC replica was down.
-
-    Narrower than :func:`is_transient_error`: this is the one case where the
-    write is already durable (Memgraph says so in the message), so it is safe to
-    treat as success.  The routing engine already treats this as a successful
-    :meth:`Router.execute_write`, so callers rarely need this directly.
-    """
-    message = str(getattr(exc, "message", "") or exc).lower()
-    return "replication exception" in message and "committed on the main" in message
-
-
 def _normalize_access_mode(access_mode):
     if isinstance(access_mode, str):
         access_mode = access_mode.upper()
@@ -179,10 +167,13 @@ class Router:
         Like :meth:`execute_read`, but the work runs inside an explicit
         transaction that is committed for you, and it is routed to the main.
 
-        Transient failover conditions are retried.  The one exception is a write
-        that committed on the main but could not reach a SYNC replica: that
-        write is durable, so it is treated as success and *not* retried
-        (retrying would duplicate it).
+        Transient failover conditions are retried.  A replication failure at
+        commit is surfaced as an error like any other -- including a SYNC
+        "committed on the main" failure, which is *not* treated as success: the
+        write is durable only on that main, so if the main is then lost before
+        an unreachable replica catches up the write is gone.  As with any
+        retried write, make ``work`` idempotent (e.g. ``MERGE``) so a re-run
+        after such an error cannot duplicate it.
         """
         return self._router.execute_write(work)
 

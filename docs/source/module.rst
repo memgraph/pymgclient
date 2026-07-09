@@ -47,16 +47,14 @@ balances reads across replicas and fails over across coordinators, use the
 transactions*: they run your unit of work against the right instance and
 automatically retry transient failover conditions (a new main being elected, a
 replica catching up, an instance dropping mid-request) with a routing refresh
-and capped exponential backoff. A write that committed on the main but could
-not reach a synchronous replica is treated as success rather than retried
-(retrying would duplicate it).
+and capped exponential backoff. Because the work may run more than once, make
+it idempotent (e.g. ``MERGE`` rather than ``CREATE``) so a retry cannot
+duplicate a write.
 
 The classification used for retries is also exposed for building your own retry
 loops:
 
 .. autofunction:: mgclient.is_transient_error
-
-.. autofunction:: mgclient.is_committed_on_main_error
 
 For lower-level access to the routing table itself, see
 :meth:`Connection.get_routing_table`.

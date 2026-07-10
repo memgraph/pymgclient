@@ -20,15 +20,15 @@ itself -- routing-table parsing and caching, read round-robin, coordinator
 failover and the managed-transaction retry loop -- is unit-tested in
 libmgclient's own suite (``tests/routing.cpp``); the cluster-gated tests here
 confirm the facade wires it up correctly end to end. They are skipped unless
-``MEMGRAPH_HA_COORDINATOR_HOST`` is set. See ``conftest.resolve_ha_address``
-for how the advertised cluster addresses are mapped to reachable ones.
+``MEMGRAPH_HA_COORDINATOR_HOST`` is set. The cluster's advertised addresses must
+be directly reachable from the test runner (as they are on the shared CI Docker
+network).
 """
 
 import mgclient
 import pytest
 
 from common import requires_ha_cluster
-from conftest import resolve_ha_address
 from mgclient.routing import (
     Router,
     is_transient_error,
@@ -78,41 +78,35 @@ def test_connect_rejects_positional_arguments():
 
 
 @requires_ha_cluster
-def test_connect_routing_write_reaches_main(ha_cluster, ha_resolver):
+def test_connect_routing_write_reaches_main(ha_cluster):
     host, port = ha_cluster
-    conn = mgclient.connect(
-        host=host, port=port, routing=True, access_mode="WRITE", resolver=ha_resolver
-    )
+    conn = mgclient.connect(host=host, port=port, routing=True, access_mode="WRITE")
     assert conn.status == mgclient.CONN_STATUS_READY
     assert _replication_role(conn) == "main"
     conn.close()
 
 
 @requires_ha_cluster
-def test_connect_routing_read_reaches_replica(ha_cluster, ha_resolver):
+def test_connect_routing_read_reaches_replica(ha_cluster):
     host, port = ha_cluster
-    conn = mgclient.connect(
-        host=host, port=port, routing=True, access_mode="READ", resolver=ha_resolver
-    )
+    conn = mgclient.connect(host=host, port=port, routing=True, access_mode="READ")
     assert conn.status == mgclient.CONN_STATUS_READY
     assert _replication_role(conn) == "replica"
     conn.close()
 
 
 @requires_ha_cluster
-def test_connect_routing_default_access_mode_is_write(ha_cluster, ha_resolver):
+def test_connect_routing_default_access_mode_is_write(ha_cluster):
     host, port = ha_cluster
-    conn = mgclient.connect(host=host, port=port, routing=True, resolver=ha_resolver)
+    conn = mgclient.connect(host=host, port=port, routing=True)
     assert _replication_role(conn) == "main"
     conn.close()
 
 
 @requires_ha_cluster
-def test_connect_routing_access_mode_is_case_insensitive(ha_cluster, ha_resolver):
+def test_connect_routing_access_mode_is_case_insensitive(ha_cluster):
     host, port = ha_cluster
-    conn = mgclient.connect(
-        host=host, port=port, routing=True, access_mode="read", resolver=ha_resolver
-    )
+    conn = mgclient.connect(host=host, port=port, routing=True, access_mode="read")
     assert _replication_role(conn) == "replica"
     conn.close()
 
@@ -125,7 +119,7 @@ def test_connect_routing_resolver_receives_advertised_addresses(ha_cluster):
 
     def resolver(address):
         seen.append(address)
-        return [resolve_ha_address(address)]
+        return [address]
 
     conn = mgclient.connect(
         host=host, port=port, routing=True, access_mode="WRITE", resolver=resolver
@@ -144,7 +138,7 @@ def test_connect_routing_fails_over_across_candidates(ha_cluster):
 
     # The first candidate is unreachable; routing must fall back to the next.
     def resolver(address):
-        return ["127.0.0.1:1", resolve_ha_address(address)]
+        return ["127.0.0.1:1", address]
 
     conn = mgclient.connect(
         host=host, port=port, routing=True, access_mode="WRITE", resolver=resolver
@@ -174,9 +168,9 @@ def test_connect_routing_all_candidates_unreachable(ha_cluster):
 
 
 @requires_ha_cluster
-def test_router_connect_reaches_correct_instances(ha_cluster, ha_resolver):
+def test_router_connect_reaches_correct_instances(ha_cluster):
     host, port = ha_cluster
-    router = Router(host=host, port=port, resolver=ha_resolver)
+    router = Router(host=host, port=port)
 
     writer = router.connect(access_mode="WRITE")
     assert _replication_role(writer) == "main"
@@ -203,9 +197,9 @@ def test_router_refreshes_when_targets_unreachable(ha_cluster):
 
 
 @requires_ha_cluster
-def test_router_routing_table_property(ha_cluster, ha_resolver):
+def test_router_routing_table_property(ha_cluster):
     host, port = ha_cluster
-    router = Router(host=host, port=port, resolver=ha_resolver)
+    router = Router(host=host, port=port)
 
     table = router.routing_table
     assert table["write"]
@@ -215,9 +209,9 @@ def test_router_routing_table_property(ha_cluster, ha_resolver):
 
 
 @requires_ha_cluster
-def test_router_refresh_succeeds(ha_cluster, ha_resolver):
+def test_router_refresh_succeeds(ha_cluster):
     host, port = ha_cluster
-    router = Router(host=host, port=port, resolver=ha_resolver)
+    router = Router(host=host, port=port)
 
     # An explicit refresh works before and after any connection is opened.
     router.refresh()
@@ -231,9 +225,9 @@ def test_router_refresh_succeeds(ha_cluster, ha_resolver):
 
 
 @requires_ha_cluster
-def test_execute_write_and_read_roundtrip(ha_cluster, ha_resolver):
+def test_execute_write_and_read_roundtrip(ha_cluster):
     host, port = ha_cluster
-    router = Router(host=host, port=port, resolver=ha_resolver)
+    router = Router(host=host, port=port)
 
     def create(cursor):
         cursor.execute(

@@ -19,7 +19,6 @@ The high-availability fixtures here are used by both ``test_connection.py``
 routing built on top of it).
 """
 
-import os
 import time
 
 import mgclient
@@ -102,42 +101,3 @@ def ha_cluster():
     yield host, port
 
     conn.close()
-
-
-def _parse_address_map(raw):
-    """Parse ``adv1=target1,adv2=target2`` into a ``dict``."""
-    mapping = {}
-    for pair in raw.split(","):
-        pair = pair.strip()
-        if not pair:
-            continue
-        advertised, _, target = pair.partition("=")
-        mapping[advertised.strip()] = target.strip()
-    return mapping
-
-
-def resolve_ha_address(address):
-    """Map a routing-table address to a locally reachable one.
-
-    In CI the cluster runs on the same Docker network as the test runner, so
-    the advertised addresses (e.g. ``mg-data1:7687``) resolve directly and this
-    is the identity function.  When running against a cluster whose advertised
-    addresses are not directly reachable (for example a Kubernetes cluster
-    reached through ``kubectl port-forward``), set ``MEMGRAPH_HA_ADDRESS_MAP``
-    to a comma-separated list of ``advertised=target`` pairs, e.g.::
-
-        MEMGRAPH_HA_ADDRESS_MAP="memgraph-data-0.default.svc.cluster.local:7687=127.0.0.1:17690,..."
-    """
-    raw = os.getenv("MEMGRAPH_HA_ADDRESS_MAP")
-    mapping = _parse_address_map(raw) if raw else {}
-    return mapping.get(address, address)
-
-
-@pytest.fixture(scope="module")
-def ha_resolver():
-    """A ``resolver`` callable suitable for the current environment."""
-
-    def resolver(address):
-        return [resolve_ha_address(address)]
-
-    return resolver

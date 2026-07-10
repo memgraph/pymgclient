@@ -192,14 +192,21 @@ def test_connect_routing_resolver_receives_advertised_addresses(ha_cluster):
 def test_connect_routing_fails_over_across_candidates(ha_cluster):
     host, port = ha_cluster
 
-    # The first candidate is unreachable; routing must fall back to the next.
+    # Make the first replica the router selects unreachable (remap it to a dead
+    # address); every other replica resolves to itself. Routing must fail over
+    # to a reachable replica rather than giving up. Relies on the cluster having
+    # more than one replica.
+    killed = []
+
     def resolver(address):
-        return ["127.0.0.1:1", address]
+        if not killed:
+            killed.append(address)
+        return ["127.0.0.1:1"] if address == killed[0] else [address]
 
     conn = mgclient.connect(
-        host=host, port=port, routing=True, access_mode="WRITE", resolver=resolver
+        host=host, port=port, routing=True, access_mode="READ", resolver=resolver
     )
-    assert _replication_role(conn) == "main"
+    assert _replication_role(conn) == "replica"
     conn.close()
 
 

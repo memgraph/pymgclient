@@ -14,6 +14,7 @@
 
 import mgclient
 import pytest
+import socket
 import tempfile
 
 from common import (
@@ -90,10 +91,16 @@ def test_connect_args_validation():
 def test_connection_refused_is_transient():
     # A connection that can't be established is a low-level transport failure
     # (no Bolt code); it is surfaced as TransientError (a subclass of
-    # OperationalError), since it is retryable in an HA cluster. Port 1 has
-    # nothing listening, so the connect is refused.
-    with pytest.raises(mgclient.TransientError):
-        mgclient.connect(host="127.0.0.1", port=1)
+    # OperationalError), since it is retryable in an HA cluster.
+    #
+    # Reserve a port with no listener -- bind a socket without calling listen()
+    # and keep it open -- so the connect is guaranteed to be refused rather than
+    # relying on a well-known port happening to be closed.
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+        with pytest.raises(mgclient.TransientError):
+            mgclient.connect(host="127.0.0.1", port=port)
 
 
 def test_transient_error_hierarchy():

@@ -114,10 +114,12 @@ through these exceptions or subclasses thereof:
 
 .. NOTE::
 
-   Most database errors are surfaced as :exc:`OperationalError`. The one
-   refinement is :exc:`TransientError` (a subclass of :exc:`OperationalError`),
-   raised for retryable conditions such as a high-availability failover; see
+   Most database errors are surfaced as :exc:`DatabaseError` (with
+   connection-related failures raised as :exc:`OperationalError`). Retryable
+   conditions such as  a high-availability failover are raised as
+   :exc:`TransientError` (a subclass of :exc:`OperationalError`); see
    :func:`is_transient_error`.
+
 
 ##################
 Graph type objects

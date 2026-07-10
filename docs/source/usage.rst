@@ -142,7 +142,7 @@ instance: writes to the main, reads to a replica. Pass ``routing=True`` to
    ...                         routing=True,
    ...                         access_mode=mgclient.ACCESS_MODE_WRITE)
    >>> cursor = conn.cursor()
-   >>> cursor.execute("CREATE (:Person {name: $name})", {"name": "Ada"})
+   >>> cursor.execute("MERGE (:Person {name: $name})", {"name": "Ada"})
    >>> conn.commit()
 
    # Routed to a replica (reads)

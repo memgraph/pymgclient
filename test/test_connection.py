@@ -21,7 +21,6 @@ from common import (
     Memgraph,
     requires_ssl_enabled,
     requires_ssl_disabled,
-    requires_ha_cluster,
 )
 from OpenSSL import crypto
 
@@ -137,26 +136,6 @@ def test_get_routing_table_closed_connection(memgraph_server):
 
     with pytest.raises(mgclient.InterfaceError):
         conn.get_routing_table()
-
-
-@requires_ha_cluster
-def test_get_routing_table_ha(ha_cluster):
-    host, port = ha_cluster
-    conn = mgclient.connect(host=host, port=port)
-
-    table = conn.get_routing_table()
-
-    assert isinstance(table["ttl"], int)
-    assert table["servers"]
-
-    # The cluster has a main (WRITE), a replica (READ) and coordinators (ROUTE),
-    # so all three roles must be present.
-    roles = {server["role"] for server in table["servers"]}
-    assert roles == {"READ", "WRITE", "ROUTE"}
-
-    for server in table["servers"]:
-        assert isinstance(server["addresses"], list)
-        assert server["addresses"]
 
 
 @requires_ssl_disabled

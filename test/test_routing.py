@@ -28,7 +28,11 @@ network).
 import mgclient
 import pytest
 
-from common import requires_ha_cluster
+from common import (
+    MEMGRAPH_HA_COORDINATOR_HOST,
+    MEMGRAPH_HA_COORDINATOR_PORT,
+    requires_ha_cluster,
+)
 from mgclient.routing import (
     Router,
     is_transient_error,
@@ -41,6 +45,33 @@ def _replication_role(conn):
     cursor = conn.cursor()
     cursor.execute("SHOW REPLICATION ROLE")
     return cursor.fetchall()[0][0]
+
+
+@pytest.fixture(scope="module")
+def ha_cluster():
+    """The coordinator ``(host, port)`` of a pre-provisioned HA cluster.
+
+    The cluster is created, registered and converged out of band -- in CI by
+    the "Run Memgraph HA Cluster" step (``mgclient/tool/ha_cluster.sh``), or
+    locally by running that script -- so this fixture only checks it is up and
+    advertising all roles, then hands the coordinator address to the tests.
+    """
+    host = MEMGRAPH_HA_COORDINATOR_HOST
+    port = MEMGRAPH_HA_COORDINATOR_PORT
+
+    conn = mgclient.connect(host=host, port=port)
+    try:
+        roles = {
+            server["role"] for server in conn.get_routing_table()["servers"]
+        }
+        if not {"READ", "WRITE", "ROUTE"} <= roles:
+            raise RuntimeError(
+                f"HA cluster not ready; routing table advertised roles: {roles}"
+            )
+    finally:
+        conn.close()
+
+    return host, port
 
 
 # ---------------------------------------------------------------------------
@@ -70,6 +101,31 @@ def test_connect_rejects_positional_arguments():
     # treated as the routing flag.
     with pytest.raises(TypeError):
         mgclient.connect("127.0.0.1", 7687)
+
+
+# ---------------------------------------------------------------------------
+# Routing-table primitive: Connection.get_routing_table (cluster-gated).
+# ---------------------------------------------------------------------------
+
+
+@requires_ha_cluster
+def test_get_routing_table_ha(ha_cluster):
+    host, port = ha_cluster
+    conn = mgclient.connect(host=host, port=port)
+
+    table = conn.get_routing_table()
+
+    assert isinstance(table["ttl"], int)
+    assert table["servers"]
+
+    # The cluster has a main (WRITE), a replica (READ) and coordinators (ROUTE),
+    # so all three roles must be present.
+    roles = {server["role"] for server in table["servers"]}
+    assert roles == {"READ", "WRITE", "ROUTE"}
+
+    for server in table["servers"]:
+        assert isinstance(server["addresses"], list)
+        assert server["addresses"]
 
 
 # ---------------------------------------------------------------------------

@@ -47,8 +47,7 @@ def is_transient_error(exc):
     Classification is purely by type: the driver surfaces every transient
     condition as :exc:`mgclient.TransientError` (Memgraph's ``TransientError``
     Bolt code, or a low-level transport/connection failure). Errors Memgraph
-    reports as ``ClientError`` -- including a write briefly forbidden while a new
-    main is being elected -- are treated as non-transient, like any other
+    reports as ``ClientError`` are treated as non-transient, like any other
     client error.
     """
     return isinstance(exc, TransientError)

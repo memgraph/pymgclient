@@ -134,7 +134,7 @@ jobs:
             # when the enterprise license secrets are unavailable, e.g. forks).
             if [ "$(docker inspect -f '{{.State.Running}}' mg-coord1 2>/dev/null)" = "true" ]; then
               docker exec -i testcontainer \
-                bash -c "export MEMGRAPH_HA_COORDINATOR_HOST=mg-coord1 && cd /home/memgraph/pymgclient && python$python_version -m pytest -v test/test_connection.py -k get_routing_table_ha"
+                bash -c "export MEMGRAPH_HA_COORDINATOR_HOST=mg-coord1 && cd /home/memgraph/pymgclient && python$python_version -m pytest -v test/test_routing.py"
             fi
           done
 

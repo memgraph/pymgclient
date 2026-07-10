@@ -45,11 +45,11 @@ balances reads across replicas and fails over across coordinators, use the
 
 :meth:`Router.execute_read` and :meth:`Router.execute_write` are *managed
 transactions*: they run your unit of work against the right instance and
-automatically retry transient failover conditions (a new main being elected, a
-replica catching up, an instance dropping mid-request) with a routing refresh
-and capped exponential backoff. Because the work may run more than once, make
-it idempotent (e.g. ``MERGE`` rather than ``CREATE``) so a retry cannot
-duplicate a write.
+automatically retry transient conditions -- an instance briefly unreachable
+during a failover, a replica still catching up, or a connection dropped
+mid-request -- with a routing refresh and capped exponential backoff. Because
+the work may run more than once, make it idempotent (e.g. ``MERGE`` rather than
+``CREATE``) so a retry cannot duplicate a write.
 
 The classification used for retries is also exposed for building your own retry
 loops:

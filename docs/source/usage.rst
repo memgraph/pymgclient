@@ -160,9 +160,10 @@ balances reads across replicas, and fails over across coordinators::
    >>> writer = router.connect(access_mode=mgclient.ACCESS_MODE_WRITE)
    >>> reader = router.connect(access_mode=mgclient.ACCESS_MODE_READ)
 
-To keep working through failovers (a new main being elected, a replica catching
-up, an instance dropping), run your queries through the *managed* transaction
-helpers, which retry transient conditions automatically::
+To keep working through transient cluster conditions -- an instance briefly
+unreachable during a failover, a replica still catching up, or a connection
+dropped mid-request -- run your queries through the *managed* transaction
+helpers, which retry them automatically::
 
    >>> def create_person(cursor):
    ...     cursor.execute("CREATE (p:Person {name: $n}) RETURN id(p)", {"n": "Ada"})

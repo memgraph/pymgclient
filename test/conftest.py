@@ -19,8 +19,6 @@ The high-availability fixtures here are used by both ``test_connection.py``
 routing built on top of it).
 """
 
-import time
-
 import mgclient
 import pytest
 
@@ -29,75 +27,29 @@ from common import (
     MEMGRAPH_HA_COORDINATOR_PORT,
 )
 
-# Topology created by the "Run Memgraph HA Cluster" CI step. The fixture below
-# must agree with the container names and ports used there.
-HA_COORDINATORS = ["mg-coord1", "mg-coord2", "mg-coord3"]
-HA_DATA_INSTANCES = [("instance_1", "mg-data1"), ("instance_2", "mg-data2")]
-HA_MAIN = "instance_1"
-HA_BOLT_PORT = 7687
-HA_COORDINATOR_PORT = 12121
-HA_MANAGEMENT_PORT = 13011
-HA_REPLICATION_PORT = 10000
-
-
-def _ha_admin(conn, query):
-    """Run a coordinator admin query, tolerating idempotent re-runs."""
-    cursor = conn.cursor()
-    try:
-        cursor.execute(query)
-        try:
-            cursor.fetchall()
-        except mgclient.Error:
-            pass
-    except mgclient.DatabaseError as exc:
-        # Re-running setup against an already-configured cluster is fine.
-        print(f"HA setup query ignored error: {exc}")
-
 
 @pytest.fixture(scope="module")
 def ha_cluster():
+    """The coordinator ``(host, port)`` of a pre-provisioned HA cluster.
+
+    The cluster is created, registered and converged out of band -- in CI by
+    the "Run Memgraph HA Cluster" step (``mgclient/tool/ha_cluster.sh``), or
+    locally by running that script -- so this fixture only checks it is up and
+    advertising all roles, then hands the coordinator address to the tests.
+    """
     host = MEMGRAPH_HA_COORDINATOR_HOST
     port = MEMGRAPH_HA_COORDINATOR_PORT
 
     conn = mgclient.connect(host=host, port=port)
-    conn.autocommit = True
-
-    # mg-coord1 is the bootstrap coordinator; add the remaining ones.
-    for cid, name in enumerate(HA_COORDINATORS, start=1):
-        if cid == 1:
-            continue
-        _ha_admin(
-            conn,
-            f'ADD COORDINATOR {cid} WITH CONFIG '
-            f'{{"bolt_server": "{name}:{HA_BOLT_PORT}", '
-            f'"coordinator_server": "{name}:{HA_COORDINATOR_PORT}", '
-            f'"management_server": "{name}:{HA_MANAGEMENT_PORT}"}}',
-        )
-
-    for name, data_host in HA_DATA_INSTANCES:
-        _ha_admin(
-            conn,
-            f'REGISTER INSTANCE {name} WITH CONFIG '
-            f'{{"bolt_server": "{data_host}:{HA_BOLT_PORT}", '
-            f'"management_server": "{data_host}:{HA_MANAGEMENT_PORT}", '
-            f'"replication_server": "{data_host}:{HA_REPLICATION_PORT}"}}',
-        )
-
-    _ha_admin(conn, f"SET INSTANCE {HA_MAIN} TO MAIN")
-
-    # Wait for the cluster to converge and advertise all roles: the main
-    # (WRITE), the replica (READ) and the coordinators (ROUTE).
-    timeout = 60
-    for _ in range(timeout):
-        table = conn.get_routing_table()
-        roles = {server["role"] for server in table["servers"]}
-        if {"READ", "WRITE", "ROUTE"} <= roles:
-            break
-        time.sleep(1)
-    else:
+    try:
+        roles = {
+            server["role"] for server in conn.get_routing_table()["servers"]
+        }
+        if not {"READ", "WRITE", "ROUTE"} <= roles:
+            raise RuntimeError(
+                f"HA cluster not ready; routing table advertised roles: {roles}"
+            )
+    finally:
         conn.close()
-        raise RuntimeError(f"HA cluster did not converge: {table}")
 
-    yield host, port
-
-    conn.close()
+    return host, port

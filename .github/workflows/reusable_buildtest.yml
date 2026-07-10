@@ -70,49 +70,20 @@ jobs:
         run: |
           # High availability is a Memgraph Enterprise feature. The license
           # secrets are unavailable on PRs from forks, so skip the cluster (and
-          # the HA test) with a warning rather than failing the whole build.
+          # the HA tests) with a warning rather than failing the whole build.
           if [ -z "$MEMGRAPH_ENTERPRISE_LICENSE" ] || [ -z "$MEMGRAPH_ORGANIZATION_NAME" ]; then
-            echo "::warning::Memgraph enterprise license secrets are not set; skipping the HA cluster and the get_routing_table HA test."
+            echo "::warning::Memgraph enterprise license secrets are not set; skipping the HA cluster and the routing tests."
             exit 0
           fi
 
-          # Two data instances...
-          for name in mg-data1 mg-data2; do
-            docker run -d --rm --name "$name" --network pymgclient-network \
-              -e MEMGRAPH_ENTERPRISE_LICENSE="$MEMGRAPH_ENTERPRISE_LICENSE" \
-              -e MEMGRAPH_ORGANIZATION_NAME="$MEMGRAPH_ORGANIZATION_NAME" \
-              memgraph/memgraph:latest \
-              --bolt-port=7687 \
-              --management-port=13011 \
-              --telemetry-enabled=false
-          done
-
-          # ...and three coordinators for a Raft quorum. mg-coord1 is the
-          # bootstrap leader; the test harness adds the other two coordinators,
-          # registers the instances and elects a main once the containers are up.
-          for id in 1 2 3; do
-            docker run -d --rm --name "mg-coord${id}" --network pymgclient-network \
-              -e MEMGRAPH_ENTERPRISE_LICENSE="$MEMGRAPH_ENTERPRISE_LICENSE" \
-              -e MEMGRAPH_ORGANIZATION_NAME="$MEMGRAPH_ORGANIZATION_NAME" \
-              memgraph/memgraph:latest \
-              --bolt-port=7687 \
-              --coordinator-id="${id}" \
-              --coordinator-port=12121 \
-              --coordinator-hostname="mg-coord${id}" \
-              --management-port=13011 \
-              --telemetry-enabled=false
-          done
-
-          # Fail with a clear message if the cluster didn't come up, rather than
-          # as an opaque DNS error when the test connects to the coordinator.
-          sleep 10
-          for name in mg-data1 mg-data2 mg-coord1 mg-coord2 mg-coord3; do
-            if [ "$(docker inspect -f '{{.State.Running}}' "$name" 2>/dev/null)" != "true" ]; then
-              echo "::error::Memgraph HA container $name is not running"
-              docker logs "$name" || true
-              exit 1
-            fi
-          done
+          # Start a 3-data + 3-coordinator cluster on the test runner's Docker
+          # network, using the shared script from the mgclient submodule. In
+          # bridge mode it addresses instances by container name (mg-*:7687),
+          # which the test container resolves; the script also registers the
+          # topology and waits for the cluster to converge.
+          MEMGRAPH_HA_NETWORK=pymgclient-network \
+            MEMGRAPH_HA_IMAGE=memgraph/memgraph:latest \
+            bash mgclient/tool/ha_cluster.sh start
 
       - name: Build Docker Image
         run: |
@@ -192,9 +163,7 @@ jobs:
           docker wait memgraph || echo "Memgraph container does not exist"
           docker stop memgraph-ssl || echo "Memgraph container with SSL does not exist"
           docker wait memgraph-ssl || echo "Memgraph container with SSL does not exist"
-          for name in mg-coord1 mg-coord2 mg-coord3 mg-data1 mg-data2; do
-            docker stop "$name" || echo "$name does not exist"
-          done
+          bash mgclient/tool/ha_cluster.sh stop || echo "HA cluster does not exist"
           docker rmi pymgclient-builder:latest || echo "Image does not exist"
           docker network rm pymgclient-network || echo "Network does not exist"
 

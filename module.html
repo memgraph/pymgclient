@@ -38,101 +38,172 @@
 <p>The module interface respects the DB-API 2.0 standard defined in <span class="target" id="index-0"></span><a class="pep reference external" href="https://peps.python.org/pep-0249/"><strong>PEP 249</strong></a>.</p>
 <dl class="py function" id="module-mgclient">
 <dt class="sig sig-object py" id="mgclient.connect">
-<span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sslmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sslcert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sslkey</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trust_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lazy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.connect" title="Link to this definition">¶</a></dt>
-<dd><p>Makes a new connection to the database server and returns a
-<a class="reference internal" href="connection.html#mgclient.Connection" title="mgclient.Connection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code></a> object.</p>
-<p>Currently recognized parameters are:</p>
-<blockquote>
-<div><ul>
-<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">host</span></code></p>
-<blockquote>
-<div><p>DNS resolvable name of host to connect to. Exactly one of host and
-address parameters must be specified.</p>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">address</span></code></p>
-<blockquote>
-<div><p>Numeric IP address of host to connect to. This should be in the
-standard IPv4 address format. You can also use IPv6 if your machine
-supports it. Exactly one of host and address parameters must be
-specified.</p>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">port</span></code></p>
-<blockquote>
-<div><p>Port number to connect to at the server host.</p>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">username</span></code></p>
-<blockquote>
-<div><p>Username to connect as.</p>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">password</span></code></p>
-<blockquote>
-<div><p>Password to be used if the server demands password authentication.</p>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">client_name</span></code></p>
-<blockquote>
-<div><p>Alternate name and version of the client to send to server. Default is
-set by the underlying mgclient library.</p>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sslmode</span></code></p>
-<blockquote>
-<div><p>This option determines whether a secure connection will be negotiated
-with the server. There are 2 possible values:</p>
-<blockquote>
-<div><ul>
-<li><p><code class="xref py py-const docutils literal notranslate"><span class="pre">mgclient.MG_SSLMODE_DISABLE</span></code></p>
-<blockquote>
-<div><p>Only try a non-SSL connection (default).</p>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-const docutils literal notranslate"><span class="pre">mgclient.MG_SSLMODE_REQUIRE</span></code></p>
-<blockquote>
-<div><p>Only try an SSL connection.</p>
-</div></blockquote>
-</li>
-</ul>
-</div></blockquote>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sslcert</span></code></p>
-<blockquote>
-<div><p>This parameter specifies the file name of the client SSL certificate.
-It is ignored in case an SSL connection is not made.</p>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sslkey</span></code></p>
-<blockquote>
-<div><p>This parameter specifies the location of the secret key used for the
-client certificate. This parameter is ignored in case an SSL connection
-is not made.</p>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">trust_callback</span></code></p>
-<blockquote>
-<div><p>A callable taking four arguments.</p>
-<p>After performing the SSL handshake, <a class="reference internal" href="#mgclient.connect" title="mgclient.connect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">connect()</span></code></a> will call this
-callable providing the hostname, IP address, public key type and
-fingerprint. If the function returns <code class="docutils literal notranslate"><span class="pre">False</span></code> SSL connection will
-immediately be terminated.</p>
-<p>This can be used to implement TOFU (trust on first use) mechanism.</p>
-</div></blockquote>
-</li>
-<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">lazy</span></code></p>
-<blockquote>
-<div><p>If this is set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, a lazy connection is made. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
-</div></blockquote>
-</li>
-</ul>
-</div></blockquote>
+<span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">routing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'WRITE'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">routing_context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.connect" title="Link to this definition">¶</a></dt>
+<dd><p>Open a connection to Memgraph.</p>
+<p>Takes only keyword arguments, exactly like the C extension’s
+<a class="reference internal" href="#mgclient.connect" title="mgclient.connect"><code class="xref py py-func docutils literal notranslate"><span class="pre">connect()</span></code></a>.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">routing=False</span></code> (the default) this is exactly the C extension’s
+<a class="reference internal" href="#mgclient.connect" title="mgclient.connect"><code class="xref py py-func docutils literal notranslate"><span class="pre">connect()</span></code></a>: it opens a direct connection to the given host/port.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">routing=True</span></code> it treats the target as a coordinator of a
+high-availability cluster, fetches the routing table, and returns a
+connection to a data instance serving <code class="docutils literal notranslate"><span class="pre">access_mode</span></code> (<code class="docutils literal notranslate"><span class="pre">&quot;WRITE&quot;</span></code> -&gt; the
+main, <code class="docutils literal notranslate"><span class="pre">&quot;READ&quot;</span></code> -&gt; a replica). A <code class="docutils literal notranslate"><span class="pre">resolver</span></code> may be supplied (see
+<a class="reference internal" href="#mgclient.Router" title="mgclient.Router"><code class="xref py py-class docutils literal notranslate"><span class="pre">Router</span></code></a>) for environments where advertised addresses are not
+directly reachable. This is a one-shot convenience; construct a
+<a class="reference internal" href="#mgclient.Router" title="mgclient.Router"><code class="xref py py-class docutils literal notranslate"><span class="pre">Router</span></code></a> directly to reuse the cached routing table across
+connections.</p>
 </dd></dl>
 
 <p>See <a class="reference internal" href="connection.html#lazy-connections"><span class="std std-ref">Lazy connections</span></a> section to learn about
 advantages and limitations of using the <code class="docutils literal notranslate"><span class="pre">lazy</span></code> parameter.</p>
+<section id="client-side-routing">
+<h2>Client-side routing<a class="headerlink" href="#client-side-routing" title="Link to this heading">¶</a></h2>
+<p>When connecting to a Memgraph high-availability cluster, passing
+<code class="docutils literal notranslate"><span class="pre">routing=True</span></code> to <a class="reference internal" href="#mgclient.connect" title="mgclient.connect"><code class="xref py py-func docutils literal notranslate"><span class="pre">connect()</span></code></a> makes the connection routing-aware: the
+given <code class="docutils literal notranslate"><span class="pre">host</span></code>/<code class="docutils literal notranslate"><span class="pre">port</span></code> must point at a cluster coordinator, from which the
+current cluster topology is fetched (via a Bolt <code class="docutils literal notranslate"><span class="pre">ROUTE</span></code> message) and a data
+instance matching the requested <code class="docutils literal notranslate"><span class="pre">access_mode</span></code> is selected and connected to.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="mgclient.mgclient.ACCESS_MODE_WRITE">
+<span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">ACCESS_MODE_WRITE</span></span><a class="headerlink" href="#mgclient.mgclient.ACCESS_MODE_WRITE" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">access_mode</span></code> value selecting a server that accepts writes (the cluster
+main). This is the default.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="mgclient.mgclient.ACCESS_MODE_READ">
+<span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">ACCESS_MODE_READ</span></span><a class="headerlink" href="#mgclient.mgclient.ACCESS_MODE_READ" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">access_mode</span></code> value selecting a server that serves reads (a replica).</p>
+</dd></dl>
+
+<p>If the addresses a cluster advertises are not directly reachable by the client
+(for example when the cluster is reached through a proxy or a port-forward),
+pass a <code class="docutils literal notranslate"><span class="pre">resolver</span></code> callable that maps an advertised <code class="docutils literal notranslate"><span class="pre">&quot;host:port&quot;</span></code> address to
+an iterable of <code class="docutils literal notranslate"><span class="pre">&quot;host:port&quot;</span></code> targets to try.</p>
+<p><code class="docutils literal notranslate"><span class="pre">connect(routing=True,</span> <span class="pre">...)</span></code> performs a fresh routing lookup on every call.
+For a long-lived router that caches the routing table (honouring its TTL),
+balances reads across replicas and fails over across coordinators, use the
+<a class="reference internal" href="#mgclient.Router" title="mgclient.Router"><code class="xref py py-class docutils literal notranslate"><span class="pre">Router</span></code></a> class:</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mgclient.Router">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">Router</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">routing_context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_backoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_backoff_cap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">connect_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Router" title="Link to this definition">¶</a></dt>
+<dd><p>Client-side routing engine for a Memgraph high-availability cluster.</p>
+<p>A <a class="reference internal" href="#mgclient.Router" title="mgclient.Router"><code class="xref py py-class docutils literal notranslate"><span class="pre">Router</span></code></a> is created against a seed coordinator and is meant to be
+long-lived and reused. It fetches the cluster routing table, caches it until
+its TTL expires, and hands out ordinary <a class="reference internal" href="connection.html#mgclient.Connection" title="mgclient.Connection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code></a> objects bound to
+the appropriate data instance.</p>
+<p>All connection parameters other than <code class="docutils literal notranslate"><span class="pre">host</span></code>/<code class="docutils literal notranslate"><span class="pre">address</span></code>/<code class="docutils literal notranslate"><span class="pre">port</span></code> (for
+example <code class="docutils literal notranslate"><span class="pre">username</span></code>, <code class="docutils literal notranslate"><span class="pre">password</span></code> and the SSL options) are reused for both
+the coordinator and the data-instance connections.</p>
+<p>Parameters:</p>
+<blockquote>
+<div><ul>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">host</span></code> / <code class="xref py py-obj docutils literal notranslate"><span class="pre">address</span></code> / <code class="xref py py-obj docutils literal notranslate"><span class="pre">port</span></code></p>
+<blockquote>
+<div><p>The seed coordinator to contact for the first routing-table fetch.</p>
+</div></blockquote>
+</li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolver</span></code></p>
+<blockquote>
+<div><p>Optional callable mapping an advertised <code class="docutils literal notranslate"><span class="pre">&quot;host:port&quot;</span></code> address to
+an iterable of <code class="docutils literal notranslate"><span class="pre">&quot;host:port&quot;</span></code> targets to try, in order.  Defaults
+to using the advertised address unchanged.</p>
+</div></blockquote>
+</li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">routing_context</span></code></p>
+<blockquote>
+<div><p>Optional <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code> forwarded to the coordinator’s <code class="docutils literal notranslate"><span class="pre">ROUTE</span></code>
+request.</p>
+</div></blockquote>
+</li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">max_retries</span></code> / <code class="xref py py-obj docutils literal notranslate"><span class="pre">retry_backoff</span></code> / <code class="xref py py-obj docutils literal notranslate"><span class="pre">retry_backoff_cap</span></code></p>
+<blockquote>
+<div><p>The managed-transaction retry budget (see <a class="reference internal" href="#mgclient.Router.execute_read" title="mgclient.Router.execute_read"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_read()</span></code></a> and
+<a class="reference internal" href="#mgclient.Router.execute_write" title="mgclient.Router.execute_write"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_write()</span></code></a>). Backoff is capped exponential:
+<code class="docutils literal notranslate"><span class="pre">retry_backoff</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">retry_backoff</span></code>, … up to
+<code class="docutils literal notranslate"><span class="pre">retry_backoff_cap</span></code> seconds.</p>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="mgclient.Router.connect">
+<span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">access_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'WRITE'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Router.connect" title="Link to this definition">¶</a></dt>
+<dd><p>Open a connection to a data instance serving <code class="docutils literal notranslate"><span class="pre">access_mode</span></code>.</p>
+<p>Returns an ordinary <a class="reference internal" href="connection.html#mgclient.Connection" title="mgclient.Connection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Connection</span></code></a>.  Raises
+<a class="reference internal" href="#mgclient.TransientError" title="mgclient.TransientError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">mgclient.TransientError</span></code></a> if no server for the requested access
+mode can be reached even after refreshing the routing table (a
+transient cluster condition, e.g. a failover in progress).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mgclient.Router.execute_read">
+<span class="sig-name descname"><span class="pre">execute_read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">work</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Router.execute_read" title="Link to this definition">¶</a></dt>
+<dd><p>Run <code class="docutils literal notranslate"><span class="pre">work(cursor)</span></code> as a managed read against a replica.</p>
+<p><code class="docutils literal notranslate"><span class="pre">work</span></code> receives a <a class="reference internal" href="cursor.html#mgclient.Cursor" title="mgclient.Cursor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cursor</span></code></a> from a freshly routed READ
+connection and returns whatever the caller wants; that value is returned
+from <a class="reference internal" href="#mgclient.Router.execute_read" title="mgclient.Router.execute_read"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_read()</span></code></a>.  On a transient cluster condition (see
+<a class="reference internal" href="#mgclient.is_transient_error" title="mgclient.is_transient_error"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_transient_error()</span></code></a>) the routing table is refreshed and the work
+is retried with capped exponential backoff, up to <code class="docutils literal notranslate"><span class="pre">max_retries</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">work</span></code> may be called more than once, so it should be free of side
+effects other than the database operations themselves.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mgclient.Router.execute_write">
+<span class="sig-name descname"><span class="pre">execute_write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">work</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Router.execute_write" title="Link to this definition">¶</a></dt>
+<dd><p>Run <code class="docutils literal notranslate"><span class="pre">work(cursor)</span></code> as a managed write against the main.</p>
+<p>Like <a class="reference internal" href="#mgclient.Router.execute_read" title="mgclient.Router.execute_read"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_read()</span></code></a>, but the work runs inside an explicit
+transaction that is committed for you, and it is routed to the main.</p>
+<p>Transient failover conditions are retried.  A replication failure at
+commit is surfaced as an error like any other – including a SYNC
+“committed on the main” failure, which is <em>not</em> treated as success: the
+write is durable only on that main, so if the main is then lost before
+an unreachable replica catches up the write is gone.  As with any
+retried write, make <code class="docutils literal notranslate"><span class="pre">work</span></code> idempotent (e.g. <code class="docutils literal notranslate"><span class="pre">MERGE</span></code>) so a re-run
+after such an error cannot duplicate it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mgclient.Router.refresh">
+<span class="sig-name descname"><span class="pre">refresh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Router.refresh" title="Link to this definition">¶</a></dt>
+<dd><p>Force an immediate refresh of the cached routing table.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mgclient.Router.routing_table">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">routing_table</span></span><a class="headerlink" href="#mgclient.Router.routing_table" title="Link to this definition">¶</a></dt>
+<dd><p>A snapshot of the (refreshed if absent) routing table as a dict with
+<code class="docutils literal notranslate"><span class="pre">&quot;ttl&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;write&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;read&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;route&quot;</span></code> entries.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p><a class="reference internal" href="#mgclient.Router.execute_read" title="mgclient.Router.execute_read"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Router.execute_read()</span></code></a> and <a class="reference internal" href="#mgclient.Router.execute_write" title="mgclient.Router.execute_write"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Router.execute_write()</span></code></a> are <em>managed
+transactions</em>: they run your unit of work against the right instance and
+automatically retry transient conditions – an instance briefly unreachable
+during a failover, a replica still catching up, or a connection dropped
+mid-request – with a routing refresh and capped exponential backoff. Because
+the work may run more than once, make it idempotent (e.g. <code class="docutils literal notranslate"><span class="pre">MERGE</span></code> rather than
+<code class="docutils literal notranslate"><span class="pre">CREATE</span></code>) so a retry cannot duplicate a write.</p>
+<p>The classification used for retries is also exposed for building your own retry
+loops:</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="mgclient.is_transient_error">
+<span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">is_transient_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.is_transient_error" title="Link to this definition">¶</a></dt>
+<dd><p>True for a transient HA condition worth retrying after a short backoff.</p>
+<p>These arise during a failover, while a replica catches up, or when an
+instance is dropped mid-request; they clear once the cluster reconverges.</p>
+<p>Classification is purely by type: the driver surfaces every transient
+condition as <a class="reference internal" href="#mgclient.TransientError" title="mgclient.TransientError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">mgclient.TransientError</span></code></a> (Memgraph’s <code class="docutils literal notranslate"><span class="pre">TransientError</span></code>
+Bolt code, or a low-level transport/connection failure). Errors Memgraph
+reports as <code class="docutils literal notranslate"><span class="pre">ClientError</span></code> are treated as non-transient, like any other
+client error.</p>
+</dd></dl>
+
+<p>For lower-level access to the routing table itself, see
+<a class="reference internal" href="connection.html#mgclient.Connection.get_routing_table" title="mgclient.Connection.get_routing_table"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Connection.get_routing_table()</span></code></a>.</p>
+</section>
 <section id="module-constants">
 <h2>Module constants<a class="headerlink" href="#module-constants" title="Link to this heading">¶</a></h2>
 <p>DB-API 2.0 requires the following constants to be defined:</p>
@@ -202,6 +273,12 @@ through these exceptions or subclasses thereof:</p>
 </dd></dl>
 
 <dl class="py exception">
+<dt class="sig sig-object py" id="mgclient.TransientError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">TransientError</span></span><a class="headerlink" href="#mgclient.TransientError" title="Link to this definition">¶</a></dt>
+<dd><p>Exception raised for transient errors that may succeed if the operation is retried (e.g. during a high-availability failover). A subclass of <a class="reference internal" href="#mgclient.OperationalError" title="mgclient.OperationalError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">OperationalError</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py exception">
 <dt class="sig sig-object py" id="mgclient.IntegrityError">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mgclient.</span></span><span class="sig-name descname"><span class="pre">IntegrityError</span></span><a class="headerlink" href="#mgclient.IntegrityError" title="Link to this definition">¶</a></dt>
 <dd><p>Exception raised when the relational integrity of the database is affected.</p>
@@ -227,8 +304,11 @@ through these exceptions or subclasses thereof:</p>
 
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>In the current state, <a class="reference internal" href="#mgclient.OperationalError" title="mgclient.OperationalError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">OperationalError</span></code></a> is raised for all errors
-obtained from the database. This will probably be improved in the future.</p>
+<p>Most database errors are surfaced as <a class="reference internal" href="#mgclient.DatabaseError" title="mgclient.DatabaseError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">DatabaseError</span></code></a> (with
+connection-related failures raised as <a class="reference internal" href="#mgclient.OperationalError" title="mgclient.OperationalError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">OperationalError</span></code></a>). Retryable
+conditions such as  a high-availability failover are raised as
+<a class="reference internal" href="#mgclient.TransientError" title="mgclient.TransientError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">TransientError</span></code></a> (a subclass of <a class="reference internal" href="#mgclient.OperationalError" title="mgclient.OperationalError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">OperationalError</span></code></a>); see
+<a class="reference internal" href="#mgclient.is_transient_error" title="mgclient.is_transient_error"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_transient_error()</span></code></a>.</p>
 </div>
 </section>
 <section id="graph-type-objects">
@@ -349,6 +429,7 @@ element less than the <a class="reference internal" href="#mgclient.Path.nodes" 
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Basic module usage</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code> module content</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#mgclient.connect"><code class="docutils literal notranslate"><span class="pre">connect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#client-side-routing">Client-side routing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-constants">Module constants</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#exceptions">Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#graph-type-objects">Graph type objects</a></li>

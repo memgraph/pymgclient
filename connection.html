@@ -77,6 +77,51 @@ rollback to be performed.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="mgclient.Connection.get_routing_table">
+<span class="sig-name descname"><span class="pre">get_routing_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bookmarks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Connection.get_routing_table" title="Link to this definition">¶</a></dt>
+<dd><p>Fetch the client-side routing table from a Memgraph coordinator.</p>
+<p>Sends a Bolt <code class="docutils literal notranslate"><span class="pre">ROUTE</span></code> message to the server this connection is attached to
+(which must be a coordinator of a high-availability cluster) and returns the
+current cluster topology. This is a low-level primitive intended for building
+client-side routing on top of pymgclient: it only retrieves the table and does
+not open any further connections or dispatch queries.</p>
+<p>The negotiated Bolt protocol version must be at least 4.3, and the connection
+must be idle (no query in progress and no open transaction).</p>
+<blockquote>
+<div><ul>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">routing_context</span></code></p>
+<blockquote>
+<div><p>Optional <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code> with routing context (for example the address
+used to contact the coordinator). Defaults to an empty map.</p>
+</div></blockquote>
+</li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">bookmarks</span></code></p>
+<blockquote>
+<div><p>Optional iterable of bookmark strings, or <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code> for none.</p>
+</div></blockquote>
+</li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extra</span></code></p>
+<blockquote>
+<div><p>Optional <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code> with extra information. On Bolt 4.4 it is sent
+verbatim; on Bolt 4.3 only its <code class="docutils literal notranslate"><span class="pre">&quot;db&quot;</span></code> string entry (if present) is
+used to populate the database-name field.</p>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+<p>Returns a <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code> of the form:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;ttl&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">int</span> <span class="n">seconds</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;servers&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;addresses&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;host:port&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;READ&quot;</span><span class="o">|</span><span class="s2">&quot;WRITE&quot;</span><span class="o">|</span><span class="s2">&quot;ROUTE&quot;</span><span class="p">},</span>
+        <span class="o">...</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="mgclient.Connection.rollback">
 <span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mgclient.Connection.rollback" title="Link to this definition">¶</a></dt>
 <dd><p>Roll back to the start of any pending transaction.</p>

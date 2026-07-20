@@ -177,6 +177,65 @@ will be immediately committed and no rollback is possible. A few commands
 transaction. To set the connection in <em>autocommit</em> mode, set
 <a class="reference internal" href="connection.html#mgclient.Connection.autocommit" title="mgclient.Connection.autocommit"><code class="xref py py-attr docutils literal notranslate"><span class="pre">autocommit</span></code></a> property of the connection to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </section>
+<section id="connecting-to-a-high-availability-cluster">
+<h2>Connecting to a high-availability cluster<a class="headerlink" href="#connecting-to-a-high-availability-cluster" title="Link to this heading">¶</a></h2>
+<p>When connecting to a Memgraph high-availability (HA) cluster you connect to a
+<em>coordinator</em> and let <a class="reference internal" href="#module-mgclient" title="mgclient"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code></a> route each query to the right data
+instance: writes to the main, reads to a replica. Pass <code class="docutils literal notranslate"><span class="pre">routing=True</span></code> to
+<a class="reference internal" href="module.html#mgclient.connect" title="mgclient.connect"><code class="xref py py-func docutils literal notranslate"><span class="pre">connect()</span></code></a> and choose an <code class="docutils literal notranslate"><span class="pre">access_mode</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">mgclient</span>
+
+<span class="go"># Routed to the main (writes)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">conn</span> <span class="o">=</span> <span class="n">mgclient</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">&quot;coordinator-1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">7687</span><span class="p">,</span>
+<span class="gp">... </span>                        <span class="n">username</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;pass&quot;</span><span class="p">,</span>
+<span class="gp">... </span>                        <span class="n">routing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>                        <span class="n">access_mode</span><span class="o">=</span><span class="n">mgclient</span><span class="o">.</span><span class="n">ACCESS_MODE_WRITE</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;MERGE (:Person {name: $name})&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Ada&quot;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+
+<span class="go"># Routed to a replica (reads)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reader</span> <span class="o">=</span> <span class="n">mgclient</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">&quot;coordinator-1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">7687</span><span class="p">,</span>
+<span class="gp">... </span>                          <span class="n">username</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;pass&quot;</span><span class="p">,</span>
+<span class="gp">... </span>                          <span class="n">routing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>                          <span class="n">access_mode</span><span class="o">=</span><span class="n">mgclient</span><span class="o">.</span><span class="n">ACCESS_MODE_READ</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Each <a class="reference internal" href="module.html#mgclient.connect" title="mgclient.connect"><code class="xref py py-func docutils literal notranslate"><span class="pre">connect()</span></code></a> call above performs a fresh routing lookup. For a
+long-lived client, use a <a class="reference internal" href="module.html#mgclient.Router" title="mgclient.Router"><code class="xref py py-class docutils literal notranslate"><span class="pre">Router</span></code></a> instead: it caches the routing table,
+balances reads across replicas, and fails over across coordinators:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">router</span> <span class="o">=</span> <span class="n">mgclient</span><span class="o">.</span><span class="n">Router</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">&quot;coordinator-1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">7687</span><span class="p">,</span>
+<span class="gp">... </span>                         <span class="n">username</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;pass&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">writer</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">access_mode</span><span class="o">=</span><span class="n">mgclient</span><span class="o">.</span><span class="n">ACCESS_MODE_WRITE</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reader</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">access_mode</span><span class="o">=</span><span class="n">mgclient</span><span class="o">.</span><span class="n">ACCESS_MODE_READ</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To keep working through transient cluster conditions – an instance briefly
+unreachable during a failover, a replica still catching up, or a connection
+dropped mid-request – run your queries through the <em>managed</em> transaction
+helpers, which retry them automatically:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">create_person</span><span class="p">(</span><span class="n">cursor</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE (p:Person {name: $n}) RETURN id(p)&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="s2">&quot;Ada&quot;</span><span class="p">})</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_id</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">execute_write</span><span class="p">(</span><span class="n">create_person</span><span class="p">)</span>   <span class="c1"># committed for you</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">count_people</span><span class="p">(</span><span class="n">cursor</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;MATCH (:Person) RETURN count(*)&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">total</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">execute_read</span><span class="p">(</span><span class="n">count_people</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If the addresses the cluster advertises are not directly reachable from the
+client (for example in-cluster Kubernetes names reached from outside), pass a
+<code class="docutils literal notranslate"><span class="pre">resolver</span></code> that maps an advertised <code class="docutils literal notranslate"><span class="pre">&quot;host:port&quot;</span></code> to reachable targets:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">resolver</span><span class="p">(</span><span class="n">advertised</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;memgraph-data-0.default.svc.cluster.local:7687&quot;</span><span class="p">:</span> <span class="s2">&quot;10.0.0.5:7687&quot;</span><span class="p">}</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="p">[</span><span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">advertised</span><span class="p">,</span> <span class="n">advertised</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">router</span> <span class="o">=</span> <span class="n">mgclient</span><span class="o">.</span><span class="n">Router</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">&quot;coordinator-1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">7687</span><span class="p">,</span> <span class="n">resolver</span><span class="o">=</span><span class="n">resolver</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See the <a class="reference internal" href="module.html"><span class="doc">mgclient module content</span></a> reference for the full routing API.</p>
+</section>
 </section>
 
 
@@ -212,6 +271,7 @@ transaction. To set the connection in <em>autocommit</em> mode, set
 <li class="toctree-l2"><a class="reference internal" href="#passing-parameters-to-opencypher-queries">Passing parameters to openCypher queries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#adaptation-of-memgraph-values-to-python-types">Adaptation of Memgraph values to Python types</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#transactions-control">Transactions control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#connecting-to-a-high-availability-cluster">Connecting to a high-availability cluster</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="module.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mgclient</span></code> module content</a></li>

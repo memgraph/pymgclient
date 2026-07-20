@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2020 Memgraph Ltd. [https://memgraph.com]
+// Copyright (c) 2016-2026 Memgraph Ltd. [https://memgraph.com]
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,8 +21,25 @@
 #include "glue.h"
 
 static void connection_dealloc(ConnectionObject *conn) {
-  mg_session_destroy(conn->session);
+  if (conn->owns_session) {
+    mg_session_destroy(conn->session);
+  }
   Py_TYPE(conn)->tp_free(conn);
+}
+
+PyObject *connection_wrap_session(mg_session *session, int owns_session,
+                                  int autocommit) {
+  ConnectionObject *conn =
+      (ConnectionObject *)ConnectionType.tp_alloc(&ConnectionType, 0);
+  if (!conn) {
+    return NULL;
+  }
+  conn->session = session;
+  conn->status = CONN_STATUS_READY;
+  conn->autocommit = autocommit ? 1 : 0;
+  conn->lazy = 0;
+  conn->owns_session = owns_session ? 1 : 0;
+  return (PyObject *)conn;
 }
 
 static int execute_trust_callback(const char *hostname, const char *ip_address,
@@ -113,9 +130,12 @@ static int connection_init(ConnectionObject *conn, PyObject *args,
     int status = mg_connect(params, &session);
     mg_session_params_destroy(params);
     if (status != 0) {
-      // TODO(mtomic): maybe convert MG_ERROR_* codes to different kinds of
-      // Python exceptions
-      PyErr_SetString(OperationalError, mg_session_error(session));
+      // A connection that failed for a transient reason (e.g. an instance was
+      // briefly unreachable during a failover) surfaces as TransientError so
+      // callers can retry it; mgclient owns the classification.
+      PyObject *exc =
+          mg_error_is_transient(status) ? TransientError : OperationalError;
+      PyErr_SetString(exc, mg_session_error(session));
       mg_session_destroy(session);
       return -1;
     }
@@ -125,6 +145,7 @@ static int connection_init(ConnectionObject *conn, PyObject *args,
   conn->status = CONN_STATUS_READY;
   conn->lazy = 0;
   conn->autocommit = 0;
+  conn->owns_session = 1;
 
   if (lazy) {
     conn->lazy = 1;
@@ -178,8 +199,11 @@ static PyObject *connection_close(ConnectionObject *conn, PyObject *args) {
   }
 
   // No need to rollback, closing the connection will automatically
-  // rollback any open transactions.
-  mg_session_destroy(conn->session);
+  // rollback any open transactions. A borrowed session is left intact for its
+  // owner (the router); we only detach from it here.
+  if (conn->owns_session) {
+    mg_session_destroy(conn->session);
+  }
   conn->session = NULL;
   conn->status = CONN_STATUS_CLOSED;
 

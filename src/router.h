@@ -12,19 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PYMGCLIENT_EXCEPTIONS_H
-#define PYMGCLIENT_EXCEPTIONS_H
+#ifndef PYMGCLIENT_ROUTER_H
+#define PYMGCLIENT_ROUTER_H
 
-extern PyObject *Warning;
-extern PyObject *Error;
-extern PyObject *InterfaceError;
-extern PyObject *DatabaseError;
-extern PyObject *DataError;
-extern PyObject *OperationalError;
-extern PyObject *TransientError;
-extern PyObject *IntegrityError;
-extern PyObject *InternalError;
-extern PyObject *ProgrammingError;
-extern PyObject *NotSupportedError;
+#include <Python.h>
 
-#endif
+// A thin Python wrapper over libmgclient's `mg_router` (client-side routing
+// engine). Not part of the public API surface directly; the ergonomic
+// `mgclient.routing.Router` facade is built on top of it.
+extern PyTypeObject RouterType;
+
+#endif  // PYMGCLIENT_ROUTER_H

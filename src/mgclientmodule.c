@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2020 Memgraph Ltd. [https://memgraph.com]
+// Copyright (c) 2016-2026 Memgraph Ltd. [https://memgraph.com]
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 #include "connection.h"
 #include "cursor.h"
 #include "glue.h"
+#include "router.h"
 #include "types.h"
 
 PyObject *Warning;
@@ -34,6 +35,7 @@ PyObject *InterfaceError;
 PyObject *DatabaseError;
 PyObject *DataError;
 PyObject *OperationalError;
+PyObject *TransientError;
 PyObject *IntegrityError;
 PyObject *InternalError;
 PyObject *ProgrammingError;
@@ -56,6 +58,11 @@ PyDoc_STRVAR(
     "Exception raised for errors related to the database's operation, not "
     "necessarily under the control of the programmer (e.g. unexpected "
     "disconnect, failed allocation).");
+PyDoc_STRVAR(
+    TransientError_doc,
+    "Exception raised for transient errors that may succeed if the operation "
+    "is retried (e.g. during a high-availability failover). A subclass of "
+    ":exc:`OperationalError`.");
 PyDoc_STRVAR(
     IntegrityError_doc,
     "Exception raised when the relational integrity of the database is "
@@ -86,6 +93,8 @@ int add_module_exceptions(PyObject *module) {
       {"mgclient.DataError", &DataError, &DatabaseError, DataError_doc},
       {"mgclient.OperationalError", &OperationalError, &DatabaseError,
        OperationalError_doc},
+      {"mgclient.TransientError", &TransientError, &OperationalError,
+       TransientError_doc},
       {"mgclient.IntegrityError", &IntegrityError, &DatabaseError,
        IntegrityError_doc},
       {"mgclient.InternalError", &InternalError, &DatabaseError,
@@ -171,6 +180,7 @@ static struct {
                   {"Node", &NodeType},
                   {"Relationship", &RelationshipType},
                   {"Path", &PathType},
+                  {"_Router", &RouterType},
                   {NULL, NULL}};
 
 static int add_module_types(PyObject *module) {
@@ -281,13 +291,13 @@ static PyMethodDef mgclient_methods[] = {
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef mgclient_module = {.m_base = PyModuleDef_HEAD_INIT,
-                                             .m_name = "mgclient",
+                                             .m_name = "mgclient._mgclient",
                                              .m_doc = NULL,
                                              .m_size = -1,
                                              .m_methods = mgclient_methods,
                                              .m_slots = NULL};
 
-PyMODINIT_FUNC PyInit_mgclient(void) {
+PyMODINIT_FUNC PyInit__mgclient(void) {
   PyObject *m;
   if (!(m = PyModule_Create(&mgclient_module))) {
     return NULL;

@@ -46,9 +46,8 @@ Documentation = "https://memgraph.github.io/pymgclient"
 
 [tool.setuptools]
 py-modules = ["tools.pymgclient_build_meta"]
-
-[tool.setuptools.packages.find]
-include = ["tools*"]
+packages = ["tools", "mgclient"]
+package-dir = { mgclient = "python/mgclient" }
 
 [tool.setuptools.dynamic]
 version = { attr = "tools.pymgclient_build_meta.__version__" }

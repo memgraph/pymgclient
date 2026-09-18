@@ -180,6 +180,8 @@ static struct {
                   {"Node", &NodeType},
                   {"Relationship", &RelationshipType},
                   {"Path", &PathType},
+                  {"Point2D", &Point2DType},
+                  {"Point3D", &Point3DType},
                   {"_Router", &RouterType},
                   {NULL, NULL}};
 

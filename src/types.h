@@ -42,10 +42,29 @@ typedef struct {
   PyObject *nodes;
   PyObject *relationships;
 } PathObject;
+
+typedef struct {
+  PyObject_HEAD
+
+  uint16_t srid;
+  double x_longitude;
+  double y_latitude;
+} Point2DObject;
+
+typedef struct {
+  PyObject_HEAD
+
+  uint16_t srid;
+  double x_longitude;
+  double y_latitude;
+  double z_height;
+} Point3DObject;
 // clang-format on
 
 extern PyTypeObject NodeType;
 extern PyTypeObject RelationshipType;
 extern PyTypeObject PathType;
+extern PyTypeObject Point2DType;
+extern PyTypeObject Point3DType;
 
 #endif

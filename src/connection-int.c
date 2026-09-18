@@ -191,7 +191,11 @@ int connection_begin(ConnectionObject *conn) {
 }
 
 void connection_discard_all(ConnectionObject *conn) {
-  assert(conn->status == CONN_STATUS_EXECUTING);
+  // Callers arrive here either before the results have been requested, or part
+  // way through consuming them after a row failed to convert. Only the former
+  // still owes the server a pull.
+  assert(conn->status == CONN_STATUS_EXECUTING ||
+         conn->status == CONN_STATUS_FETCHING);
   assert(PyErr_Occurred());
 
   PyObject *prev_exc;
@@ -203,7 +207,10 @@ void connection_discard_all(ConnectionObject *conn) {
     Py_XDECREF(traceback);
   }
 
-  int status = mg_session_pull(conn->session, NULL);
+  int status = 0;
+  if (conn->status == CONN_STATUS_EXECUTING) {
+    status = mg_session_pull(conn->session, NULL);
+  }
   if (status == 0) {
     mg_result *result;
     while ((status = mg_session_fetch(conn->session, &result)) == 1)

@@ -651,7 +651,7 @@ static int point_2d_init(Point2DObject *point, PyObject *args,
   double x_longitude;
   double y_latitude;
 
-  static char *kwlist[] = {"", "", "", NULL};
+  static char *kwlist[] = {"srid", "x_longitude", "y_latitude", NULL};
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Ldd", kwlist, &srid,
                                    &x_longitude, &y_latitude)) {
     return -1;
@@ -776,7 +776,8 @@ static int point_3d_init(Point3DObject *point, PyObject *args,
   double y_latitude;
   double z_height;
 
-  static char *kwlist[] = {"", "", "", "", NULL};
+  static char *kwlist[] = {"srid", "x_longitude", "y_latitude", "z_height",
+                           NULL};
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Lddd", kwlist, &srid,
                                    &x_longitude, &y_latitude, &z_height)) {
     return -1;

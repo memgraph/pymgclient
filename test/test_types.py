@@ -66,10 +66,21 @@ def test_point_3d_attributes():
     assert point.z_height == 3.5
 
 
+def test_point_accepts_keyword_arguments():
+    assert mgclient.Point2D(
+        srid=7203, x_longitude=1.5, y_latitude=2.5
+    ) == mgclient.Point2D(7203, 1.5, 2.5)
+    assert mgclient.Point3D(
+        srid=9157, x_longitude=1.5, y_latitude=2.5, z_height=3.5
+    ) == mgclient.Point3D(9157, 1.5, 2.5, 3.5)
+
+
 def test_point_attributes_are_readonly():
     point = mgclient.Point2D(7203, 1.5, 2.5)
     with pytest.raises(AttributeError):
         point.srid = 4326
+    with pytest.raises(AttributeError):
+        mgclient.Point3D(9157, 1.5, 2.5, 3.5).z_height = 0.0
 
 
 def test_point_accepts_integer_coordinates():
@@ -139,3 +150,11 @@ def test_point_rejects_out_of_range_srid():
         mgclient.Point2D(-1, 1.5, 2.5)
     with pytest.raises(OverflowError):
         mgclient.Point2D(70000, 1.5, 2.5)
+    with pytest.raises(OverflowError):
+        mgclient.Point3D(-1, 1.5, 2.5, 3.5)
+
+
+def test_point_accepts_srid_at_the_limits_of_the_wire_format():
+    assert mgclient.Point2D(0, 1.5, 2.5).srid == 0
+    assert mgclient.Point2D(65535, 1.5, 2.5).srid == 65535
+    assert mgclient.Point3D(65535, 1.5, 2.5, 3.5).srid == 65535

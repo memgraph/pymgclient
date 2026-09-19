@@ -142,3 +142,17 @@ Graph type objects
 
 .. autoclass:: mgclient.Path
    :members:
+
+
+.. autoclass:: mgclient.Point2D
+
+   .. autoattribute:: mgclient.Point2D.srid
+   .. autoattribute:: mgclient.Point2D.x_longitude
+   .. autoattribute:: mgclient.Point2D.y_latitude
+
+.. autoclass:: mgclient.Point3D
+
+   .. autoattribute:: mgclient.Point3D.srid
+   .. autoattribute:: mgclient.Point3D.x_longitude
+   .. autoattribute:: mgclient.Point3D.y_latitude
+   .. autoattribute:: mgclient.Point3D.z_height

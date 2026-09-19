@@ -190,8 +190,24 @@ int connection_begin(ConnectionObject *conn) {
   return 0;
 }
 
+// Whether the server said it is holding back more of the stream. A pull the
+// cursor bounded with a row count ends this way, and the rest has to be asked
+// for before the query is finished with.
+static int result_has_more(const mg_result *result) {
+  const mg_map *summary = mg_result_summary(result);
+  if (!summary) {
+    return 0;
+  }
+  const mg_value *has_more = mg_map_at(summary, "has_more");
+  return has_more && mg_value_bool(has_more);
+}
+
 void connection_discard_all(ConnectionObject *conn) {
-  assert(conn->status == CONN_STATUS_EXECUTING);
+  // Callers arrive here either before the results have been requested, or part
+  // way through consuming them after a row failed to convert. Only the former
+  // still owes the server the first pull.
+  assert(conn->status == CONN_STATUS_EXECUTING ||
+         conn->status == CONN_STATUS_FETCHING);
   assert(PyErr_Occurred());
 
   PyObject *prev_exc;
@@ -203,11 +219,22 @@ void connection_discard_all(ConnectionObject *conn) {
     Py_XDECREF(traceback);
   }
 
-  int status = mg_session_pull(conn->session, NULL);
-  if (status == 0) {
-    mg_result *result;
+  int status = 0;
+  int pull_needed = conn->status == CONN_STATUS_EXECUTING;
+  mg_result *result;
+  while (1) {
+    if (pull_needed) {
+      status = mg_session_pull(conn->session, NULL);
+      if (status != 0) {
+        break;
+      }
+    }
     while ((status = mg_session_fetch(conn->session, &result)) == 1)
       ;
+    if (status != 0 || !result_has_more(result)) {
+      break;
+    }
+    pull_needed = 1;
   }
 
   if (status == 0) {

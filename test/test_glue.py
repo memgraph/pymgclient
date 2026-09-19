@@ -352,3 +352,94 @@ def test_zoneddatetime_with_iana_timezone(memgraph_connection):
     assert dt.second == 45
     assert str(dt.tzinfo) in expected_tz_names
 
+
+# Spatial reference system identifiers Memgraph assigns to the two coordinate
+# systems, in their two and three dimensional forms.
+SRID_CARTESIAN_2D = 7203
+SRID_CARTESIAN_3D = 9157
+SRID_WGS84_2D = 4326
+SRID_WGS84_3D = 4979
+
+
+def test_point_2d_receive(memgraph_connection):
+    cursor = memgraph_connection.cursor()
+    cursor.execute("RETURN point({x: 1.5, y: 2.5}) AS point")
+    assert cursor.fetchall() == [(mgclient.Point2D(SRID_CARTESIAN_2D, 1.5, 2.5),)]
+
+
+def test_point_3d_receive(memgraph_connection):
+    cursor = memgraph_connection.cursor()
+    cursor.execute("RETURN point({x: 1.5, y: 2.5, z: 3.5}) AS point")
+    assert cursor.fetchall() == [(mgclient.Point3D(SRID_CARTESIAN_3D, 1.5, 2.5, 3.5),)]
+
+
+def test_wgs84_point_receive(memgraph_connection):
+    cursor = memgraph_connection.cursor()
+    cursor.execute(
+        "RETURN point({longitude: 1.5, latitude: 2.5}) AS two, "
+        "point({longitude: 1.5, latitude: 2.5, height: 3.5}) AS three"
+    )
+    assert cursor.fetchall() == [
+        (
+            mgclient.Point2D(SRID_WGS84_2D, 1.5, 2.5),
+            mgclient.Point3D(SRID_WGS84_3D, 1.5, 2.5, 3.5),
+        )
+    ]
+
+
+def test_point_receive_nested_in_collections(memgraph_connection):
+    cursor = memgraph_connection.cursor()
+    cursor.execute(
+        "RETURN [point({x: 1.5, y: 2.5})] AS list, {p: point({x: 1.5, y: 2.5})} AS map"
+    )
+    point = mgclient.Point2D(SRID_CARTESIAN_2D, 1.5, 2.5)
+    assert cursor.fetchall() == [([point], {"p": point})]
+
+
+def test_point_receive_as_node_property(memgraph_connection):
+    cursor = memgraph_connection.cursor()
+    cursor.execute("MATCH (n:Place) DETACH DELETE n")
+    cursor.execute("CREATE (:Place {location: point({x: 1.5, y: 2.5})})")
+    cursor.execute("MATCH (n:Place) RETURN n.location AS location")
+    assert cursor.fetchall() == [(mgclient.Point2D(SRID_CARTESIAN_2D, 1.5, 2.5),)]
+
+
+def test_point_2d_send(memgraph_connection):
+    cursor = memgraph_connection.cursor()
+    point = mgclient.Point2D(SRID_CARTESIAN_2D, 1.5, 2.5)
+    cursor.execute("RETURN $value AS point", {"value": point})
+    assert cursor.fetchall() == [(point,)]
+
+
+def test_point_3d_send(memgraph_connection):
+    cursor = memgraph_connection.cursor()
+    point = mgclient.Point3D(SRID_CARTESIAN_3D, 1.5, 2.5, 3.5)
+    cursor.execute("RETURN $value AS point", {"value": point})
+    assert cursor.fetchall() == [(point,)]
+
+
+def test_wgs84_point_send(memgraph_connection):
+    cursor = memgraph_connection.cursor()
+    two = mgclient.Point2D(SRID_WGS84_2D, 1.5, 2.5)
+    three = mgclient.Point3D(SRID_WGS84_3D, 1.5, 2.5, 3.5)
+    cursor.execute("RETURN $two AS two, $three AS three", {"two": two, "three": three})
+    assert cursor.fetchall() == [(two, three)]
+
+
+def test_point_send_nested_in_collections(memgraph_connection):
+    cursor = memgraph_connection.cursor()
+    point = mgclient.Point2D(SRID_CARTESIAN_2D, 1.5, 2.5)
+    cursor.execute(
+        "RETURN $list AS list, $map AS map", {"list": [point], "map": {"p": point}}
+    )
+    assert cursor.fetchall() == [([point], {"p": point})]
+
+
+def test_point_send_as_node_property(memgraph_connection):
+    cursor = memgraph_connection.cursor()
+    point = mgclient.Point2D(SRID_CARTESIAN_2D, 1.5, 2.5)
+    cursor.execute("MATCH (n:Stored) DETACH DELETE n")
+    cursor.execute("CREATE (:Stored {location: $value})", {"value": point})
+    cursor.execute("MATCH (n:Stored) RETURN n.location AS location")
+    assert cursor.fetchall() == [(point,)]
+

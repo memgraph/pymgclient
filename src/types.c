@@ -19,6 +19,8 @@
 PyTypeObject NodeType;
 PyTypeObject RelationshipType;
 PyTypeObject PathType;
+PyTypeObject Point2DType;
+PyTypeObject Point3DType;
 
 #define CHECK_ATTRIBUTE(obj, name)                                            \
   do {                                                                        \
@@ -569,6 +571,255 @@ PyTypeObject PathType = {
     .tp_richcompare = (richcmpfunc)path_richcompare,
     .tp_members = path_members,
     .tp_init = (initproc)path_init,
+    .tp_new = PyType_GenericNew
+};
+
+// A spatial reference system identifier is carried on the wire as an unsigned
+// 16 bit integer, so reject anything Memgraph could not round trip.
+static int parse_srid(int64_t srid, uint16_t *out) {
+  if (srid < 0 || srid > UINT16_MAX) {
+    PyErr_Format(PyExc_OverflowError,
+                 "srid must be between 0 and %d, got %lld", UINT16_MAX,
+                 (long long)srid);
+    return -1;
+  }
+  *out = (uint16_t)srid;
+  return 0;
+}
+
+static PyObject *point_2d_repr(Point2DObject *point) {
+  PyObject *x = PyFloat_FromDouble(point->x_longitude);
+  PyObject *y = PyFloat_FromDouble(point->y_latitude);
+  PyObject *result = NULL;
+  if (x && y) {
+    result = PyUnicode_FromFormat(
+        "<%s(srid=%u, x_longitude=%R, y_latitude=%R) at %p>",
+        Py_TYPE(point)->tp_name, (unsigned)point->srid, x, y, point);
+  }
+  Py_XDECREF(x);
+  Py_XDECREF(y);
+  return result;
+}
+
+static PyObject *point_2d_str(Point2DObject *point) {
+  PyObject *x = PyFloat_FromDouble(point->x_longitude);
+  PyObject *y = PyFloat_FromDouble(point->y_latitude);
+  PyObject *result = NULL;
+  if (x && y) {
+    result = PyUnicode_FromFormat("POINT({x: %R, y: %R, srid: %u})", x, y,
+                                  (unsigned)point->srid);
+  }
+  Py_XDECREF(x);
+  Py_XDECREF(y);
+  return result;
+}
+
+// Helper function for implementing richcompare and hash.
+static PyObject *point_2d_astuple(Point2DObject *point) {
+  return Py_BuildValue("(Idd)", (unsigned)point->srid, point->x_longitude,
+                       point->y_latitude);
+}
+
+static PyObject *point_2d_richcompare(Point2DObject *lhs, PyObject *rhs,
+                                      int op) {
+  if (Py_TYPE(rhs) != &Point2DType) {
+    Py_RETURN_NOTIMPLEMENTED;
+  }
+
+  PyObject *tlhs = point_2d_astuple(lhs);
+  PyObject *trhs = tlhs ? point_2d_astuple((Point2DObject *)rhs) : NULL;
+  PyObject *ret = trhs ? PyObject_RichCompare(tlhs, trhs, op) : NULL;
+
+  Py_XDECREF(tlhs);
+  Py_XDECREF(trhs);
+  return ret;
+}
+
+static Py_hash_t point_2d_hash(Point2DObject *point) {
+  PyObject *tuple = point_2d_astuple(point);
+  if (!tuple) {
+    return -1;
+  }
+  Py_hash_t hash = PyObject_Hash(tuple);
+  Py_DECREF(tuple);
+  return hash;
+}
+
+static int point_2d_init(Point2DObject *point, PyObject *args,
+                         PyObject *kwargs) {
+  int64_t srid;
+  double x_longitude;
+  double y_latitude;
+
+  static char *kwlist[] = {"srid", "x_longitude", "y_latitude", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Ldd", kwlist, &srid,
+                                   &x_longitude, &y_latitude)) {
+    return -1;
+  }
+  if (parse_srid(srid, &point->srid) < 0) {
+    return -1;
+  }
+
+  point->x_longitude = x_longitude;
+  point->y_latitude = y_latitude;
+  return 0;
+}
+
+PyDoc_STRVAR(PointType_srid_doc,
+             "Spatial reference system identifier of the coordinate system the "
+             "point is expressed in.");
+
+PyDoc_STRVAR(PointType_x_longitude_doc,
+             "First coordinate: x in a Cartesian system, longitude in WGS84.");
+
+PyDoc_STRVAR(PointType_y_latitude_doc,
+             "Second coordinate: y in a Cartesian system, latitude in WGS84.");
+
+PyDoc_STRVAR(PointType_z_height_doc,
+             "Third coordinate: z in a Cartesian system, height in WGS84.");
+
+static PyMemberDef point_2d_members[] = {
+    {"srid", T_USHORT, offsetof(Point2DObject, srid), READONLY,
+     PointType_srid_doc},
+    {"x_longitude", T_DOUBLE, offsetof(Point2DObject, x_longitude), READONLY,
+     PointType_x_longitude_doc},
+    {"y_latitude", T_DOUBLE, offsetof(Point2DObject, y_latitude), READONLY,
+     PointType_y_latitude_doc},
+    {NULL}};
+
+PyDoc_STRVAR(Point2DType_doc, "A point in a two dimensional coordinate system.");
+
+// clang-format off
+PyTypeObject Point2DType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "mgclient.Point2D",
+    .tp_basicsize = sizeof(Point2DObject),
+    .tp_itemsize = 0,
+    .tp_repr = (reprfunc)point_2d_repr,
+    .tp_str = (reprfunc)point_2d_str,
+    .tp_hash = (hashfunc)point_2d_hash,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_doc = Point2DType_doc,
+    .tp_richcompare = (richcmpfunc)point_2d_richcompare,
+    .tp_members = point_2d_members,
+    .tp_init = (initproc)point_2d_init,
+    .tp_new = PyType_GenericNew
+};
+// clang-format on
+
+static PyObject *point_3d_repr(Point3DObject *point) {
+  PyObject *x = PyFloat_FromDouble(point->x_longitude);
+  PyObject *y = PyFloat_FromDouble(point->y_latitude);
+  PyObject *z = PyFloat_FromDouble(point->z_height);
+  PyObject *result = NULL;
+  if (x && y && z) {
+    result = PyUnicode_FromFormat(
+        "<%s(srid=%u, x_longitude=%R, y_latitude=%R, z_height=%R) at %p>",
+        Py_TYPE(point)->tp_name, (unsigned)point->srid, x, y, z, point);
+  }
+  Py_XDECREF(x);
+  Py_XDECREF(y);
+  Py_XDECREF(z);
+  return result;
+}
+
+static PyObject *point_3d_str(Point3DObject *point) {
+  PyObject *x = PyFloat_FromDouble(point->x_longitude);
+  PyObject *y = PyFloat_FromDouble(point->y_latitude);
+  PyObject *z = PyFloat_FromDouble(point->z_height);
+  PyObject *result = NULL;
+  if (x && y && z) {
+    result = PyUnicode_FromFormat("POINT({x: %R, y: %R, z: %R, srid: %u})", x,
+                                  y, z, (unsigned)point->srid);
+  }
+  Py_XDECREF(x);
+  Py_XDECREF(y);
+  Py_XDECREF(z);
+  return result;
+}
+
+// Helper function for implementing richcompare and hash.
+static PyObject *point_3d_astuple(Point3DObject *point) {
+  return Py_BuildValue("(Iddd)", (unsigned)point->srid, point->x_longitude,
+                       point->y_latitude, point->z_height);
+}
+
+static PyObject *point_3d_richcompare(Point3DObject *lhs, PyObject *rhs,
+                                      int op) {
+  if (Py_TYPE(rhs) != &Point3DType) {
+    Py_RETURN_NOTIMPLEMENTED;
+  }
+
+  PyObject *tlhs = point_3d_astuple(lhs);
+  PyObject *trhs = tlhs ? point_3d_astuple((Point3DObject *)rhs) : NULL;
+  PyObject *ret = trhs ? PyObject_RichCompare(tlhs, trhs, op) : NULL;
+
+  Py_XDECREF(tlhs);
+  Py_XDECREF(trhs);
+  return ret;
+}
+
+static Py_hash_t point_3d_hash(Point3DObject *point) {
+  PyObject *tuple = point_3d_astuple(point);
+  if (!tuple) {
+    return -1;
+  }
+  Py_hash_t hash = PyObject_Hash(tuple);
+  Py_DECREF(tuple);
+  return hash;
+}
+
+static int point_3d_init(Point3DObject *point, PyObject *args,
+                         PyObject *kwargs) {
+  int64_t srid;
+  double x_longitude;
+  double y_latitude;
+  double z_height;
+
+  static char *kwlist[] = {"srid", "x_longitude", "y_latitude", "z_height",
+                           NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Lddd", kwlist, &srid,
+                                   &x_longitude, &y_latitude, &z_height)) {
+    return -1;
+  }
+  if (parse_srid(srid, &point->srid) < 0) {
+    return -1;
+  }
+
+  point->x_longitude = x_longitude;
+  point->y_latitude = y_latitude;
+  point->z_height = z_height;
+  return 0;
+}
+
+static PyMemberDef point_3d_members[] = {
+    {"srid", T_USHORT, offsetof(Point3DObject, srid), READONLY,
+     PointType_srid_doc},
+    {"x_longitude", T_DOUBLE, offsetof(Point3DObject, x_longitude), READONLY,
+     PointType_x_longitude_doc},
+    {"y_latitude", T_DOUBLE, offsetof(Point3DObject, y_latitude), READONLY,
+     PointType_y_latitude_doc},
+    {"z_height", T_DOUBLE, offsetof(Point3DObject, z_height), READONLY,
+     PointType_z_height_doc},
+    {NULL}};
+
+PyDoc_STRVAR(Point3DType_doc,
+             "A point in a three dimensional coordinate system.");
+
+// clang-format off
+PyTypeObject Point3DType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "mgclient.Point3D",
+    .tp_basicsize = sizeof(Point3DObject),
+    .tp_itemsize = 0,
+    .tp_repr = (reprfunc)point_3d_repr,
+    .tp_str = (reprfunc)point_3d_str,
+    .tp_hash = (hashfunc)point_3d_hash,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_doc = Point3DType_doc,
+    .tp_richcompare = (richcmpfunc)point_3d_richcompare,
+    .tp_members = point_3d_members,
+    .tp_init = (initproc)point_3d_init,
     .tp_new = PyType_GenericNew
 };
 

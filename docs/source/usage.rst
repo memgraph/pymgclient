@@ -97,6 +97,8 @@ Map             :class:`dict`
 Node            :class:`mgclient.Node`
 Relationship    :class:`mgclient.Relationship`
 Path            :class:`mgclient.Path`
+Point2D         :class:`mgclient.Point2D`
+Point3D         :class:`mgclient.Point3D`
 =============   ===============================
 
 Note that in Bolt protocol, all string data is represented as UTF-8 encoded

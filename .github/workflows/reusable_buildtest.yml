@@ -90,7 +90,7 @@ jobs:
           docker buildx build \
             --platform linux/${{ matrix.arch }} \
             -t pymgclient-builder:latest \
-            --build-arg PYTHON_VERSIONS="3.10,3.11,3.12,3.13,3.14" \
+            --build-arg PYTHON_VERSIONS="3.10,3.11,3.12,3.13,3.14,3.15" \
             -f tools/Dockerfile.manylinux \
             --load .
 
@@ -105,7 +105,7 @@ jobs:
 
       - name: Build Python Wheels
         run: |
-          PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14")
+          PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14" "3.15")
           for python_version in "${PYTHON_VERSIONS[@]}"; do
             build_cmd="./tools/build-wheel-manylinux.sh --python-version $python_version --static-ssl --run-auditwheel"
             docker exec -i testcontainer \
@@ -118,7 +118,7 @@ jobs:
 
       - name: Install pymgclient and run tests
         run: |
-          PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14")
+          PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14" "3.15")
           for python_version in "${PYTHON_VERSIONS[@]}"; do
             echo "Testing Python version $python_version"
             short_python_version=$(echo $python_version | sed 's/\.//g')
@@ -176,7 +176,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2022, windows-2025]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
 
     steps:
       - name: Checkout code
@@ -313,6 +313,7 @@ jobs:
           - '3.12'
           - '3.13'
           - '3.14'
+          - '3.15'
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2

@@ -305,11 +305,24 @@ if sys.platform == "win32":
 else:
     extra_link_args = None
 
+# The extension only uses the stable ABI (limited API) of the minimum
+# supported Python version, so a single abi3 wheel works on all later versions.
+PY_LIMITED_API_VERSION = "0x030A0000"
+PY_LIMITED_API_TAG = "cp310"
+
 setup(
     ext_modules=[
-        Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_link_args=extra_link_args)
+        Extension(
+            EXTENSION_NAME,
+            sources=sources,
+            depends=headers,
+            extra_link_args=extra_link_args,
+            define_macros=[("Py_LIMITED_API", PY_LIMITED_API_VERSION)],
+            py_limited_api=True,
+        )
     ],
     cmdclass={"build_ext": BuildMgclientExt},
+    options={"bdist_wheel": {"py_limited_api": PY_LIMITED_API_TAG}},
 )
 
 if readme_path.exists():

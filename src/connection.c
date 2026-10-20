@@ -19,18 +19,18 @@
 #include "cursor.h"
 #include "exceptions.h"
 #include "glue.h"
-
+#include "heaptype.h"
 static void connection_dealloc(ConnectionObject *conn) {
   if (conn->owns_session) {
     mg_session_destroy(conn->session);
   }
-  Py_TYPE(conn)->tp_free(conn);
+  heap_type_free(conn);
 }
 
 PyObject *connection_wrap_session(mg_session *session, int owns_session,
                                   int autocommit) {
   ConnectionObject *conn =
-      (ConnectionObject *)ConnectionType.tp_alloc(&ConnectionType, 0);
+      (ConnectionObject *)heap_type_alloc(ConnectionType);
   if (!conn) {
     return NULL;
   }
@@ -161,7 +161,7 @@ static PyObject *connection_new(PyTypeObject *subtype, PyObject *args,
   (void)args;
   (void)kwargs;
 
-  PyObject *conn = subtype->tp_alloc(subtype, 0);
+  PyObject *conn = heap_type_alloc(subtype);
   if (!conn) {
     return NULL;
   }
@@ -311,7 +311,7 @@ static PyObject *connection_cursor(ConnectionObject *conn, PyObject *args) {
     return NULL;
   }
 
-  return PyObject_CallFunctionObjArgs((PyObject *)&CursorType, conn, NULL);
+  return PyObject_CallFunctionObjArgs((PyObject *)CursorType, conn, NULL);
 }
 
 // clang-format off
@@ -475,7 +475,11 @@ static PyObject *connection_get_routing_table(ConnectionObject *conn,
     if (!seq) {
       goto cleanup_error;
     }
-    Py_ssize_t size = PySequence_Fast_GET_SIZE(seq);
+    Py_ssize_t size = PySequence_Size(seq);
+    if (size < 0) {
+      Py_DECREF(seq);
+      goto cleanup_error;
+    }
     if (size > UINT32_MAX) {
       Py_DECREF(seq);
       PyErr_SetString(PyExc_ValueError, "bookmarks size exceeded");
@@ -488,18 +492,25 @@ static PyObject *connection_get_routing_table(ConnectionObject *conn,
       goto cleanup_error;
     }
     for (Py_ssize_t i = 0; i < size; ++i) {
-      PyObject *item = PySequence_Fast_GET_ITEM(seq, i);  // borrowed reference
+      PyObject *item = PySequence_GetItem(seq, i);
+      if (!item) {
+        Py_DECREF(seq);
+        goto cleanup_error;
+      }
       if (!PyUnicode_Check(item)) {
+        Py_DECREF(item);
         Py_DECREF(seq);
         PyErr_SetString(PyExc_TypeError, "bookmarks must be str");
         goto cleanup_error;
       }
-      const char *bookmark = PyUnicode_AsUTF8(item);
+      const char *bookmark = PyUnicode_AsUTF8AndSize(item, NULL);
       if (!bookmark) {
+        Py_DECREF(item);
         Py_DECREF(seq);
         goto cleanup_error;
       }
       mg_value *value = mg_value_make_string(bookmark);
+      Py_DECREF(item);
       if (!value || mg_list_append(mg_bookmarks, value) != 0) {
         mg_value_destroy(value);
         Py_DECREF(seq);
@@ -591,18 +602,21 @@ New instances are created using the factory function :func:`connect`.\n\
 Connections are not thread-safe.");
 // clang-format on
 
-// clang-format off
-PyTypeObject ConnectionType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "mgclient.Connection",
-    .tp_doc = ConnectionType_doc,
-    .tp_basicsize = sizeof(ConnectionObject),
-    .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_dealloc = (destructor)connection_dealloc,
-    .tp_methods = connection_methods,
-    .tp_members = connection_members,
-    .tp_getset = connection_getset,
-    .tp_init = (initproc)connection_init,
-    .tp_new = (newfunc)connection_new};
-// clang-format on
+PyTypeObject *ConnectionType;
+
+static PyType_Slot connection_slots[] = {
+    {Py_tp_doc, (void *)ConnectionType_doc},
+    {Py_tp_dealloc, connection_dealloc},
+    {Py_tp_methods, connection_methods},
+    {Py_tp_members, connection_members},
+    {Py_tp_getset, connection_getset},
+    {Py_tp_init, connection_init},
+    {Py_tp_new, connection_new},
+    {0, NULL}};
+
+PyType_Spec ConnectionType_spec = {
+    .name = "mgclient.Connection",
+    .basicsize = sizeof(ConnectionObject),
+    .itemsize = 0,
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
+    .slots = connection_slots};

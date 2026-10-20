@@ -33,5 +33,5 @@ mg_value *py_object_to_mg_value(PyObject *object);
 
 mg_date_time_zone_id *py_date_time_to_mg_date_time_zone_id(PyObject *obj);
 
-void py_datetime_import_init();
+int py_datetime_import_init(void);
 #endif

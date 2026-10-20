@@ -54,7 +54,9 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          # omit ‘name’ to fetch *every* artifact uploaded earlier
+          # Fetch every release artifact, but not the build-* wheels that are
+          # only uploaded for the test jobs.
+          pattern: pymgclient-*
           path: ./downloaded-artifacts
 
       - name: Move Artifacts

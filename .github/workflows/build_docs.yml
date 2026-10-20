@@ -39,9 +39,6 @@ jobs:
           version="$(( python3 --version 2>&1 || echo ) | grep -Po '(?<=Python )\d+\.\d+' || true)"
           echo "Found version $version"
           echo "PYTHON_VERSION=$version" >> $GITHUB_ENV
-          # Convert Python version to wheel tag format (e.g., 3.10 -> cp310)
-          major_minor=$(echo "$version" | sed 's/\.//')
-          echo "PYTHON_TAG=cp${major_minor}" >> $GITHUB_ENV
 
       - name: Download Python Artifact
         id: download
@@ -66,13 +63,13 @@ jobs:
         if: steps.record.outputs.DOWNLOAD_STATUS == 'success'
         run: |
           source env/bin/activate
-          # Find the wheel matching the Python version
-          wheel=$(find downloaded-artifacts -name "*${PYTHON_TAG}*.whl" | head -n 1)
+          # The wheel uses the stable ABI, so it works on any supported Python
+          wheel=$(find downloaded-artifacts -name "*-abi3-*.whl" | head -n 1)
           if [ -n "$wheel" ]; then
             echo "Installing wheel: $wheel"
             pip install "$wheel"
           else
-            echo "No matching wheel found for Python ${PYTHON_VERSION} (tag: ${PYTHON_TAG})"
+            echo "No abi3 wheel found"
             echo "Available wheels:"
             find downloaded-artifacts -name "*.whl" || true
             exit 1

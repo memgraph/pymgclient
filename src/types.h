@@ -44,8 +44,11 @@ typedef struct {
 } PathObject;
 // clang-format on
 
-extern PyTypeObject NodeType;
-extern PyTypeObject RelationshipType;
-extern PyTypeObject PathType;
+extern PyTypeObject *NodeType;
+extern PyType_Spec NodeType_spec;
+extern PyTypeObject *RelationshipType;
+extern PyType_Spec RelationshipType_spec;
+extern PyTypeObject *PathType;
+extern PyType_Spec PathType_spec;
 
 #endif

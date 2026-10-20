@@ -17,83 +17,52 @@
 #include "types.h"
 
 #include <Python.h>
-#include <datetime.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
 /**
- * TODO(colinbarry) Python 3.9 doesn't support the PyDateTime_DATE_GET_TZINFO
- * macro. Until we require Python 3.10, this shim function does exactly the
- * same thing whilst keeping 3.9 compatibility.
- * 
- * Updated for Python 3.14 compatibility: In Python 3.14, the datetime struct
- * includes a hastzinfo field that must be checked before accessing tzinfo.
- * The macro PyDateTime_DATE_GET_TZINFO handles this correctly in Python 3.10+.
+ * The datetime C API (datetime.h) is not part of the limited API, so all
+ * datetime handling goes through the Python-level datetime module. These
+ * references are populated once by py_datetime_import_init().
  */
-PyObject* INTERNAL_PyDateTime_DATE_GET_TZINFO(PyObject *obj)
-{
-#if PY_VERSION_HEX >= 0x030A0000
-    // Python 3.10+ has the macro available, use it
-    #ifdef PyDateTime_DATE_GET_TZINFO
-        if (PyDateTime_Check(obj)) {
-            return PyDateTime_DATE_GET_TZINFO(obj);
-        } else if (PyTime_Check(obj)) {
-            return PyDateTime_TIME_GET_TZINFO(obj);
-        }
-    #endif
-#endif
+static PyObject *py_date_class = NULL;
+static PyObject *py_time_class = NULL;
+static PyObject *py_datetime_class = NULL;
+static PyObject *py_timedelta_class = NULL;
+static PyObject *py_timezone_class = NULL;
+static PyObject *py_timezone_utc = NULL;
 
-    // Fallback for Python 3.9 or if macro not available
-    // For Python 3.9, we can safely access tzinfo directly
-    // For Python 3.10+, if macro wasn't available, check hastzinfo if possible
-    PyObject *tzinfo = NULL;
-    
-    if (PyDateTime_Check(obj)) {
-        #if PY_VERSION_HEX >= 0x030E0000
-            // Python 3.14+ requires checking hastzinfo before accessing tzinfo
-            // Use the internal _PyDateTime_HAS_TZINFO check if available
-            if (((_PyDateTime_BaseTZInfo *)obj)->hastzinfo) {
-                tzinfo = ((PyDateTime_DateTime*)obj)->tzinfo;
-            } else {
-                return Py_None;
-            }
-        #elif PY_VERSION_HEX >= 0x030A0000
-            // Python 3.10-3.13: check hastzinfo if struct has it
-            if (((_PyDateTime_BaseTZInfo *)obj)->hastzinfo) {
-                tzinfo = ((PyDateTime_DateTime*)obj)->tzinfo;
-            } else {
-                return Py_None;
-            }
-        #else
-            // Python 3.9 - direct access (struct doesn't have hastzinfo)
-            tzinfo = ((PyDateTime_DateTime*)obj)->tzinfo;
-        #endif
-    } else if (PyTime_Check(obj)) {
-        #if PY_VERSION_HEX >= 0x030E0000
-            // Python 3.14+ requires checking hastzinfo before accessing tzinfo
-            if (((_PyDateTime_BaseTZInfo *)obj)->hastzinfo) {
-                tzinfo = ((PyDateTime_Time*)obj)->tzinfo;
-            } else {
-                return Py_None;
-            }
-        #elif PY_VERSION_HEX >= 0x030A0000
-            // Python 3.10-3.13: check hastzinfo if struct has it
-            if (((_PyDateTime_BaseTZInfo *)obj)->hastzinfo) {
-                tzinfo = ((PyDateTime_Time*)obj)->tzinfo;
-            } else {
-                return Py_None;
-            }
-        #else
-            // Python 3.9 - direct access (struct doesn't have hastzinfo)
-            tzinfo = ((PyDateTime_Time*)obj)->tzinfo;
-        #endif
-    }
+// Return -1 on failure (with a Python exception set)
+// Return 0 on success
+int py_datetime_import_init(void) {
+  PyObject *datetime_module = PyImport_ImportModule("datetime");
+  if (!datetime_module) {
+    return -1;
+  }
 
-    return tzinfo ? tzinfo : Py_None;
+  int ret = -1;
+  if (!(py_date_class = PyObject_GetAttrString(datetime_module, "date")) ||
+      !(py_time_class = PyObject_GetAttrString(datetime_module, "time")) ||
+      !(py_datetime_class =
+            PyObject_GetAttrString(datetime_module, "datetime")) ||
+      !(py_timedelta_class =
+            PyObject_GetAttrString(datetime_module, "timedelta")) ||
+      !(py_timezone_class =
+            PyObject_GetAttrString(datetime_module, "timezone")) ||
+      !(py_timezone_utc = PyObject_GetAttrString(py_timezone_class, "utc"))) {
+    goto exit;
+  }
+  ret = 0;
+
+exit:
+  Py_DECREF(datetime_module);
+  return ret;
 }
 
-void py_datetime_import_init() { PyDateTime_IMPORT; }
+static int is_exact_type(PyObject *obj, PyObject *type) {
+  return Py_TYPE(obj) == (PyTypeObject *)type;
+}
 
 PyObject *mg_list_to_py_tuple(const mg_list *list) {
   PyObject *tuple = PyTuple_New(mg_list_size(list));
@@ -105,7 +74,7 @@ PyObject *mg_list_to_py_tuple(const mg_list *list) {
     if (!elem) {
       goto cleanup;
     }
-    PyTuple_SET_ITEM(tuple, i, elem);
+    PyTuple_SetItem(tuple, i, elem);
   }
 
   return tuple;
@@ -129,7 +98,7 @@ PyObject *mg_list_to_py_list(const mg_list *list) {
     if (!elem) {
       goto cleanup;
     }
-    PyList_SET_ITEM(pylist, i, elem);
+    PyList_SetItem(pylist, i, elem);
   }
 
   return pylist;
@@ -181,7 +150,7 @@ PyObject *mg_node_to_py_node(const mg_node *node) {
     if (!label) {
       goto exit;
     }
-    PyList_SET_ITEM(label_list, i, label);
+    PyList_SetItem(label_list, i, label);
   }
 
   if (!(label_set = PySet_New(label_list))) {
@@ -192,7 +161,7 @@ PyObject *mg_node_to_py_node(const mg_node *node) {
     goto exit;
   }
 
-  ret = PyObject_CallFunction((PyObject *)&NodeType, "LOO", mg_node_id(node),
+  ret = PyObject_CallFunction((PyObject *)NodeType, "LOO", mg_node_id(node),
                               label_set, props);
 
 exit:
@@ -215,7 +184,7 @@ PyObject *mg_relationship_to_py_relationship(const mg_relationship *rel) {
   }
 
   ret = PyObject_CallFunction(
-      (PyObject *)&RelationshipType, "LLLOO", mg_relationship_id(rel),
+      (PyObject *)RelationshipType, "LLLOO", mg_relationship_id(rel),
       mg_relationship_start_id(rel), mg_relationship_end_id(rel), type, props);
 
 exit:
@@ -237,7 +206,7 @@ PyObject *mg_unbound_relationship_to_py_relationship(
     goto exit;
   }
 
-  ret = PyObject_CallFunction((PyObject *)&RelationshipType, "LLLOO",
+  ret = PyObject_CallFunction((PyObject *)RelationshipType, "LLLOO",
                               mg_unbound_relationship_id(rel), -1, -1, type,
                               props);
 
@@ -266,7 +235,7 @@ PyObject *mg_path_to_py_path(const mg_path *path) {
     if (!node) {
       goto exit;
     }
-    PyList_SET_ITEM(nodes, i, node);
+    PyList_SetItem(nodes, i, node);
     if (i > 0) {
       PyObject *rel = mg_unbound_relationship_to_py_relationship(
           mg_path_relationship_at(path, i - 1));
@@ -280,12 +249,12 @@ PyObject *mg_path_to_py_path(const mg_path *path) {
         ((RelationshipObject *)rel)->start_id = prev_node_id;
         ((RelationshipObject *)rel)->end_id = curr_node_id;
       }
-      PyList_SET_ITEM(rels, i - 1, rel);
+      PyList_SetItem(rels, i - 1, rel);
     }
     prev_node_id = curr_node_id;
   }
 
-  ret = PyObject_CallFunction((PyObject *)&PathType, "OO", nodes, rels);
+  ret = PyObject_CallFunction((PyObject *)PathType, "OO", nodes, rels);
 
 exit:
   Py_XDECREF(nodes);
@@ -303,8 +272,17 @@ void maybe_decrement_ref(PyObject **obj) { Py_XDECREF(*obj); }
     }                                     \
   } while (false)
 
+// Return 0 on failure
+// Return 1 on success
+static int get_long_attr(PyObject *obj, const char *name, long *result) {
+  SCOPED_CLEANUP PyObject *attr = PyObject_GetAttrString(obj, name);
+  IF_PTR_IS_NULL_RETURN(attr, 0);
+  *result = PyLong_AsLong(attr);
+  return !(*result == -1 && PyErr_Occurred());
+}
+
 PyObject *make_py_date(int y, int m, int d) {
-  PyObject *date = PyDate_FromDate(y, m, d);
+  PyObject *date = PyObject_CallFunction(py_date_class, "iii", y, m, d);
   if (!date) {
     PyErr_Print();
   }
@@ -312,7 +290,9 @@ PyObject *make_py_date(int y, int m, int d) {
 }
 
 PyObject *make_py_time(int64_t h, int64_t min, int64_t sec, int64_t mi) {
-  PyObject *time = PyTime_FromTime(h, min, sec, mi);
+  PyObject *time =
+      PyObject_CallFunction(py_time_class, "LLLL", (long long)h,
+                            (long long)min, (long long)sec, (long long)mi);
   if (!time) {
     PyErr_Print();
   }
@@ -321,7 +301,8 @@ PyObject *make_py_time(int64_t h, int64_t min, int64_t sec, int64_t mi) {
 
 PyObject *make_py_datetime(int y, int m, int d, int h, int min, int sec,
                            int mi) {
-  PyObject *datetime = PyDateTime_FromDateAndTime(y, m, d, h, min, sec, mi);
+  PyObject *datetime = PyObject_CallFunction(py_datetime_class, "iiiiiii", y,
+                                             m, d, h, min, sec, mi);
   if (!datetime) {
     PyErr_Print();
   }
@@ -329,7 +310,8 @@ PyObject *make_py_datetime(int y, int m, int d, int h, int min, int sec,
 }
 
 PyObject *make_py_delta(int days, int sec, int micros) {
-  PyObject *delta = PyDelta_FromDSU(days, sec, micros);
+  PyObject *delta =
+      PyObject_CallFunction(py_timedelta_class, "iii", days, sec, micros);
   if (!delta) {
     PyErr_Print();
   }
@@ -359,8 +341,8 @@ PyObject *mg_local_time_to_py_time(const mg_local_time *lt) {
   SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
   SCOPED_CLEANUP PyObject *utc_result = PyObject_CallMethodObjArgs(
-      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds,
-      PyDateTime_TimeZone_UTC, NULL);
+      py_datetime_class, method_name, seconds,
+      py_timezone_utc, NULL);
   IF_PTR_IS_NULL_RETURN(utc_result, NULL);
   SCOPED_CLEANUP PyObject *replace_method = PyObject_GetAttrString(utc_result, "replace");
   IF_PTR_IS_NULL_RETURN(replace_method, NULL);
@@ -388,8 +370,8 @@ PyObject *mg_local_date_time_to_py_datetime(const mg_local_date_time *ldt) {
   SCOPED_CLEANUP PyObject *method_name = PyUnicode_FromString("fromtimestamp");
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
   SCOPED_CLEANUP PyObject *utc_result = PyObject_CallMethodObjArgs(
-      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, seconds,
-      PyDateTime_TimeZone_UTC, NULL);
+      py_datetime_class, method_name, seconds,
+      py_timezone_utc, NULL);
   IF_PTR_IS_NULL_RETURN(utc_result, NULL);
   SCOPED_CLEANUP PyObject *replace_method = PyObject_GetAttrString(utc_result, "replace");
   IF_PTR_IS_NULL_RETURN(replace_method, NULL);
@@ -429,8 +411,8 @@ PyObject *mg_date_time_to_py_datetime(const mg_date_time *dt) {
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
 
   SCOPED_CLEANUP PyObject *utc_dt = PyObject_CallMethodObjArgs(
-      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, timestamp,
-      PyDateTime_TimeZone_UTC, NULL);
+      py_datetime_class, method_name, timestamp,
+      py_timezone_utc, NULL);
   IF_PTR_IS_NULL_RETURN(utc_dt, NULL);
 
   SCOPED_CLEANUP PyObject *y = PyObject_GetAttrString(utc_dt, "year");
@@ -440,21 +422,12 @@ PyObject *mg_date_time_to_py_datetime(const mg_date_time *dt) {
   SCOPED_CLEANUP PyObject *m = PyObject_GetAttrString(utc_dt, "minute");
   SCOPED_CLEANUP PyObject *s = PyObject_GetAttrString(utc_dt, "second");
 
-  SCOPED_CLEANUP PyObject *datetime_module = PyImport_ImportModule("datetime");
-  IF_PTR_IS_NULL_RETURN(datetime_module, NULL);
-
-  SCOPED_CLEANUP PyObject *timezone_class = PyObject_GetAttrString(datetime_module, "timezone");
-  IF_PTR_IS_NULL_RETURN(timezone_class, NULL);
-
-  SCOPED_CLEANUP PyObject *timedelta_class = PyObject_GetAttrString(datetime_module, "timedelta");
-  IF_PTR_IS_NULL_RETURN(timedelta_class, NULL);
-
   SCOPED_CLEANUP PyObject *offset_delta = PyObject_CallFunction(
-      timedelta_class, "iii", 0, tz_offset_minutes * 60, 0);
+      py_timedelta_class, "iii", 0, tz_offset_minutes * 60, 0);
   IF_PTR_IS_NULL_RETURN(offset_delta, NULL);
 
   SCOPED_CLEANUP PyObject *tz = PyObject_CallFunction(
-      timezone_class, "O", offset_delta);
+      py_timezone_class, "O", offset_delta);
   IF_PTR_IS_NULL_RETURN(tz, NULL);
 
   SCOPED_CLEANUP PyObject *naive_dt = make_py_datetime(
@@ -485,8 +458,8 @@ PyObject *mg_date_time_zone_id_to_py_datetime(const mg_date_time_zone_id *dt) {
   IF_PTR_IS_NULL_RETURN(method_name, NULL);
 
   SCOPED_CLEANUP PyObject *utc_dt = PyObject_CallMethodObjArgs(
-      (PyObject *)PyDateTimeAPI->DateTimeType, method_name, timestamp,
-      PyDateTime_TimeZone_UTC, NULL);
+      py_datetime_class, method_name, timestamp,
+      py_timezone_utc, NULL);
   IF_PTR_IS_NULL_RETURN(utc_dt, NULL);
 
   SCOPED_CLEANUP PyObject *y = PyObject_GetAttrString(utc_dt, "year");
@@ -703,13 +676,18 @@ int64_t minutes_to_nanos(int64_t minutes) {
 
 int64_t hours_to_nanos(int64_t hours) { return minutes_to_nanos(hours * 60); }
 
-int64_t nanoseconds_since_epoch(PyObject *obj) {
-  int64_t h = PyDateTime_TIME_GET_HOUR(obj);
-  int64_t m = PyDateTime_TIME_GET_MINUTE(obj);
-  int64_t s = PyDateTime_TIME_GET_SECOND(obj);
-  int64_t mi = PyDateTime_TIME_GET_MICROSECOND(obj);
-  return hours_to_nanos(h) + minutes_to_nanos(m) + seconds_to_nanos(s) +
-         microseconds_to_nanos(mi);
+// Return 0 on failure
+// Return 1 on success
+int nanoseconds_since_epoch(PyObject *obj, int64_t *result) {
+  long h, m, s, mi;
+  if (!get_long_attr(obj, "hour", &h) || !get_long_attr(obj, "minute", &m) ||
+      !get_long_attr(obj, "second", &s) ||
+      !get_long_attr(obj, "microsecond", &mi)) {
+    return 0;
+  }
+  *result = hours_to_nanos(h) + minutes_to_nanos(m) + seconds_to_nanos(s) +
+            microseconds_to_nanos(mi);
+  return 1;
 }
 
 int64_t minutes_to_seconds(int64_t minutes) { return minutes * 60; }
@@ -724,38 +702,56 @@ int64_t to_seconds(int64_t days, int hours, int minutes, int seconds) {
 
 // Return 0 on failure
 // Return 1 on success
-int seconds_since_unix_epoch(PyObject *obj, int64_t *result) {
-  int y = PyDateTime_GET_YEAR(obj);
-  int mo = PyDateTime_GET_MONTH(obj);
-  int d = PyDateTime_GET_DAY(obj);
-  int64_t days = 0;
-  if (days_since_unix_epoch(y, mo, d, &days) == 0) {
+int days_since_unix_epoch_of(PyObject *obj, int64_t *result) {
+  long y, mo, d;
+  if (!get_long_attr(obj, "year", &y) || !get_long_attr(obj, "month", &mo) ||
+      !get_long_attr(obj, "day", &d)) {
     return 0;
   }
-  int h = PyDateTime_DATE_GET_HOUR(obj);
-  int m = PyDateTime_DATE_GET_MINUTE(obj);
-  int s = PyDateTime_DATE_GET_SECOND(obj);
+  return days_since_unix_epoch(y, mo, d, result);
+}
+
+// Return 0 on failure
+// Return 1 on success
+int seconds_since_unix_epoch(PyObject *obj, int64_t *result) {
+  int64_t days = 0;
+  if (days_since_unix_epoch_of(obj, &days) == 0) {
+    return 0;
+  }
+  long h, m, s;
+  if (!get_long_attr(obj, "hour", &h) || !get_long_attr(obj, "minute", &m) ||
+      !get_long_attr(obj, "second", &s)) {
+    return 0;
+  }
   *result = to_seconds(days, h, m, s);
   return 1;
 }
 
-int64_t subseconds_as_nanoseconds(PyObject *obj) {
-  return microseconds_to_nanos(PyDateTime_DATE_GET_MICROSECOND(obj));
+// Return 0 on failure
+// Return 1 on success
+int subseconds_as_nanoseconds(PyObject *obj, int64_t *result) {
+  long mi;
+  if (!get_long_attr(obj, "microsecond", &mi)) {
+    return 0;
+  }
+  *result = microseconds_to_nanos(mi);
+  return 1;
 }
 
 mg_date *py_date_to_mg_date(PyObject *obj) {
-  int y = PyDateTime_GET_YEAR(obj);
-  int m = PyDateTime_GET_MONTH(obj);
-  int d = PyDateTime_GET_DAY(obj);
   int64_t days = 0;
-  if (!days_since_unix_epoch(y, m, d, &days)) {
+  if (!days_since_unix_epoch_of(obj, &days)) {
     return NULL;
   }
   return mg_date_make(days);
 }
 
 mg_local_time *py_time_to_mg_local_time(PyObject *obj) {
-  return mg_local_time_make(nanoseconds_since_epoch(obj));
+  int64_t nanoseconds = 0;
+  if (!nanoseconds_since_epoch(obj, &nanoseconds)) {
+    return NULL;
+  }
+  return mg_local_time_make(nanoseconds);
 }
 
 mg_local_date_time *py_date_time_to_mg_local_date_time(PyObject *obj) {
@@ -763,7 +759,10 @@ mg_local_date_time *py_date_time_to_mg_local_date_time(PyObject *obj) {
   if (seconds_since_unix_epoch(obj, &seconds_since_epoch) == 0) {
     return NULL;
   }
-  int64_t subseconds = subseconds_as_nanoseconds(obj);
+  int64_t subseconds = 0;
+  if (subseconds_as_nanoseconds(obj, &subseconds) == 0) {
+    return NULL;
+  }
   return mg_local_date_time_make(seconds_since_epoch, subseconds);
 }
 
@@ -772,9 +771,13 @@ mg_date_time *py_date_time_to_mg_date_time(PyObject *obj) {
   if (seconds_since_unix_epoch(obj, &seconds_since_epoch) == 0) {
     return NULL;
   }
-  int64_t subseconds = subseconds_as_nanoseconds(obj);
+  int64_t subseconds = 0;
+  if (subseconds_as_nanoseconds(obj, &subseconds) == 0) {
+    return NULL;
+  }
 
-  PyObject *tzinfo = INTERNAL_PyDateTime_DATE_GET_TZINFO(obj);
+  SCOPED_CLEANUP PyObject *tzinfo = PyObject_GetAttrString(obj, "tzinfo");
+  IF_PTR_IS_NULL_RETURN(tzinfo, NULL);
   if (tzinfo == Py_None) {
     return NULL;
   }
@@ -796,9 +799,13 @@ mg_date_time_zone_id *py_date_time_to_mg_date_time_zone_id(PyObject *obj) {
   if (seconds_since_unix_epoch(obj, &seconds_since_epoch) == 0) {
     return NULL;
   }
-  int64_t subseconds = subseconds_as_nanoseconds(obj);
+  int64_t subseconds = 0;
+  if (subseconds_as_nanoseconds(obj, &subseconds) == 0) {
+    return NULL;
+  }
 
-  PyObject *tzinfo = INTERNAL_PyDateTime_DATE_GET_TZINFO(obj);
+  SCOPED_CLEANUP PyObject *tzinfo = PyObject_GetAttrString(obj, "tzinfo");
+  IF_PTR_IS_NULL_RETURN(tzinfo, NULL);
   if (tzinfo == Py_None) {
     return NULL;
   }
@@ -810,7 +817,7 @@ mg_date_time_zone_id *py_date_time_to_mg_date_time_zone_id(PyObject *obj) {
     return NULL;
   }
 
-  const char *timezone_name_str = PyUnicode_AsUTF8(tzname_str);
+  const char *timezone_name_str = PyUnicode_AsUTF8AndSize(tzname_str, NULL);
   if (!timezone_name_str) {
     return NULL;
   }
@@ -818,25 +825,23 @@ mg_date_time_zone_id *py_date_time_to_mg_date_time_zone_id(PyObject *obj) {
   return mg_date_time_zone_id_make(seconds_since_epoch, subseconds, timezone_name_str);
 }
 
+// Return -1 on failure
+// Return 0 if tzinfo is not a datetime.timezone, 1 if it is
 int is_datetime_timezone(PyObject *tzinfo) {
   if (tzinfo == Py_None) {
     return 0;
   }
-
-  SCOPED_CLEANUP PyObject *datetime_module = PyImport_ImportModule("datetime");
-  IF_PTR_IS_NULL_RETURN(datetime_module, 0);
-
-  SCOPED_CLEANUP PyObject *timezone_class = PyObject_GetAttrString(datetime_module, "timezone");
-  IF_PTR_IS_NULL_RETURN(timezone_class, 0);
-
-  return PyObject_IsInstance(tzinfo, timezone_class);
+  return PyObject_IsInstance(tzinfo, py_timezone_class);
 }
 
 mg_duration *py_delta_to_mg_duration(PyObject *obj) {
-  int64_t days = PyDateTime_DELTA_GET_DAYS(obj);
-  int64_t seconds = PyDateTime_DELTA_GET_SECONDS(obj);
-  int64_t microseconds = PyDateTime_DELTA_GET_MICROSECONDS(obj);
-  return mg_duration_make(0, days, seconds, microseconds * 1000);
+  long days, seconds, microseconds;
+  if (!get_long_attr(obj, "days", &days) ||
+      !get_long_attr(obj, "seconds", &seconds) ||
+      !get_long_attr(obj, "microseconds", &microseconds)) {
+    return NULL;
+  }
+  return mg_duration_make(0, days, seconds, (int64_t)microseconds * 1000);
 }
 
 mg_value *py_object_to_mg_value(PyObject *object) {
@@ -876,26 +881,33 @@ mg_value *py_object_to_mg_value(PyObject *object) {
       return NULL;
     }
     ret = mg_value_make_map(map);
-  } else if (PyDate_CheckExact(object)) {
+  } else if (is_exact_type(object, py_date_class)) {
     mg_date *date = py_date_to_mg_date(object);
     if (!date) {
       return NULL;
     }
     ret = mg_value_make_date(date);
-  } else if (PyTime_CheckExact(object)) {
+  } else if (is_exact_type(object, py_time_class)) {
     mg_local_time *lt = py_time_to_mg_local_time(object);
     if (!lt) {
       return NULL;
     }
     ret = mg_value_make_local_time(lt);
-  } else if (PyDateTime_CheckExact(object)) {
-    PyObject *tzinfo = INTERNAL_PyDateTime_DATE_GET_TZINFO(object);
+  } else if (is_exact_type(object, py_datetime_class)) {
+    SCOPED_CLEANUP PyObject *tzinfo = PyObject_GetAttrString(object, "tzinfo");
+    if (!tzinfo) {
+      return NULL;
+    }
     if (tzinfo != Py_None) {
       // The `timezone` may either be an offset based `datetime.timezone`, or
       // some kind of instance of `tzinfo`. In the case of the former, we
       // will use the offset; and in the case of the latter, use the `str()`
       // name of the timezone.
-      if (is_datetime_timezone(tzinfo)) {
+      int is_timezone = is_datetime_timezone(tzinfo);
+      if (is_timezone < 0) {
+        return NULL;
+      }
+      if (is_timezone) {
         mg_date_time *dt = py_date_time_to_mg_date_time(object);
         if (!dt) {
           return NULL;
@@ -915,16 +927,20 @@ mg_value *py_object_to_mg_value(PyObject *object) {
       }
       ret = mg_value_make_local_date_time(ldt);
     }
-  } else if (PyDelta_CheckExact(object)) {
+  } else if (is_exact_type(object, py_timedelta_class)) {
     mg_duration *dur = py_delta_to_mg_duration(object);
     if (!dur) {
       return NULL;
     }
     ret = mg_value_make_duration(dur);
   } else {
-    PyErr_Format(PyExc_ValueError,
-                 "value of type '%s' can't be used as query parameter",
-                 Py_TYPE(object)->tp_name);
+    SCOPED_CLEANUP PyObject *type_name =
+        PyObject_GetAttrString((PyObject *)Py_TYPE(object), "__name__");
+    if (type_name) {
+      PyErr_Format(PyExc_ValueError,
+                   "value of type '%U' can't be used as query parameter",
+                   type_name);
+    }
     return NULL;
   }
 

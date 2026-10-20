@@ -42,7 +42,8 @@ typedef struct ConnectionObject {
 } ConnectionObject;
 // clang-format on
 
-extern PyTypeObject ConnectionType;
+extern PyTypeObject *ConnectionType;
+extern PyType_Spec ConnectionType_spec;
 
 // Wraps an already-established `session` in a new Connection object. When
 // `owns_session` is false the session is left untouched on close/dealloc (the

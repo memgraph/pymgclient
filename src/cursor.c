@@ -19,12 +19,12 @@
 #include "column.h"
 #include "connection.h"
 #include "exceptions.h"
-
+#include "heaptype.h"
 static void cursor_dealloc(CursorObject *cursor) {
   Py_CLEAR(cursor->conn);
   Py_CLEAR(cursor->rows);
   Py_CLEAR(cursor->description);
-  Py_TYPE(cursor)->tp_free(cursor);
+  heap_type_free(cursor);
 }
 
 int cursor_init(CursorObject *cursor, PyObject *args, PyObject *kwargs) {
@@ -35,9 +35,9 @@ int cursor_init(CursorObject *cursor, PyObject *args, PyObject *kwargs) {
     return -1;
   }
 
-  if (Py_TYPE(conn) != &ConnectionType) {
+  if (Py_TYPE(conn) != ConnectionType) {
     PyErr_Format(PyExc_TypeError, "__init__ argument 1 must be of type '%s'",
-                 ConnectionType.tp_name);
+                 ConnectionType_spec.name);
     return -1;
   }
 
@@ -57,7 +57,7 @@ PyObject *cursor_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs) {
   (void)args;
   (void)kwargs;
 
-  PyObject *cursor = subtype->tp_alloc(subtype, 0);
+  PyObject *cursor = heap_type_alloc(subtype);
   if (!cursor) {
     return NULL;
   }
@@ -121,11 +121,11 @@ static int cursor_set_description(CursorObject *cursor, PyObject *columns) {
   }
   for (Py_ssize_t i = 0; i < PyList_Size(columns); ++i) {
     PyObject *entry = PyObject_CallFunctionObjArgs(
-        (PyObject *)&ColumnType, PyList_GetItem(columns, i), NULL);
+        (PyObject *)ColumnType, PyList_GetItem(columns, i), NULL);
     if (!entry) {
       goto failure;
     }
-    PyList_SET_ITEM(description, i, entry);
+    PyList_SetItem(description, i, entry);
   }
 
   cursor->description = description;
@@ -323,7 +323,7 @@ PyObject *cursor_fetchone(CursorObject *cursor, PyObject *args) {
 
   assert(cursor->rowcount >= 0);
   if (cursor->rowindex < cursor->rowcount) {
-    PyObject *row = PyList_GET_ITEM(cursor->rows, cursor->rowindex++);
+    PyObject *row = PyList_GetItem(cursor->rows, cursor->rowindex++);
     Py_INCREF(row);
     return row;
   }
@@ -598,18 +598,20 @@ are immediately visible by the other cursors.\n\
 Cursor objects are not thread-safe.");
 // clang-format on
 
-// clang-format off
-PyTypeObject CursorType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "mgclient.Cursor",
-    .tp_basicsize = sizeof(CursorObject),
-    .tp_itemsize = 0,
-    .tp_dealloc = (destructor)cursor_dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_doc = cursor_doc,
-    .tp_methods = cursor_methods,
-    .tp_members = cursor_members,
-    .tp_init = (initproc)cursor_init,
-    .tp_new = (newfunc)cursor_new
-};
-// clang-format on
+PyTypeObject *CursorType;
+
+static PyType_Slot cursor_slots[] = {
+    {Py_tp_dealloc, cursor_dealloc},
+    {Py_tp_doc, (void *)cursor_doc},
+    {Py_tp_methods, cursor_methods},
+    {Py_tp_members, cursor_members},
+    {Py_tp_init, cursor_init},
+    {Py_tp_new, cursor_new},
+    {0, NULL}};
+
+PyType_Spec CursorType_spec = {
+    .name = "mgclient.Cursor",
+    .basicsize = sizeof(CursorObject),
+    .itemsize = 0,
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
+    .slots = cursor_slots};

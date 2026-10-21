@@ -178,11 +178,9 @@ jobs:
   build_windows:
     if: ${{ inputs.test_windows }}
     name: Build on Windows
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2022, windows-2025]
+    # The wheel only depends on python3.dll and system DLLs, so one build (and
+    # test run) covers all supported Windows versions.
+    runs-on: windows-2025
 
     steps:
       - name: Checkout code
@@ -269,12 +267,12 @@ jobs:
       - name: Upload Wheel for Testing
         uses: actions/upload-artifact@v4
         with:
-          name: build-win-${{ matrix.os }}
+          name: build-win
           path: dist/*.whl
           retention-days: 1
 
       - name: Upload Wheel Artifact
-        if: ${{ inputs.upload_artifacts && matrix.os == 'windows-2025' }}
+        if: ${{ inputs.upload_artifacts }}
         uses: actions/upload-artifact@v4
         with:
           name: pymgclient-win
@@ -285,12 +283,7 @@ jobs:
     if: ${{ inputs.test_windows }}
     needs: [build_windows]
     name: Test on Windows
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2022, windows-2025]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+    runs-on: windows-2025
 
     steps:
       - name: Checkout code
@@ -313,30 +306,21 @@ jobs:
       - name: Set up Windows Python
         uses: actions/setup-python@ec52d0af729a7c50ced4261d17a07916f43f5b8e  # Not a tagged version (> 7.0.0)
         with:
-          python-version: ${{ matrix.python-version }}
+          # Keep in sync with TEST_PYTHON_VERSIONS.
+          python-version: |
+            3.10
+            3.11
+            3.12
+            3.13
+            3.14
+            3.15
           architecture: x64
-
-      - name: Add Windows Python to PATH
-        shell: msys2 {0}
-        run: |
-          echo "$pythonLocation" >> $GITHUB_PATH
-        env:
-          pythonLocation: ${{ env.pythonLocation }}
 
       - name: Download Wheel
         uses: actions/download-artifact@v4
         with:
-          name: build-win-${{ matrix.os }}
+          name: build-win
           path: dist/
-
-      - name: Install built wheel
-        shell: msys2 {0}
-        run: |
-          export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python -m pip install --upgrade pip pyopenssl pytest tzdata
-          python -m pip install dist/*-abi3-*.whl
-        env:
-          pythonLocation: ${{ env.pythonLocation }}
 
       - name: Setup WSL Ubuntu
         uses: Vampire/setup-wsl@v5
@@ -370,12 +354,9 @@ jobs:
       - name: Run Tests
         shell: msys2 {0}
         run: |
-          export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
-          echo $PATH
-          python -m pytest -v
-
+          export PATH="/mingw64/bin:$PATH"
+          ./tools/test-wheel.sh "$(ls dist/*-abi3-*.whl)" -v
         env:
-          pythonLocation: ${{ env.pythonLocation }}
           MEMGRAPH_HOST: localhost
           MEMGRAPH_STARTED_WITH_SSL:
 
@@ -487,13 +468,6 @@ jobs:
       fail-fast: false
       matrix:
         platform: [macos-14, macos-15]
-        python_version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
-          - '3.14'
-          - '3.15'
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -501,7 +475,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@ec52d0af729a7c50ced4261d17a07916f43f5b8e  # Not a tagged version (> 7.0.0)
         with:
-          python-version: ${{ matrix.python_version }}
+          # Keep in sync with TEST_PYTHON_VERSIONS.
+          python-version: |
+            3.10
+            3.11
+            3.12
+            3.13
+            3.14
+            3.15
 
       - name: Download Wheel
         uses: actions/download-artifact@v4
@@ -509,18 +490,6 @@ jobs:
           name: build-macos
           path: dist/
 
-      - name: Install pymgclient
-        run: |
-          python -m venv env
-          source env/bin/activate
-          python -m pip install pytest dist/*-abi3-*.whl
-
-      - name: Import mgclient to validate installation
-        run: |
-          source env/bin/activate
-          python -c "import mgclient"
-
       - name: Run tests that don't need a server
         run: |
-          source env/bin/activate
-          python -m pytest -v test/test_types.py
+          ./tools/test-wheel.sh "$(ls dist/*-abi3-*.whl)" -v test/test_types.py

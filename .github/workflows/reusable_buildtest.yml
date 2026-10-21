@@ -263,20 +263,14 @@ jobs:
         env:
           pythonLocation: ${{ env.pythonLocation }}
 
-      # Used by the test job below; not part of the release.
-      - name: Upload Wheel for Testing
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
-        with:
-          name: build-win
-          path: dist/*.whl
-          retention-days: 1
-
+      # Always uploaded, as the test job installs it. When the artifacts
+      # aren't wanted for a release, only keep them for a day.
       - name: Upload Wheel Artifact
-        if: ${{ inputs.upload_artifacts }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: pymgclient-win
           path: dist/
+          retention-days: ${{ !inputs.upload_artifacts && 1 || 0 }}
 
 
   test_windows:
@@ -319,7 +313,7 @@ jobs:
       - name: Download Wheel
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
-          name: build-win
+          name: pymgclient-win
           path: dist/
 
       - name: Setup WSL Ubuntu
@@ -445,20 +439,14 @@ jobs:
             exit 1
           fi
 
-      # Used by the test job below; not part of the release.
-      - name: Upload Wheel for Testing
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
-        with:
-          name: build-macos
-          path: dist/*.whl
-          retention-days: 1
-
+      # Always uploaded, as the test job installs it. When the artifacts
+      # aren't wanted for a release, only keep them for a day.
       - name: Save wheel package
-        if: ${{ inputs.upload_artifacts }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: pymgclient-macos
           path: dist/*.whl
+          retention-days: ${{ !inputs.upload_artifacts && 1 || 0 }}
 
   test_macos:
     if: ${{ inputs.test_macintosh }}
@@ -485,7 +473,7 @@ jobs:
       - name: Download Wheel
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
-          name: build-macos
+          name: pymgclient-macos
           path: dist/
 
       - name: Run tests that don't need a server

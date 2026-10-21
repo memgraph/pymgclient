@@ -42,17 +42,17 @@ jobs:
     runs-on: [self-hosted, "${{ matrix.arch == 'x86_64' && 'X64' || 'ARM64' }}"]
     steps:
       - name: Checkout repository and submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
           submodules: recursive
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069  # v4.4.1
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f  # v4.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -156,7 +156,7 @@ jobs:
 
       - name: Save Packages
         if: ${{ inputs.upload_artifacts }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: pymgclient-linux-${{ matrix.arch }}
           path: dist/*
@@ -184,7 +184,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
 
@@ -196,7 +196,7 @@ jobs:
           echo "PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
 
       - name: Set up MSYS2
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e  # v2.33.0
         with:
           msystem: MINGW64
           install: >
@@ -265,7 +265,7 @@ jobs:
 
       # Used by the test job below; not part of the release.
       - name: Upload Wheel for Testing
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: build-win
           path: dist/*.whl
@@ -273,7 +273,7 @@ jobs:
 
       - name: Upload Wheel Artifact
         if: ${{ inputs.upload_artifacts }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: pymgclient-win
           path: dist/
@@ -287,10 +287,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Set up MSYS2
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e  # v2.33.0
         with:
           msystem: MINGW64
           install: >
@@ -317,13 +317,13 @@ jobs:
           architecture: x64
 
       - name: Download Wheel
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
           name: build-win
           path: dist/
 
       - name: Setup WSL Ubuntu
-        uses: Vampire/setup-wsl@v5
+        uses: Vampire/setup-wsl@4c48163d9f981914dd8caa0fc335fe19cca5bff4  # v7.2.0
         with:
           distribution: Ubuntu-24.04
 
@@ -380,7 +380,7 @@ jobs:
       OPENSSL_VERSION: "3.5.4"
       ZLIB_VERSION: "1.3.1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
 
@@ -403,7 +403,7 @@ jobs:
 
       - name: Cache OpenSSL
         id: cache-openssl
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
           path: ${{ runner.temp }}/openssl
           key: openssl-${{ env.OPENSSL_VERSION }}-zlib-${{ env.ZLIB_VERSION }}-macosx-${{ env.MACOSX_DEPLOYMENT_TARGET }}-arm64
@@ -447,7 +447,7 @@ jobs:
 
       # Used by the test job below; not part of the release.
       - name: Upload Wheel for Testing
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: build-macos
           path: dist/*.whl
@@ -455,7 +455,7 @@ jobs:
 
       - name: Save wheel package
         if: ${{ inputs.upload_artifacts }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: pymgclient-macos
           path: dist/*.whl
@@ -468,7 +468,7 @@ jobs:
     # targets MACOSX_DEPLOYMENT_TARGET and only links system libraries.
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Set up Python
         uses: actions/setup-python@ec52d0af729a7c50ced4261d17a07916f43f5b8e  # Not a tagged version (> 7.0.0)
@@ -483,7 +483,7 @@ jobs:
             3.15
 
       - name: Download Wheel
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
           name: build-macos
           path: dist/

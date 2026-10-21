@@ -464,11 +464,9 @@ jobs:
     if: ${{ inputs.test_macintosh }}
     needs: [build_macos]
     name: Test on MacOS
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [macos-14, macos-15]
-    runs-on: ${{ matrix.platform }}
+    # Only tested on the build runner's macOS; the build job checks the wheel
+    # targets MACOSX_DEPLOYMENT_TARGET and only links system libraries.
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 

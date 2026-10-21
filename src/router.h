@@ -20,6 +20,7 @@
 // A thin Python wrapper over libmgclient's `mg_router` (client-side routing
 // engine). Not part of the public API surface directly; the ergonomic
 // `mgclient.routing.Router` facade is built on top of it.
-extern PyTypeObject RouterType;
+extern PyTypeObject *RouterType;
+extern PyType_Spec RouterType_spec;
 
 #endif  // PYMGCLIENT_ROUTER_H

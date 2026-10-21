@@ -31,6 +31,7 @@ typedef struct {
 } ColumnObject;
 // clang-format on
 
-extern PyTypeObject ColumnType;
+extern PyTypeObject *ColumnType;
+extern PyType_Spec ColumnType_spec;
 
 #endif

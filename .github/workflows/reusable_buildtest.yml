@@ -24,6 +24,13 @@ on:
         required: false
         type: string
 
+env:
+  # pymgclient is built against the stable ABI (abi3), so a single wheel per
+  # platform built with the oldest supported Python works on every later
+  # version. The wheel is then tested on all of TEST_PYTHON_VERSIONS.
+  BUILD_PYTHON_VERSION: "3.10"
+  TEST_PYTHON_VERSIONS: "3.10 3.11 3.12 3.13 3.14 3.15"
+
 jobs:
   build_and_test_linux:
     if: ${{ inputs.test_linux }}
@@ -35,17 +42,17 @@ jobs:
     runs-on: [self-hosted, "${{ matrix.arch == 'x86_64' && 'X64' || 'ARM64' }}"]
     steps:
       - name: Checkout repository and submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
           submodules: recursive
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069  # v4.4.1
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f  # v4.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -90,7 +97,7 @@ jobs:
           docker buildx build \
             --platform linux/${{ matrix.arch }} \
             -t pymgclient-builder:latest \
-            --build-arg PYTHON_VERSIONS="3.10,3.11,3.12,3.13,3.14" \
+            --build-arg PYTHON_VERSIONS="${TEST_PYTHON_VERSIONS// /,}" \
             -f tools/Dockerfile.manylinux \
             --load .
 
@@ -103,27 +110,27 @@ jobs:
             docker run -d --rm --name testcontainer --network pymgclient-network pymgclient-builder:latest
           fi
 
-      - name: Build Python Wheels
+      - name: Build Python Wheel
         run: |
-          PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14")
-          for python_version in "${PYTHON_VERSIONS[@]}"; do
-            build_cmd="./tools/build-wheel-manylinux.sh --python-version $python_version --static-ssl --run-auditwheel"
-            docker exec -i testcontainer \
-              bash -c "cd /home/memgraph/pymgclient && $build_cmd"
-          done
+          build_cmd="./tools/build-wheel-manylinux.sh --python-version $BUILD_PYTHON_VERSION --static-ssl --run-auditwheel"
+          docker exec -i testcontainer \
+            bash -c "cd /home/memgraph/pymgclient && $build_cmd"
 
           # list the wheels
           docker exec -i testcontainer \
             bash -c "ls -la /home/memgraph/pymgclient/dist"
 
+      - name: Check wheel only uses the stable ABI
+        run: |
+          docker exec -i testcontainer \
+            bash -c "python$BUILD_PYTHON_VERSION -m abi3audit --strict --verbose /home/memgraph/pymgclient/dist/*-abi3-*.whl"
+
       - name: Install pymgclient and run tests
         run: |
-          PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13" "3.14")
-          for python_version in "${PYTHON_VERSIONS[@]}"; do
+          for python_version in $TEST_PYTHON_VERSIONS; do
             echo "Testing Python version $python_version"
-            short_python_version=$(echo $python_version | sed 's/\.//g')
             docker exec -i testcontainer \
-              bash -c "python$python_version -m pip install \$(ls /home/memgraph/pymgclient/dist/pymgclient*cp${short_python_version}*.whl) --break-system-packages"
+              bash -c "python$python_version -m pip install \$(ls /home/memgraph/pymgclient/dist/pymgclient*-abi3-*.whl) --break-system-packages"
             docker exec -i testcontainer \
               bash -c "python$python_version -c 'import mgclient'"
             docker exec -i testcontainer \
@@ -149,7 +156,7 @@ jobs:
 
       - name: Save Packages
         if: ${{ inputs.upload_artifacts }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: pymgclient-linux-${{ matrix.arch }}
           path: dist/*
@@ -168,19 +175,16 @@ jobs:
           docker network rm pymgclient-network || echo "Network does not exist"
 
 
-  build_and_test_windows:
+  build_windows:
     if: ${{ inputs.test_windows }}
-    name: Build and Test on Windows
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2022, windows-2025]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    name: Build on Windows
+    # The wheel only depends on python3.dll and system DLLs, so one build (and
+    # test run) covers all supported Windows versions.
+    runs-on: windows-2025
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
 
@@ -192,7 +196,7 @@ jobs:
           echo "PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
 
       - name: Set up MSYS2
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e  # v2.33.0
         with:
           msystem: MINGW64
           install: >
@@ -209,9 +213,9 @@ jobs:
 
 
       - name: Set up Windows Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ec52d0af729a7c50ced4261d17a07916f43f5b8e  # Not a tagged version (> 7.0.0)
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.BUILD_PYTHON_VERSION }}
           architecture: x64
 
       - name: Add Windows Python to PATH
@@ -226,7 +230,7 @@ jobs:
         shell: msys2 {0}
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python -m pip install --upgrade pip setuptools wheel pyopenssl pytest tzdata build
+          python -m pip install --upgrade pip setuptools wheel build abi3audit
         env:
           pythonLocation: ${{ env.pythonLocation }}
 
@@ -238,16 +242,82 @@ jobs:
         env:
           pythonLocation: ${{ env.pythonLocation }}
 
-      - name: Install built wheel
+      - name: Check wheel only uses the stable ABI
         shell: msys2 {0}
         run: |
           export PATH="$(cygpath -u "$pythonLocation"):$PATH"
-          python -m pip install dist/*.whl
+          python -m abi3audit --strict --verbose dist/*-abi3-*.whl
         env:
           pythonLocation: ${{ env.pythonLocation }}
 
+      # abi3audit only checks which symbols are used, not which DLL they are
+      # imported from: the extension must link python3.dll, not python3XX.dll.
+      - name: Check wheel links against python3.dll
+        shell: msys2 {0}
+        run: |
+          export PATH="$(cygpath -u "$pythonLocation"):$PATH"
+          python -m zipfile -e dist/*-abi3-*.whl wheel-check
+          dlls=$(objdump -p wheel-check/mgclient/_mgclient*.pyd | grep -i "DLL Name: python")
+          echo "$dlls"
+          echo "$dlls" | grep -qix "\s*DLL Name: python3.dll"
+        env:
+          pythonLocation: ${{ env.pythonLocation }}
+
+      # Always uploaded, as the test job installs it. When the artifacts
+      # aren't wanted for a release, only keep them for a day.
+      - name: Upload Wheel Artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: pymgclient-win
+          path: dist/
+          retention-days: ${{ !inputs.upload_artifacts && 1 || 0 }}
+
+
+  test_windows:
+    if: ${{ inputs.test_windows }}
+    needs: [build_windows]
+    name: Test on Windows
+    runs-on: windows-2025
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e  # v2.33.0
+        with:
+          msystem: MINGW64
+          install: >
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-openssl
+
+      - name: Add MSYS2 mingw64/bin to PATH
+        shell: msys2 {0}
+        run: |
+          echo "/mingw64/bin" >> $GITHUB_PATH
+
+
+      - name: Set up Windows Python
+        uses: actions/setup-python@ec52d0af729a7c50ced4261d17a07916f43f5b8e  # Not a tagged version (> 7.0.0)
+        with:
+          # Keep in sync with TEST_PYTHON_VERSIONS.
+          python-version: |
+            3.10
+            3.11
+            3.12
+            3.13
+            3.14
+            3.15
+          architecture: x64
+
+      - name: Download Wheel
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: pymgclient-win
+          path: dist/
+
       - name: Setup WSL Ubuntu
-        uses: Vampire/setup-wsl@v5
+        uses: Vampire/setup-wsl@4c48163d9f981914dd8caa0fc335fe19cca5bff4  # v7.2.0
         with:
           distribution: Ubuntu-24.04
 
@@ -263,7 +333,7 @@ jobs:
           mkdir -p $HOME/memgraph/data
           sudo apt update
           sudo apt install -y curl
-          curl -L https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/ubuntu-24.04/memgraph_${{ env.MGVERSION }}-1_amd64.deb -o memgraph.deb
+          curl -L https://download.memgraph.com/memgraph/v${{ env.MGVERSION }}/x86_64-deb/memgraph_${{ env.MGVERSION }}-1_amd64.deb -o memgraph.deb
           sudo mkdir -p /etc/systemd/system && sudo ln -s /dev/null /etc/systemd/system/memgraph.service # Prevents Memgraph from starting.
           sudo apt install -y ./memgraph.deb
           openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/C=GB/ST=London/L=London/O=Testing Corp./CN=PymgclientTest"
@@ -278,44 +348,33 @@ jobs:
       - name: Run Tests
         shell: msys2 {0}
         run: |
-          export PATH="$(cygpath -u "$pythonLocation"):/mingw64/bin:$PATH"
-          echo $PATH
-          python -m pytest -v
-
+          export PATH="/mingw64/bin:$PATH"
+          ./tools/test-wheel.sh "$(ls dist/*-abi3-*.whl)" -v
         env:
-          pythonLocation: ${{ env.pythonLocation }}
           MEMGRAPH_HOST: localhost
           MEMGRAPH_STARTED_WITH_SSL:
 
 
-      - name: Upload Wheel Artifact
-        if: ${{ inputs.upload_artifacts && matrix.os == 'windows-2025' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: pymgclient-win-${{ matrix.python-version }}
-          path: dist/
-
-
-  # NOTE: Cannot run tests on Mac OS runners because:
+  # NOTE: Cannot run the server tests on Mac OS runners because:
   # - GitHub hosted runners don't have docker
   # - self-hosted runner unable to log in to docker due to requiring a password to unlock the keychain
   # Also - github hosted macos runners after macos-13 are all arm64
+  #
+  # A single wheel is built for MACOSX_DEPLOYMENT_TARGET, so it installs on that
+  # macOS version and later. OpenSSL is built from source for the same target
+  # (Homebrew's libraries target the runner's own macOS version).
   build_macos:
     if: ${{ inputs.test_macintosh }}
-    name: Build and test on MacOS
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [macos-14, macos-15]
-        python_version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
-          - '3.14'
-    runs-on: ${{ matrix.platform }}
+    name: Build on MacOS
+    runs-on: macos-15
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+      ARCHFLAGS: "-arch arm64"
+      _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
+      OPENSSL_VERSION: "3.5.4"
+      ZLIB_VERSION: "1.3.1"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
 
@@ -325,53 +384,98 @@ jobs:
           echo "Building version ${{ inputs.version }}"
           echo "PYMGCLIENT_OVERRIDE_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
 
-      - name: Install python and OpenSSL
-        run: |
-          brew install python@${{ matrix.python_version }} openssl@1.1
-          brew link --force --overwrite openssl@1.1
-          openssl version -a
-
-      - name: Manage OpenSSL 3 on ARM machines
-        if: ${{ contains(matrix.platform, 'ARM64') }}
-        run: |
-          brew install openssl@3
-          brew link --force --overwrite openssl@3
-          openssl version -a
-
-      - name: Make used python version default
-        run: |
-          brew unlink python@3 && brew link --force python@${{ matrix.python_version }}
-          python${{ matrix.python_version }} --version
+      - name: Set up Python
+        uses: actions/setup-python@ec52d0af729a7c50ced4261d17a07916f43f5b8e  # Not a tagged version (> 7.0.0)
+        with:
+          python-version: ${{ env.BUILD_PYTHON_VERSION }}
 
       - name: Create Virtual Env
         run: |
-          python${{ matrix.python_version }} -m venv env
-
-      - name: Install pytest and pyopenssl
-        run: |
-          export PIP_BREAK_SYSTEM_PACKAGES=1
+          python -m venv env
           source env/bin/activate
-          python${{ matrix.python_version }} -m pip install pyopenssl pytest setuptools build
+          python -m pip install --upgrade pip setuptools build abi3audit conan==2.24.0
+
+      - name: Cache OpenSSL
+        id: cache-openssl
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ${{ runner.temp }}/openssl
+          key: openssl-${{ env.OPENSSL_VERSION }}-zlib-${{ env.ZLIB_VERSION }}-macosx-${{ env.MACOSX_DEPLOYMENT_TARGET }}-arm64
+
+      - name: Build OpenSSL
+        if: steps.cache-openssl.outputs.cache-hit != 'true'
+        run: |
+          source env/bin/activate
+          ./tools/build-openssl.sh \
+            --openssl-version "$OPENSSL_VERSION" \
+            --zlib-version "$ZLIB_VERSION" \
+            --out-dir "$RUNNER_TEMP/openssl"
 
       - name: Build pymgclient
         run: |
           source env/bin/activate
-          python${{ matrix.python_version }} -m build
+          export OPENSSL_ROOT_DIR="$RUNNER_TEMP/openssl"
+          # Treat OpenSSL headers as system headers (avoid -Werror pain)
+          export CFLAGS="-isystem $OPENSSL_ROOT_DIR/include"
+          export LDFLAGS="-L$OPENSSL_ROOT_DIR/lib -lz"
+          python -m build
+          ls -la dist
 
-      - name: Install pymgclient
+      - name: Check wheel only uses the stable ABI
         run: |
-          export PIP_BREAK_SYSTEM_PACKAGES=1
           source env/bin/activate
-          python${{ matrix.python_version }} -m pip install dist/*.whl
+          python -m abi3audit --strict --verbose dist/*-abi3-*.whl
 
-      - name: Import mgclient to validate installation
+      # The platform tag is raised automatically if any linked object needs a
+      # newer macOS, so this also catches libraries built for the wrong target.
+      - name: Check wheel targets macOS ${{ env.MACOSX_DEPLOYMENT_TARGET }} and links only system libraries
         run: |
           source env/bin/activate
-          python${{ matrix.python_version }} -c "import mgclient"
+          ls dist/*-abi3-macosx_11_0_arm64.whl
+          python -m zipfile -e dist/*-abi3-*.whl wheel-check
+          otool -L wheel-check/mgclient/_mgclient*.so
+          if otool -L wheel-check/mgclient/_mgclient*.so | tail -n +2 | grep -v -E '^[[:space:]]+/usr/lib/|^[[:space:]]+/System/'; then
+            echo "Extension links against non-system libraries"
+            exit 1
+          fi
 
+      # Always uploaded, as the test job installs it. When the artifacts
+      # aren't wanted for a release, only keep them for a day.
       - name: Save wheel package
-        if: ${{ inputs.upload_artifacts }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
-          name: pymgclient-${{ matrix.platform[0] || matrix.platform }}-${{ matrix.python_version }}
+          name: pymgclient-macos
           path: dist/*.whl
+          retention-days: ${{ !inputs.upload_artifacts && 1 || 0 }}
+
+  test_macos:
+    if: ${{ inputs.test_macintosh }}
+    needs: [build_macos]
+    name: Test on MacOS
+    # Only tested on the build runner's macOS; the build job checks the wheel
+    # targets MACOSX_DEPLOYMENT_TARGET and only links system libraries.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@ec52d0af729a7c50ced4261d17a07916f43f5b8e  # Not a tagged version (> 7.0.0)
+        with:
+          # Keep in sync with TEST_PYTHON_VERSIONS.
+          python-version: |
+            3.10
+            3.11
+            3.12
+            3.13
+            3.14
+            3.15
+
+      - name: Download Wheel
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: pymgclient-macos
+          path: dist/
+
+      - name: Run tests that don't need a server
+        run: |
+          ./tools/test-wheel.sh "$(ls dist/*-abi3-*.whl)" -v test/test_types.py

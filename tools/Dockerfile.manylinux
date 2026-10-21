@@ -44,7 +44,7 @@ RUN set -euo pipefail; \
     for v in "${versions[@]}"; do \
       v="$(echo "$v" | xargs)"; \
       echo "=== Installing dependencies for Python ${v} ==="; \
-      python${v} -m pip install --upgrade --ignore-installed networkx pytest pyopenssl sphinx setuptools wheel auditwheel tzdata build; \
+      python${v} -m pip install --upgrade --ignore-installed networkx pytest pyopenssl sphinx setuptools wheel auditwheel abi3audit tzdata build; \
     done
 
 # copy the source code

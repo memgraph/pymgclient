@@ -65,6 +65,5 @@ $PYTHON_BINARY -m build "${args[@]}"
 
 if $run_auditwheel; then
   ARCH="$(arch)"
-  cp_version=$(echo $python_version | sed 's/\.//g')
-  auditwheel repair dist/*cp${cp_version}*.whl --plat manylinux_2_34_${ARCH} -w dist/ && rm dist/*linux_${ARCH}.whl
+  auditwheel repair dist/*-abi3-linux_${ARCH}.whl --plat manylinux_2_34_${ARCH} -w dist/ && rm dist/*linux_${ARCH}.whl
 fi

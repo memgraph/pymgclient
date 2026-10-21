@@ -16,9 +16,11 @@
 
 #include <structmember.h>
 
-PyTypeObject NodeType;
-PyTypeObject RelationshipType;
-PyTypeObject PathType;
+#include "heaptype.h"
+
+PyTypeObject *NodeType;
+PyTypeObject *RelationshipType;
+PyTypeObject *PathType;
 
 #define CHECK_ATTRIBUTE(obj, name)                                            \
   do {                                                                        \
@@ -31,12 +33,12 @@ PyTypeObject PathType;
 static void node_dealloc(NodeObject *node) {
   Py_CLEAR(node->labels);
   Py_CLEAR(node->properties);
-  Py_TYPE(node)->tp_free(node);
+  heap_type_free(node);
 }
 
 static PyObject *node_repr(NodeObject *node) {
   return PyUnicode_FromFormat("<%s(id=%lld, labels=%R, properties=%R) at %p>",
-                              Py_TYPE(node)->tp_name, node->id, node->labels,
+                              NodeType_spec.name, node->id, node->labels,
                               node->properties, node);
 }
 
@@ -87,9 +89,9 @@ static PyObject *node_astuple(NodeObject *node) {
   Py_INCREF(node->labels);
   Py_INCREF(node->properties);
 
-  PyTuple_SET_ITEM(tuple, 0, id);
-  PyTuple_SET_ITEM(tuple, 1, node->labels);
-  PyTuple_SET_ITEM(tuple, 2, node->properties);
+  PyTuple_SetItem(tuple, 0, id);
+  PyTuple_SetItem(tuple, 1, node->labels);
+  PyTuple_SetItem(tuple, 2, node->properties);
   return tuple;
 }
 
@@ -98,7 +100,7 @@ static PyObject *node_richcompare(NodeObject *lhs, PyObject *rhs, int op) {
   PyObject *trhs = NULL;
   PyObject *ret = NULL;
 
-  if (Py_TYPE(rhs) == &NodeType) {
+  if (Py_TYPE(rhs) == NodeType) {
     if (!(tlhs = node_astuple(lhs))) {
       goto exit;
     }
@@ -170,34 +172,34 @@ static PyMemberDef node_members[] = {
 PyDoc_STRVAR(NodeType_doc,
              "A node in the graph with optional properties and labels.");
 
-// clang-format off
-PyTypeObject NodeType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "mgclient.Node",
-    .tp_basicsize = sizeof(NodeObject),
-    .tp_itemsize = 0,
-    .tp_dealloc = (destructor)node_dealloc,
-    .tp_repr = (reprfunc)node_repr,
-    .tp_str = (reprfunc)node_str,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_doc = NodeType_doc,
-    .tp_richcompare = (richcmpfunc)node_richcompare,
-    .tp_members = node_members,
-    .tp_init = (initproc)node_init,
-    .tp_new = PyType_GenericNew
-};
-// clang-format on
+static PyType_Slot node_slots[] = {
+    {Py_tp_dealloc, node_dealloc},
+    {Py_tp_repr, node_repr},
+    {Py_tp_str, node_str},
+    {Py_tp_doc, (void *)NodeType_doc},
+    {Py_tp_richcompare, node_richcompare},
+    {Py_tp_members, node_members},
+    {Py_tp_init, node_init},
+    {Py_tp_new, PyType_GenericNew},
+    {0, NULL}};
+
+PyType_Spec NodeType_spec = {
+    .name = "mgclient.Node",
+    .basicsize = sizeof(NodeObject),
+    .itemsize = 0,
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
+    .slots = node_slots};
 
 static void relationship_dealloc(RelationshipObject *rel) {
   Py_CLEAR(rel->type);
   Py_CLEAR(rel->properties);
-  Py_TYPE(rel)->tp_free(rel);
+  heap_type_free(rel);
 }
 
 static PyObject *relationship_repr(RelationshipObject *rel) {
   return PyUnicode_FromFormat(
       "<%s(start_id=%lld, end_id=%lld, type=%R, properties=%R) at %p>",
-      Py_TYPE(rel)->tp_name, rel->start_id, rel->end_id, rel->type,
+      RelationshipType_spec.name, rel->start_id, rel->end_id, rel->type,
       rel->properties, rel);
 }
 
@@ -235,13 +237,13 @@ static PyObject *relationship_astuple(RelationshipObject *rel) {
     goto cleanup;
   }
 
-  PyTuple_SET_ITEM(tuple, 0, id);
-  PyTuple_SET_ITEM(tuple, 1, start_id);
-  PyTuple_SET_ITEM(tuple, 2, end_id);
+  PyTuple_SetItem(tuple, 0, id);
+  PyTuple_SetItem(tuple, 1, start_id);
+  PyTuple_SetItem(tuple, 2, end_id);
   Py_INCREF(rel->type);
-  PyTuple_SET_ITEM(tuple, 3, rel->type);
+  PyTuple_SetItem(tuple, 3, rel->type);
   Py_INCREF(rel->properties);
-  PyTuple_SET_ITEM(tuple, 4, rel->properties);
+  PyTuple_SetItem(tuple, 4, rel->properties);
 
   return tuple;
 
@@ -259,7 +261,7 @@ static PyObject *relationship_richcompare(RelationshipObject *lhs,
   PyObject *trhs = NULL;
   PyObject *ret = NULL;
 
-  if (Py_TYPE(rhs) == &RelationshipType) {
+  if (Py_TYPE(rhs) == RelationshipType) {
     if (!(tlhs = relationship_astuple(lhs))) {
       goto exit;
     }
@@ -352,33 +354,33 @@ PyDoc_STRVAR(
     RelationshipType_doc,
     "A directed, typed connection between two nodes with optional properties.");
 
-// clang-format off
- PyTypeObject RelationshipType = {
-     PyVarObject_HEAD_INIT(NULL, 0)
-     .tp_name = "mgclient.Relationship",
-     .tp_basicsize = sizeof(RelationshipObject),
-     .tp_itemsize = 0,
-     .tp_dealloc = (destructor)relationship_dealloc,
-     .tp_repr = (reprfunc)relationship_repr,
-     .tp_str = (reprfunc)relationship_str,
-     .tp_flags = Py_TPFLAGS_DEFAULT,
-     .tp_doc = RelationshipType_doc,
-     .tp_richcompare = (richcmpfunc)relationship_richcompare,
-     .tp_members = relationship_members,
-     .tp_init = (initproc)relationship_init,
-     .tp_new = PyType_GenericNew
- };
-// clang-format on
+static PyType_Slot relationship_slots[] = {
+    {Py_tp_dealloc, relationship_dealloc},
+    {Py_tp_repr, relationship_repr},
+    {Py_tp_str, relationship_str},
+    {Py_tp_doc, (void *)RelationshipType_doc},
+    {Py_tp_richcompare, relationship_richcompare},
+    {Py_tp_members, relationship_members},
+    {Py_tp_init, relationship_init},
+    {Py_tp_new, PyType_GenericNew},
+    {0, NULL}};
+
+PyType_Spec RelationshipType_spec = {
+    .name = "mgclient.Relationship",
+    .basicsize = sizeof(RelationshipObject),
+    .itemsize = 0,
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
+    .slots = relationship_slots};
 
 static void path_dealloc(PathObject *path) {
   Py_CLEAR(path->nodes);
   Py_CLEAR(path->relationships);
-  Py_TYPE(path)->tp_free(path);
+  heap_type_free(path);
 }
 
 static PyObject *path_repr(PathObject *path) {
   return PyUnicode_FromFormat("<%s(nodes=%R, relationships=%R) at %p>",
-                              Py_TYPE(path)->tp_name, path->nodes,
+                              PathType_spec.name, path->nodes,
                               path->relationships, path);
 }
 
@@ -403,7 +405,7 @@ static PyObject *path_str(PathObject *path) {
     if (!node_s) {
       goto end;
     }
-    PyList_SET_ITEM(elements, 2 * i, node_s);
+    PyList_SetItem(elements, 2 * i, node_s);
     if (i < length) {
       RelationshipObject *rel =
           (RelationshipObject *)PyList_GetItem(path->relationships, i);
@@ -416,7 +418,7 @@ static PyObject *path_str(PathObject *path) {
       if (!rel_s) {
         goto end;
       }
-      PyList_SET_ITEM(elements, 2 * i + 1, rel_s);
+      PyList_SetItem(elements, 2 * i + 1, rel_s);
     }
   }
 
@@ -443,8 +445,8 @@ static PyObject *path_astuple(PathObject *path) {
   }
   Py_INCREF(path->nodes);
   Py_INCREF(path->relationships);
-  PyTuple_SET_ITEM(tuple, 0, path->nodes);
-  PyTuple_SET_ITEM(tuple, 1, path->relationships);
+  PyTuple_SetItem(tuple, 0, path->nodes);
+  PyTuple_SetItem(tuple, 1, path->relationships);
   return tuple;
 }
 
@@ -452,7 +454,7 @@ static PyObject *path_richcompare(PathObject *lhs, PathObject *rhs, int op) {
   PyObject *tlhs = NULL;
   PyObject *trhs = NULL;
   PyObject *ret = NULL;
-  if (Py_TYPE(rhs) == &PathType) {
+  if (Py_TYPE(rhs) == PathType) {
     if (!(tlhs = path_astuple(lhs))) {
       goto exit;
     }
@@ -473,6 +475,7 @@ exit:
 }
 
 static int check_types_in_list(PyObject *list, PyTypeObject *expected_type,
+                               const char *expected_type_name,
                                const char *function_name, int arg_index) {
   int ok = 1;
   if (PyList_Check(list)) {
@@ -497,7 +500,7 @@ static int check_types_in_list(PyObject *list, PyTypeObject *expected_type,
   }
   if (!ok) {
     PyErr_Format(PyExc_TypeError, "%s argument %d must be a list of '%s'",
-                 function_name, arg_index, expected_type->tp_name);
+                 function_name, arg_index, expected_type_name);
     return -1;
   }
   return 0;
@@ -513,9 +516,10 @@ static int path_init(PathObject *path, PyObject *args, PyObject *kwargs) {
     return -1;
   }
 
-  if (check_types_in_list(nodes, &NodeType, "__init__", 1) < 0 ||
-      check_types_in_list(relationships, &RelationshipType, "__init__", 2) <
-          0) {
+  if (check_types_in_list(nodes, NodeType, NodeType_spec.name, "__init__",
+                          1) < 0 ||
+      check_types_in_list(relationships, RelationshipType,
+                          RelationshipType_spec.name, "__init__", 2) < 0) {
     return -1;
   }
 
@@ -555,22 +559,22 @@ PyDoc_STRVAR(PathType_doc,
 in the graph.");
 // clang-format on
 
-// clang-format off
-PyTypeObject PathType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "mgclient.Path",
-    .tp_basicsize = sizeof(PathObject),
-    .tp_itemsize = 0,
-    .tp_dealloc = (destructor)path_dealloc,
-    .tp_repr = (reprfunc)path_repr,
-    .tp_str = (reprfunc)path_str,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_doc = PathType_doc,
-    .tp_richcompare = (richcmpfunc)path_richcompare,
-    .tp_members = path_members,
-    .tp_init = (initproc)path_init,
-    .tp_new = PyType_GenericNew
-};
+static PyType_Slot path_slots[] = {
+    {Py_tp_dealloc, path_dealloc},
+    {Py_tp_repr, path_repr},
+    {Py_tp_str, path_str},
+    {Py_tp_doc, (void *)PathType_doc},
+    {Py_tp_richcompare, path_richcompare},
+    {Py_tp_members, path_members},
+    {Py_tp_init, path_init},
+    {Py_tp_new, PyType_GenericNew},
+    {0, NULL}};
+
+PyType_Spec PathType_spec = {
+    .name = "mgclient.Path",
+    .basicsize = sizeof(PathObject),
+    .itemsize = 0,
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
+    .slots = path_slots};
 
 #undef CHECK_ATTRIBUTE
-// clang-format on

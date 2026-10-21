@@ -16,6 +16,7 @@
 
 #include <structmember.h>
 
+#include "heaptype.h"
 static void column_dealloc(ColumnObject *column) {
   Py_XDECREF(column->name);
   Py_XDECREF(column->type_code);
@@ -24,14 +25,14 @@ static void column_dealloc(ColumnObject *column) {
   Py_XDECREF(column->precision);
   Py_XDECREF(column->scale);
   Py_XDECREF(column->null_ok);
-  Py_TYPE(column)->tp_free(column);
+  heap_type_free(column);
 }
 
 static PyObject *column_repr(ColumnObject *column) {
   return PyUnicode_FromFormat(
       "<%s(name=%R, type_code=%R, display_size=%R, internal_size=%R, "
       "precision=%R, scale=%R, null_ok=%R) at %p>",
-      Py_TYPE(column)->tp_name, column->name, column->type_code,
+      ColumnType_spec.name, column->name, column->type_code,
       column->display_size, column->internal_size, column->precision,
       column->scale, column->null_ok, column);
 }
@@ -110,18 +111,20 @@ static PyMemberDef column_members[] = {
 
 PyDoc_STRVAR(ColumnType_doc, "Description of a column returned by the query.");
 
-// clang-format off
-PyTypeObject ColumnType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "mgclient.Column",
-    .tp_basicsize = sizeof(ColumnObject),
-    .tp_itemsize = 0,
-    .tp_dealloc = (destructor)column_dealloc,
-    .tp_repr = (reprfunc)column_repr,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_doc = ColumnType_doc,
-    .tp_members = column_members,
-    .tp_init = (initproc)column_init,
-    .tp_new = PyType_GenericNew
-};
-// clang-format on
+PyTypeObject *ColumnType;
+
+static PyType_Slot column_slots[] = {
+    {Py_tp_dealloc, column_dealloc},
+    {Py_tp_repr, column_repr},
+    {Py_tp_doc, (void *)ColumnType_doc},
+    {Py_tp_members, column_members},
+    {Py_tp_init, column_init},
+    {Py_tp_new, PyType_GenericNew},
+    {0, NULL}};
+
+PyType_Spec ColumnType_spec = {
+    .name = "mgclient.Column",
+    .basicsize = sizeof(ColumnObject),
+    .itemsize = 0,
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
+    .slots = column_slots};

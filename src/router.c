@@ -19,6 +19,7 @@
 #include "connection.h"
 #include "exceptions.h"
 #include "glue.h"
+#include "heaptype.h"
 
 // clang-format off
 typedef struct RouterObject {
@@ -94,16 +95,24 @@ static int router_resolver_trampoline(const char *advertised,
   }
 
   int rc = 0;
-  Py_ssize_t size = PySequence_Fast_GET_SIZE(seq);
+  Py_ssize_t size = PySequence_Size(seq);
   for (Py_ssize_t i = 0; i < size; ++i) {
-    PyObject *item = PySequence_Fast_GET_ITEM(seq, i);  // borrowed
-    const char *target = PyUnicode_AsUTF8(item);
-    if (!target) {
+    PyObject *item = PySequence_GetItem(seq, i);
+    if (!item) {
       router_stash_exception(self);
       rc = MG_ERROR_CLIENT_ERROR;
       break;
     }
-    if (mg_resolver_result_add(result, target) != 0) {
+    const char *target = PyUnicode_AsUTF8AndSize(item, NULL);
+    if (!target) {
+      Py_DECREF(item);
+      router_stash_exception(self);
+      rc = MG_ERROR_CLIENT_ERROR;
+      break;
+    }
+    int add_status = mg_resolver_result_add(result, target);
+    Py_DECREF(item);
+    if (add_status != 0) {
       PyErr_NoMemory();
       router_stash_exception(self);
       rc = MG_ERROR_OOM;
@@ -254,7 +263,7 @@ static PyObject *router_new(PyTypeObject *subtype, PyObject *args,
                             PyObject *kwargs) {
   (void)args;
   (void)kwargs;
-  RouterObject *self = (RouterObject *)subtype->tp_alloc(subtype, 0);
+  RouterObject *self = (RouterObject *)heap_type_alloc(subtype);
   if (!self) {
     return NULL;
   }
@@ -269,7 +278,7 @@ static void router_dealloc(RouterObject *self) {
   mg_router_destroy(self->router);
   Py_XDECREF(self->resolver);
   router_clear_stashed(self);
-  Py_TYPE(self)->tp_free(self);
+  heap_type_free(self);
 }
 
 // -- connect -----------------------------------------------------------------
@@ -355,7 +364,8 @@ static int router_work_trampoline(mg_session *session, void *data) {
     router_stash_exception(self);
     return transient ? MG_ERROR_TRANSIENT_ERROR : MG_ERROR_CLIENT_ERROR;
   }
-  Py_XSETREF(ctx->result, result);
+  Py_XDECREF(ctx->result);
+  ctx->result = result;
   return 0;
 }
 
@@ -434,7 +444,7 @@ static PyObject *role_addresses(const mg_routing_table *table,
       Py_DECREF(list);
       return NULL;
     }
-    PyList_SET_ITEM(list, i, item);  // steals reference
+    PyList_SetItem(list, i, item);  // steals reference
   }
   return list;
 }
@@ -510,16 +520,19 @@ PyDoc_STRVAR(RouterType_doc,
              "Low-level client-side routing engine over libmgclient's "
              "mg_router. Use mgclient.routing.Router instead.");
 
-// clang-format off
-PyTypeObject RouterType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "mgclient._mgclient._Router",
-    .tp_doc = RouterType_doc,
-    .tp_basicsize = sizeof(RouterObject),
-    .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_dealloc = (destructor)router_dealloc,
-    .tp_methods = router_methods,
-    .tp_init = (initproc)router_init,
-    .tp_new = (newfunc)router_new};
-// clang-format on
+PyTypeObject *RouterType;
+
+static PyType_Slot router_slots[] = {
+    {Py_tp_doc, (void *)RouterType_doc},
+    {Py_tp_dealloc, router_dealloc},
+    {Py_tp_methods, router_methods},
+    {Py_tp_init, router_init},
+    {Py_tp_new, router_new},
+    {0, NULL}};
+
+PyType_Spec RouterType_spec = {
+    .name = "mgclient._mgclient._Router",
+    .basicsize = sizeof(RouterObject),
+    .itemsize = 0,
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
+    .slots = router_slots};

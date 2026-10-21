@@ -39,6 +39,7 @@ typedef struct {
 } CursorObject;
 // clang-format on
 
-extern PyTypeObject CursorType;
+extern PyTypeObject *CursorType;
+extern PyType_Spec CursorType_spec;
 
 #endif

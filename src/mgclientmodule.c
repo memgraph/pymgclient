@@ -173,23 +173,25 @@ int add_module_constants(PyObject *module) {
 
 static struct {
   char *name;
-  PyTypeObject *type;
-} type_table[] = {{"Connection", &ConnectionType},
-                  {"Cursor", &CursorType},
-                  {"Column", &ColumnType},
-                  {"Node", &NodeType},
-                  {"Relationship", &RelationshipType},
-                  {"Path", &PathType},
-                  {"_Router", &RouterType},
-                  {NULL, NULL}};
+  PyTypeObject **type;
+  PyType_Spec *spec;
+} type_table[] = {{"Connection", &ConnectionType, &ConnectionType_spec},
+                  {"Cursor", &CursorType, &CursorType_spec},
+                  {"Column", &ColumnType, &ColumnType_spec},
+                  {"Node", &NodeType, &NodeType_spec},
+                  {"Relationship", &RelationshipType, &RelationshipType_spec},
+                  {"Path", &PathType, &PathType_spec},
+                  {"_Router", &RouterType, &RouterType_spec},
+                  {NULL, NULL, NULL}};
 
 static int add_module_types(PyObject *module) {
   for (size_t i = 0; type_table[i].name; ++i) {
-    if (PyType_Ready(type_table[i].type) < 0) {
+    PyObject *type = PyType_FromSpec(type_table[i].spec);
+    if (!type) {
       return -1;
     }
-    if (PyModule_AddObject(module, type_table[i].name,
-                           (PyObject *)type_table[i].type) < 0) {
+    *type_table[i].type = (PyTypeObject *)type;
+    if (PyModule_AddObjectRef(module, type_table[i].name, type) < 0) {
       return -1;
     }
   }
@@ -201,7 +203,7 @@ static PyObject *mgclient_connect(PyObject *self, PyObject *args,
   // Unused parameter.
   (void)self;
 
-  return PyObject_Call((PyObject *)&ConnectionType, args, kwargs);
+  return PyObject_Call((PyObject *)ConnectionType, args, kwargs);
 }
 
 // clang-format off
@@ -315,6 +317,8 @@ PyMODINIT_FUNC PyInit__mgclient(void) {
     return NULL;
   }
 
-  py_datetime_import_init();
+  if (py_datetime_import_init() < 0) {
+    return NULL;
+  }
   return m;
 }

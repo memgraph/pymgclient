@@ -52,9 +52,10 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
-          # omit ‘name’ to fetch *every* artifact uploaded earlier
+          # Fetch every package artifact uploaded earlier.
+          pattern: pymgclient-*
           path: ./downloaded-artifacts
 
       - name: Move Artifacts
@@ -74,16 +75,16 @@ jobs:
       
       - name: Publish Package to PyPI
         if: ${{ inputs.publish_pypi == true && inputs.test == false }}
-        uses: pypa/gh-action-pypi-publish@v1.4.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Publish Package to PyPI (TEST)
         if: ${{ inputs.publish_pypi == true && inputs.test }}
-        uses: pypa/gh-action-pypi-publish@v1.4.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/
           verbose: true

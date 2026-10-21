@@ -45,6 +45,13 @@ if [[ -n "$CONAN_REMOTE" ]]; then
     conan remote add artifactory $CONAN_REMOTE --force
 fi
 
+conan_args=()
+# On macOS build for the same minimum version as the wheel, otherwise the
+# static libraries would raise the minimum macOS version of the extension.
+if [[ "$(uname -s)" == "Darwin" && -n "$MACOSX_DEPLOYMENT_TARGET" ]]; then
+  conan_args+=("-s" "os.version=$MACOSX_DEPLOYMENT_TARGET")
+fi
+
 conan install   \
   --lockfile="" \
   --requires=openssl/$OPENSSL_VERSION  \
@@ -53,9 +60,10 @@ conan install   \
   -o openssl/*:shared=False \
   -o zlib/*:shared=False \
   --deployer=full_deploy \
-  --output-folder=$OUT_DIR
+  --output-folder=$OUT_DIR \
+  "${conan_args[@]}"
 
-if [[ "$(arch)" == "aarch64" ]]; then
+if [[ "$(arch)" == "aarch64" || "$(arch)" == "arm64" ]]; then
   ARCH="armv8"
 else
   ARCH="$(arch)"

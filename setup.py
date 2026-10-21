@@ -212,6 +212,17 @@ class BuildMgclientExt(build_ext):
     def finalize_linux(self, extension: Extension):
         self.finalize_linux_like(extension, ["ssl", "crypto"])
 
+    def get_libraries(self, ext: Extension):
+        libraries = super().get_libraries(ext)
+        if IS_WINDOWS and ext.py_limited_api:
+            # For non-MSVC compilers (we use MinGW) setuptools links against the
+            # versioned pythonXY library, which ties the abi3 extension to the
+            # Python used for the build. Link against the stable ABI's python3
+            # library instead (MSVC gets this via a pragma in pyconfig.h).
+            versioned = f"python{sys.version_info.major}{sys.version_info.minor}"
+            libraries = ["python3" if lib == versioned else lib for lib in libraries]
+        return libraries
+
     def get_cflags(self):
         return "{0} -Werror=all".format(os.getenv("CFLAGS", "")).strip()
 
@@ -305,11 +316,24 @@ if sys.platform == "win32":
 else:
     extra_link_args = None
 
+# The extension only uses the stable ABI (limited API) of the minimum
+# supported Python version, so a single abi3 wheel works on all later versions.
+PY_LIMITED_API_VERSION = "0x030A0000"
+PY_LIMITED_API_TAG = "cp310"
+
 setup(
     ext_modules=[
-        Extension(EXTENSION_NAME, sources=sources, depends=headers, extra_link_args=extra_link_args)
+        Extension(
+            EXTENSION_NAME,
+            sources=sources,
+            depends=headers,
+            extra_link_args=extra_link_args,
+            define_macros=[("Py_LIMITED_API", PY_LIMITED_API_VERSION)],
+            py_limited_api=True,
+        )
     ],
     cmdclass={"build_ext": BuildMgclientExt},
+    options={"bdist_wheel": {"py_limited_api": PY_LIMITED_API_TAG}},
 )
 
 if readme_path.exists():

@@ -463,6 +463,7 @@ jobs:
     steps:
       - name: Install python
         run: |
+          brew update
           brew install python@${{ matrix.python_version }}
           python${{ matrix.python_version }} --version
 

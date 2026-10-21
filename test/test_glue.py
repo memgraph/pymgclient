@@ -157,14 +157,19 @@ def test_map(memgraph_connection):
     #  * one temporary reference because sys.getrefcount increases the ref
     #    count
     assert sys.getrefcount(value_in_a_map_from_result) == 3 - REF_COUNT_DECREMENT
+    key_in_a_map_from_result = next(iter(result[0][0]["map"]))
     # This checks if the reference number of the keys in a mg_map are correct.
+    # The key is a new string created from the mg_map, not key_in_a_map itself,
+    # so key_in_a_map's own ref count says nothing about mgclient (and since
+    # Python 3.15 locals holding constants don't count towards it, see
+    # https://github.com/python/cpython/issues/134282).
     # Ref count should be 3, because:
     #  * one reference because the string is referenced in result
-    #  * one reference because of key_in_the_map (refs to the same strings are
-    #    globally counted)
+    #  * one reference because of key_in_a_map_from_result
     #  * one temporary reference because sys.getrefcount increases the ref
     #    count
-    assert sys.getrefcount(key_in_a_map) == 3 - REF_COUNT_DECREMENT
+    assert key_in_a_map_from_result is not key_in_a_map
+    assert sys.getrefcount(key_in_a_map_from_result) == 3 - REF_COUNT_DECREMENT
 
 
 def test_node(memgraph_connection):

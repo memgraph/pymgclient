@@ -212,6 +212,17 @@ class BuildMgclientExt(build_ext):
     def finalize_linux(self, extension: Extension):
         self.finalize_linux_like(extension, ["ssl", "crypto"])
 
+    def get_libraries(self, ext: Extension):
+        libraries = super().get_libraries(ext)
+        if IS_WINDOWS and ext.py_limited_api:
+            # For non-MSVC compilers (we use MinGW) setuptools links against the
+            # versioned pythonXY library, which ties the abi3 extension to the
+            # Python used for the build. Link against the stable ABI's python3
+            # library instead (MSVC gets this via a pragma in pyconfig.h).
+            versioned = f"python{sys.version_info.major}{sys.version_info.minor}"
+            libraries = ["python3" if lib == versioned else lib for lib in libraries]
+        return libraries
+
     def get_cflags(self):
         return "{0} -Werror=all".format(os.getenv("CFLAGS", "")).strip()
 

@@ -252,6 +252,19 @@ jobs:
         env:
           pythonLocation: ${{ env.pythonLocation }}
 
+      # abi3audit only checks which symbols are used, not which DLL they are
+      # imported from: the extension must link python3.dll, not python3XX.dll.
+      - name: Check wheel links against python3.dll
+        shell: msys2 {0}
+        run: |
+          export PATH="$(cygpath -u "$pythonLocation"):$PATH"
+          python -m zipfile -e dist/*-abi3-*.whl wheel-check
+          dlls=$(objdump -p wheel-check/mgclient/_mgclient*.pyd | grep -i "DLL Name: python")
+          echo "$dlls"
+          echo "$dlls" | grep -qix "\s*DLL Name: python3.dll"
+        env:
+          pythonLocation: ${{ env.pythonLocation }}
+
       # Used by the test job below; not part of the release.
       - name: Upload Wheel for Testing
         uses: actions/upload-artifact@v4
